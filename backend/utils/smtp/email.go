@@ -1,15 +1,13 @@
-package smtp
+package mailer
 
 import (
 	"fmt"
 	"net/smtp"
-
 	"devSync/config"
 )
 
-// SendOTPEmail sends a plain-text OTP email using the configured SMTP server.
 func SendOTPEmail(cfg *config.AppConfig, toEmail, otp, purpose string) error {
-	subject := "Your DevSync verification code"
+	subject := "DevSync Verification Code"
 	body := fmt.Sprintf("Your DevSync OTP for %s is: %s\nThis code expires in 10 minutes.", purpose, otp)
 
 	msg := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s",

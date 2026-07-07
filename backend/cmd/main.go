@@ -13,8 +13,8 @@ func main() {
 
 	router := bootstrap.InitRouter(cfg, db)
 
-	log.Printf("main: DevSync running on port %s", cfg.AppPort)
+	log.Printf("Server running on port %s", cfg.AppPort)
 	if err := router.Run(":" + cfg.AppPort); err != nil {
-		log.Fatalf("main: server failed: %v", err)
+		log.Fatalf("Server failed: %v", err)
 	}
 }

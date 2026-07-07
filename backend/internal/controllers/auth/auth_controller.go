@@ -1,4 +1,4 @@
-package controller
+package auth
 
 import (
 	"net/http"
@@ -8,20 +8,20 @@ import (
 
 	"devSync/internal/dto/request"
 	"devSync/internal/dto/response"
+	"devSync/internal/services/auth"
 	"devSync/internal/validators"
-	"devSync/pkg/response"
-	service "devSync/internal/services/auth"
+	"devSync/internal/response"
 )
 
-type AuthController struct {
-	service service.AuthService
+type Controller struct {
+	service auth.Service
 }
 
-func NewAuthController(s service.AuthService) *AuthController {
-	return &AuthController{service: s}
+func NewController(s auth.Service) *Controller {
+	return &Controller{service: s}
 }
 
-func (h *AuthController) Register(c *gin.Context) {
+func (h *Controller) Register(c *gin.Context) {
 	var req request.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -32,15 +32,15 @@ func (h *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Register(&req)
+	result, err := h.service.Register(c.Request.Context(), &req)
 	if err != nil {
 		response.Error(c, http.StatusConflict, err.Error())
 		return
 	}
-	response.Success(c, http.StatusCreated, result)
+	response.Created(c, result)
 }
 
-func (h *AuthController) Login(c *gin.Context) {
+func (h *Controller) Login(c *gin.Context) {
 	var req request.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -51,15 +51,15 @@ func (h *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Login(&req)
+	result, err := h.service.Login(c.Request.Context(), &req)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	response.Success(c, http.StatusOK, result)
+	response.Success(c, result)
 }
 
-func (h *AuthController) VerifyEmail(c *gin.Context) {
+func (h *Controller) VerifyEmail(c *gin.Context) {
 	var req request.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -70,14 +70,14 @@ func (h *AuthController) VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.VerifyEmail(&req); err != nil {
+	if err := h.service.VerifyEmail(c.Request.Context(), &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Success(c, http.StatusOK, dtoresponse.MessageResponse{Message: "Email verified successfully"})
+	response.Success(c, response.MessageResponse{Message: "Email verified successfully"})
 }
 
-func (h *AuthController) ResendOTP(c *gin.Context) {
+func (h *Controller) ResendOTP(c *gin.Context) {
 	var req request.ResendOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -88,11 +88,11 @@ func (h *AuthController) ResendOTP(c *gin.Context) {
 		return
 	}
 
-	_ = h.service.ResendOTP(&req)
-	response.Success(c, http.StatusOK, dtoresponse.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
+	_ = h.service.ResendOTP(c.Request.Context(), &req)
+	response.Success(c, response.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
 }
 
-func (h *AuthController) ForgotPassword(c *gin.Context) {
+func (h *Controller) ForgotPassword(c *gin.Context) {
 	var req request.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -103,11 +103,11 @@ func (h *AuthController) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	_ = h.service.ForgotPassword(&req)
-	response.Success(c, http.StatusOK, dtoresponse.MessageResponse{Message: "If the account exists, a reset code has been sent"})
+	_ = h.service.ForgotPassword(c.Request.Context(), &req)
+	response.Success(c, response.MessageResponse{Message: "If the account exists, a reset code has been sent"})
 }
 
-func (h *AuthController) ResetPassword(c *gin.Context) {
+func (h *Controller) ResetPassword(c *gin.Context) {
 	var req request.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -118,14 +118,14 @@ func (h *AuthController) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.ResetPassword(&req); err != nil {
+	if err := h.service.ResetPassword(c.Request.Context(), &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Success(c, http.StatusOK, dtoresponse.MessageResponse{Message: "Password reset successfully"})
+	response.Success(c, response.MessageResponse{Message: "Password reset successfully"})
 }
 
-func (h *AuthController) RefreshToken(c *gin.Context) {
+func (h *Controller) RefreshToken(c *gin.Context) {
 	var req request.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -136,15 +136,15 @@ func (h *AuthController) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.RefreshAccessToken(&req)
+	result, err := h.service.RefreshToken(c.Request.Context(), &req)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
-	response.Success(c, http.StatusOK, result)
+	response.Success(c, result)
 }
 
-func (h *AuthController) Logout(c *gin.Context) {
+func (h *Controller) Logout(c *gin.Context) {
 	var req request.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -155,11 +155,11 @@ func (h *AuthController) Logout(c *gin.Context) {
 		return
 	}
 
-	_ = h.service.Logout(&req)
-	response.Success(c, http.StatusOK, dtoresponse.MessageResponse{Message: "Logged out successfully"})
+	_ = h.service.Logout(c.Request.Context(), &req)
+	response.Success(c, response.MessageResponse{Message: "Logged out successfully"})
 }
 
-func (h *AuthController) Me(c *gin.Context) {
+func (h *Controller) Me(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
@@ -167,10 +167,10 @@ func (h *AuthController) Me(c *gin.Context) {
 	}
 	userID := userIDValue.(uuid.UUID)
 
-	result, err := h.service.GetCurrentUser(userID)
+	result, err := h.service.GetCurrentUser(c.Request.Context(), userID)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, "User not found")
 		return
 	}
-	response.Success(c, http.StatusOK, result)
+	response.Success(c, result)
 }

@@ -2,7 +2,6 @@ package response
 
 import (
 	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -23,22 +22,11 @@ type TokenResponse struct {
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
-type RegisterResponse struct {
-	User    UserResponse `json:"user"`
-	Message string       `json:"message"`
-}
-
-type LoginResponse struct {
+type AuthResponse struct {
 	User  UserResponse  `json:"user"`
 	Token TokenResponse `json:"token"`
 }
 
 type MessageResponse struct {
 	Message string `json:"message"`
-}
-
-type ErrorResponse struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Errors  interface{} `json:"errors,omitempty"`
 }
