@@ -1,10 +1,11 @@
 export { Logo } from './Logo';
 export { LeftHero } from './LeftHero';
 export { RegisterHero } from './RegisterHero';
-export { RightHero } from './RightHero';
+export { ForgotPasswordHero } from './ForgotPasswordHero';
 export { FeatureItem } from './FeatureItem';
 export { LoginForm } from './LoginForm';
 export { RegisterForm } from './RegisterForm';
+export { ForgotPasswordForm } from './ForgotPasswordForm';
 export { AuthInput } from './AuthInput';
 export { SocialButton } from './SocialButton';
 export { AuthDivider } from './AuthDivider';

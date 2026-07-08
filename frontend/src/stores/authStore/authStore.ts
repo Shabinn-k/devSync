@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { authApi } from '../../features/auth/api/authApi';
-import type { 
-  User, 
-  LoginPayload, 
-  RegisterPayload, 
-  VerifyEmailPayload 
+import type {
+  User,
+  LoginPayload,
+  RegisterPayload,
+  VerifyEmailPayload
 } from '../../types/api';
 
 interface AuthState {
@@ -21,6 +21,7 @@ interface AuthState {
   register: (payload: RegisterPayload) => Promise<User>;
   verifyEmail: (payload: VerifyEmailPayload) => Promise<void>;
   resendOTP: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<User | null>;
   setUnverifiedEmail: (email: string | null) => void;
@@ -141,6 +142,21 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({ isLoading: false, error: null });
       } catch (err: any) {
         const message = err.response?.data?.message || err.message || 'Failed to resend OTP';
+        set({ error: message, isLoading: false });
+        throw new Error(message);
+      }
+    },
+
+    forgotPassword: async (email: string) => {
+      set({ isLoading: true, error: null });
+      try {
+        const response = await authApi.forgotPassword({ email });
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to send reset link');
+        }
+        set({ isLoading: false, error: null });
+      } catch (err: any) {
+        const message = err.response?.data?.message || err.message || 'Failed to send reset link';
         set({ error: message, isLoading: false });
         throw new Error(message);
       }
