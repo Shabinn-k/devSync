@@ -12,7 +12,9 @@ import type {
   RefreshTokenPayload,
   LogoutPayload,
   TokenResponse,
-  User
+  User,
+  VerifyOTPPayload,
+  ResetPasswordOTPPayload
 } from '../../../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -60,7 +62,6 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // Dispatch logout event
         window.dispatchEvent(new Event('auth:logout'));
         localStorage.removeItem('devsync_access_token');
         localStorage.removeItem('devsync_refresh_token');
@@ -73,8 +74,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// ============ AUTH API METHODS ============
 
 export const authApi = {
   login: (data: LoginPayload) =>
@@ -103,4 +102,12 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<ApiResponse<User>>('/auth/me').then(res => res.data),
+
+  // NEW: OTP Verification
+  verifyOTP: (data: VerifyOTPPayload) =>
+    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-otp', data).then(res => res.data),
+
+  // NEW: Reset Password with OTP
+  resetPasswordWithOTP: (data: ResetPasswordOTPPayload) =>
+    apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password-with-otp', data).then(res => res.data),
 };

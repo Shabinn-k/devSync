@@ -4,7 +4,8 @@ import type {
   User,
   LoginPayload,
   RegisterPayload,
-  VerifyEmailPayload
+  VerifyEmailPayload,
+  ResetPasswordPayload
 } from '../../types/api';
 
 interface AuthState {
@@ -15,6 +16,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   unverifiedEmail: string | null;
+  resetEmail: string | null; // Store email for reset flow
 
   // Actions
   login: (payload: LoginPayload) => Promise<void>;
@@ -22,9 +24,12 @@ interface AuthState {
   verifyEmail: (payload: VerifyEmailPayload) => Promise<void>;
   resendOTP: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
+  verifyOTP: (otp: string) => Promise<void>;
+  resetPasswordWithOTP: (newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<User | null>;
   setUnverifiedEmail: (email: string | null) => void;
+  setResetEmail: (email: string | null) => void;
   clearError: () => void;
 }
 
@@ -42,7 +47,6 @@ const initialRefreshToken = localStorage.getItem('devsync_refresh_token');
 const initialUser = getStoredUser();
 
 export const useAuthStore = create<AuthState>((set, get) => {
-  // Listen to global window logout events from Axios interceptor
   if (typeof window !== 'undefined') {
     window.addEventListener('auth:logout', () => {
       set({
@@ -64,6 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     isLoading: false,
     error: null,
     unverifiedEmail: null,
+    resetEmail: null,
 
     login: async (payload: LoginPayload) => {
       set({ isLoading: true, error: null });
@@ -148,7 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
 
     forgotPassword: async (email: string) => {
-      set({ isLoading: true, error: null });
+      set({ isLoading: true, error: null, resetEmail: email });
       try {
         const response = await authApi.forgotPassword({ email });
         if (!response.success) {
@@ -162,6 +167,36 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
+    verifyOTP: async (otp: string) => {
+      set({ isLoading: true, error: null });
+      try {
+        const response = await authApi.verifyOTP({ otp });
+        if (!response.success) {
+          throw new Error(response.message || 'Invalid OTP');
+        }
+        set({ isLoading: false, error: null });
+      } catch (err: any) {
+        const message = err.response?.data?.message || err.message || 'Invalid OTP';
+        set({ error: message, isLoading: false });
+        throw new Error(message);
+      }
+    },
+
+    resetPasswordWithOTP: async (newPassword: string) => {
+      set({ isLoading: true, error: null });
+      try {
+        const response = await authApi.resetPasswordWithOTP({ new_password: newPassword });
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to reset password');
+        }
+        set({ isLoading: false, error: null, resetEmail: null });
+      } catch (err: any) {
+        const message = err.response?.data?.message || err.message || 'Failed to reset password';
+        set({ error: message, isLoading: false });
+        throw new Error(message);
+      }
+    },
+
     logout: async () => {
       set({ isLoading: true });
       const currentRefresh = get().refreshToken;
@@ -169,7 +204,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         try {
           await authApi.logout({ refresh_token: currentRefresh });
         } catch {
-          // Ignore logout error if token is already invalidated
+          // Ignore
         }
       }
       localStorage.removeItem('devsync_access_token');
@@ -183,6 +218,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        resetEmail: null,
       });
     },
 
@@ -206,6 +242,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     setUnverifiedEmail: (email: string | null) => {
       set({ unverifiedEmail: email });
+    },
+
+    setResetEmail: (email: string | null) => {
+      set({ resetEmail: email });
     },
 
     clearError: () => {

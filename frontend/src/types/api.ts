@@ -62,6 +62,16 @@ export interface LogoutPayload {
   refresh_token: string;
 }
 
+// ============ OTP Types ============
+
+export interface VerifyOTPPayload {
+  otp: string;
+}
+
+export interface ResetPasswordOTPPayload {
+  new_password: string;
+}
+
 // ============ Token Types ============
 
 export interface TokenResponse {
@@ -80,23 +90,4 @@ export interface AuthResponse {
 
 export interface MessageResponse {
   message: string;
-}
-
-// ============ Pagination Types ============
-
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sort?: string;
-  order?: 'asc' | 'desc';
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total_items: number;
-    total_pages: number;
-  };
 }
