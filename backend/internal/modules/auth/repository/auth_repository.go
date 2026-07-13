@@ -24,9 +24,6 @@ type AuthRepository interface {
 	// Update user's password
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 
-	// Update last successful login timestamp
-	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
-
 	// Verify user's email
 	VerifyEmail(ctx context.Context, userID uuid.UUID) error
 

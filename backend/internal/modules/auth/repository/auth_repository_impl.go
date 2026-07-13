@@ -14,7 +14,6 @@ type authRepository struct {
 	db *gorm.DB
 }
 
-// Constructor
 func NewAuthRepository(db *gorm.DB) AuthRepository {
 	return &authRepository{
 		db: db,
@@ -81,14 +80,6 @@ func (r *authRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, p
 			"password_hash": passwordHash,
 			"updated_at":    time.Now(),
 		}).Error
-}
-
-// Update last login
-func (r *authRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
-	return r.db.WithContext(ctx).
-		Model(&model.User{}).
-		Where("id = ?", userID).
-		Update("last_login_at", time.Now()).Error
 }
 
 // Verify email
