@@ -1,6 +1,5 @@
 devsync/
 ├── README.md
-├── LICENSE
 ├── .gitignore
 ├── docker-compose.yml
 ├── Makefile
