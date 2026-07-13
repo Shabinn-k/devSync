@@ -7,10 +7,10 @@ devsync/
 ├── .env.example
 │
 ├── docs/
-│   ├── sdd/                        # the Software Design Document itself, versioned
-│   ├── api/                        # Postman/Bruno collection export, OpenAPI spec
-│   ├── database/                   # ERD export, schema.sql dump
-│   └── diagrams/                   # exported PNG/SVG of every Mermaid diagram
+│   ├── sdd/                        
+│   ├── api/                        
+│   ├── database/                   
+│   └── diagrams/                  
 │
 ├── infrastructure/
 │   ├── docker/
@@ -45,16 +45,15 @@ devsync/
 │   ├── internal/
 │   │   ├── modules/
 │   │   │   ├── auth/            {handler, service, repository, model, dto, validator}
-│   │   │   ├── organization/    (same shape)
-│   │   │   ├── team/            (same shape)
-│   │   │   ├── project/         (same shape)
-│   │   │   ├── task/            (same shape)
-│   │   │   ├── comment/         (same shape)
-│   │   │   ├── attachment/      (same shape)
-│   │   │   ├── notification/    (same shape)
-│   │   │   ├── chat/            (same shape)
-│   │   │   ├── activity/        (same shape, consumer-only, no handler)
-│   │   │   └── userprofile/     (same shape)
+│   │   │   ├── organization/    "" ""
+│   │   │   ├── team/            "" ""
+│   │   │   ├── project/         "" ""
+│   │   │   ├── task/            "" ""
+│   │   │   ├── attachment/      "" ""
+│   │   │   ├── notification/    "" ""
+│   │   │   ├── chat/            "" ""
+│   │   │   ├── activity/        "" ""
+│   │   │   └── userprofile/     "" ""
 │   │   │
 │   │   ├── platform/
 │   │   │   ├── grpc/{client, server}
@@ -79,7 +78,7 @@ devsync/
 │   │   └── validator/
 │   │
 │   ├── proto/{user, organization, project, task, notification, chat}/
-│   ├── gen/                        # gitignored, protoc output
+│   ├── gen/                         
 │   ├── test/{integration, mocks}
 │   ├── go.mod
 │   └── go.sum
@@ -93,17 +92,17 @@ devsync/
 │   │   │   └── providers/{QueryProvider, AuthProvider, SocketProvider, ThemeProvider}
 │   │   ├── features/
 │   │   │   ├── auth/            {api, components, store, types, schema}
-│   │   │   ├── dashboard/       (same shape)
-│   │   │   ├── organizations/   (same shape)
-│   │   │   ├── teams/           (same shape)
-│   │   │   ├── projects/        (same shape)
-│   │   │   ├── tasks/           (same shape)
-│   │   │   ├── comments/        (same shape)
-│   │   │   ├── notifications/   (same shape)
-│   │   │   ├── chat/            (same shape)
-│   │   │   ├── activity/        (same shape)
-│   │   │   ├── profile/         (same shape)
-│   │   │   └── settings/        (same shape)
+│   │   │   ├── dashboard/       "" ""
+│   │   │   ├── organizations/   "" ""
+│   │   │   ├── teams/           "" ""
+│   │   │   ├── projects/        "" ""
+│   │   │   ├── tasks/           "" ""
+│   │   │   ├── comments/        "" ""
+│   │   │   ├── notifications/   "" ""
+│   │   │   ├── chat/            "" ""
+│   │   │   ├── activity/        "" ""
+│   │   │   ├── profile/         "" ""
+│   │   │   └── settings/        "" ""
 │   │   ├── components/{ui, layout, feedback}
 │   │   ├── layouts/{AuthLayout, DashboardLayout, OrgSettingsLayout}
 │   │   ├── hooks/
