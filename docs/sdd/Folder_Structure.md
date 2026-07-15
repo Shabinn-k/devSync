@@ -30,57 +30,147 @@ devsync/
 │       └── seed.sh
 │
 ├── backend/
-│   ├── cmd/
-│   │   ├── api/main.go
-│   │   ├── ws/main.go
-│   │   ├── worker/main.go
-│   │   └── migrate/main.go
+│
+├── cmd/
+│   └── main.go
+│
+├── config/
+│   ├── config.go
+│   ├── database.go
+│   ├── redis.go
+│   ├── kafka.go
+│   ├── websocket.go
+│   └── env.go
+│
+├── internal/
 │   │
-│   ├── configs/
-│   │   ├── config.go
-│   │   ├── development.yaml
-│   │   └── production.yaml
+│   ├── controllers/
+│   │   ├── auth/
+│   │   ├── organization/
+│   │   ├── team/
+│   │   ├── project/
+│   │   ├── task/
+│   │   ├── comment/
+│   │   ├── attachment/
+│   │   ├── notification/
+│   │   ├── activity/
+│   │   ├── chat/
+│   │   ├── profile/
+│   │   └── search/
 │   │
-│   ├── internal/
-│   │   ├── modules/
-│   │   │   ├── auth/            {handler, service, repository, model, dto, validator}
-│   │   │   ├── organization/    "" ""
-│   │   │   ├── team/            "" ""
-│   │   │   ├── project/         "" ""
-│   │   │   ├── task/            "" ""
-│   │   │   ├── attachment/      "" ""
-│   │   │   ├── notification/    "" ""
-│   │   │   ├── chat/            "" ""
-│   │   │   ├── activity/        "" ""
-│   │   │   └── userprofile/     "" ""
-│   │   │
-│   │   ├── platform/
-│   │   │   ├── grpc/{client, server}
-│   │   │   ├── kafka/{producer.go, consumer.go, topics.go}
-│   │   │   ├── websocket/{hub.go, client.go}
-│   │   │   ├── database/{postgres.go, migrations/}
-│   │   │   ├── cache/redis.go
-│   │   │   └── storage/minio.go
-│   │   │
-│   │   ├── middleware/
-│   │   ├── di/container.go
+│   ├── services/
+│   │   ├── auth/
+│   │   ├── organization/
+│   │   ├── team/
+│   │   ├── project/
+│   │   ├── task/
+│   │   ├── comment/
+│   │   ├── attachment/
+│   │   ├── notification/
+│   │   ├── activity/
+│   │   ├── chat/
+│   │   ├── profile/
+│   │   └── search/
+│   │
+│   ├── repositories/
+│   │   ├── auth/
+│   │   ├── organization/
+│   │   ├── team/
+│   │   ├── project/
+│   │   ├── task/
+│   │   ├── comment/
+│   │   ├── attachment/
+│   │   ├── notification/
+│   │   ├── activity/
+│   │   ├── chat/
+│   │   ├── profile/
+│   │   └── search/
+│   │
+│   ├── models/
+│   │
+│   ├── dto/
+│   │   ├── request/
 │   │   ├── response/
-│   │   ├── errors/
-│   │   ├── logger/
-│   │   └── router/router.go
+│   │   └── mapper/
 │   │
-│   ├── pkg/
-│   │   ├── jwtutil/
-│   │   ├── hashutil/
-│   │   ├── email/
-│   │   ├── pagination/
-│   │   └── validator/
+│   ├── validators/
 │   │
-│   ├── proto/{user, organization, project, task, notification, chat}/
-│   ├── gen/                         
-│   ├── test/{integration, mocks}
-│   ├── go.mod
-│   └── go.sum
+│   ├── middleware/
+│   │
+│   ├── routes/
+│   │
+│   ├── events/
+│   │   ├── producer/
+│   │   ├── consumer/
+│   │   └── payload/
+│   │
+│   ├── websocket/
+│   │
+│   ├── grpc/
+│   │
+│   ├── bootstrap/
+│   │
+│   ├── response/
+│   │
+│   ├── constants/
+│   │
+│   ├── errors/
+│   │
+│   └── logger/
+│
+├── infrastructure/
+│   │
+│   ├── postgres/
+│   ├── redis/
+│   ├── kafka/
+│   ├── storage/
+│   ├── email/
+│   ├── websocket/
+│   ├── grpc/
+│   └── monitoring/
+│       ├── prometheus/
+│       ├── grafana/
+│       └── loki/
+│
+├── pkg/
+│   ├── jwt/
+│   ├── bcrypt/
+│   ├── pagination/
+│   ├── validator/
+│   ├── context/
+│   └── helper/
+│
+├── proto/
+│
+├── migrations/
+│   ├── postgres/
+│   └── seed/
+│
+├── docs/
+│   ├── api/
+│   ├── architecture/
+│   ├── database/
+│   └── adr/
+│
+├── deployments/
+│   ├── docker/
+│   ├── kubernetes/
+│   ├── nginx/
+│   └── monitoring/
+│
+├── scripts/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── e2e/
+│   └── mocks/
+│
+├── .env.example
+├── docker-compose.yml
+├── Makefile
+├── go.mod
+└── go.sum
 │
 ├── frontend/
 │   ├── public/
@@ -115,3 +205,222 @@ devsync/
 │   ├── tailwind.config.ts
 │   ├── tsconfig.json
 │   └── package.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+devsync/
+│
+├── README.md
+├── LICENSE
+├── .gitignore
+├── .env.example
+├── docker-compose.yml
+├── Makefile
+│
+├── docs/
+│   ├── sdd/
+│   ├── api/
+│   ├── database/
+│   ├── architecture/
+│   ├── diagrams/
+│   └── adr/
+│
+├── infrastructure/
+│   ├── docker/
+│   │   ├── backend/
+│   │   │   └── Dockerfile
+│   │   └── frontend/
+│   │       └── Dockerfile
+│   │
+│   ├── nginx/
+│   │   └── nginx.conf
+│   │
+│   ├── monitoring/
+│   │   ├── prometheus/
+│   │   │   └── prometheus.yml
+│   │   ├── grafana/
+│   │   │   ├── dashboards/
+│   │   │   └── datasources/
+│   │   └── loki/
+│   │       └── loki-config.yml
+│   │
+│   └── scripts/
+│       ├── migrate.sh
+│       ├── seed.sh
+│       ├── backup.sh
+│       └── restore.sh
+│
+├── backend/
+│   │
+│   ├── cmd/
+│   │   └── main.go
+│   │
+│   ├── config/
+│   │   ├── config.go
+│   │   ├── database.go
+│   │   ├── redis.go
+│   │   ├── kafka.go
+│   │   ├── websocket.go
+│   │   └── env.go
+│   │
+│   ├── internal/
+│   │   │
+│   │   ├── controllers/
+│   │   │   ├── auth/
+│   │   │   ├── organization/
+│   │   │   ├── team/
+│   │   │   ├── project/
+│   │   │   ├── task/
+│   │   │   ├── comment/
+│   │   │   ├── attachment/
+│   │   │   ├── notification/
+│   │   │   ├── activity/
+│   │   │   ├── chat/
+│   │   │   ├── profile/
+│   │   │   └── search/
+│   │   │
+│   │   ├── services/
+│   │   │   ├── auth/
+│   │   │   ├── organization/
+│   │   │   ├── team/
+│   │   │   ├── project/
+│   │   │   ├── task/
+│   │   │   ├── comment/
+│   │   │   ├── attachment/
+│   │   │   ├── notification/
+│   │   │   ├── activity/
+│   │   │   ├── chat/
+│   │   │   ├── profile/
+│   │   │   └── search/
+│   │   │
+│   │   ├── repositories/
+│   │   │   ├── auth/
+│   │   │   ├── organization/
+│   │   │   ├── team/
+│   │   │   ├── project/
+│   │   │   ├── task/
+│   │   │   ├── comment/
+│   │   │   ├── attachment/
+│   │   │   ├── notification/
+│   │   │   ├── activity/
+│   │   │   ├── chat/
+│   │   │   ├── profile/
+│   │   │   └── search/
+│   │   │
+│   │   ├── models/
+│   │   │
+│   │   ├── dto/
+│   │   │   ├── request/
+│   │   │   ├── response/
+│   │   │   └── mapper/
+│   │   │
+│   │   ├── validators/
+│   │   │
+│   │   ├── middleware/
+│   │   │
+│   │   ├── routes/
+│   │   │
+│   │   ├── websocket/
+│   │   │
+│   │   ├── grpc/
+│   │   │
+│   │   ├── events/
+│   │   │   ├── producer/
+│   │   │   ├── consumer/
+│   │   │   └── payload/
+│   │   │
+│   │   ├── bootstrap/
+│   │   │
+│   │   ├── response/
+│   │   │
+│   │   ├── constants/
+│   │   │
+│   │   ├── errors/
+│   │   │
+│   │   └── logger/
+│   │
+│   ├── pkg/
+│   │   ├── jwt/
+│   │   ├── bcrypt/
+│   │   ├── pagination/
+│   │   ├── validator/
+│   │   ├── context/
+│   │   └── helper/
+│   │
+│   ├── proto/
+│   │
+│   ├── migrations/
+│   │   ├── postgres/
+│   │   └── seed/
+│   │
+│   ├── tests/
+│   │   ├── unit/
+│   │   ├── integration/
+│   │   ├── e2e/
+│   │   └── mocks/
+│   │
+│   ├── go.mod
+│   └── go.sum
+│
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── app/
+    │   ├── features/
+    │   ├── components/
+    │   ├── layouts/
+    │   ├── hooks/
+    │   ├── lib/
+    │   ├── stores/
+    │   ├── types/
+    │   ├── utils/
+    │   ├── main.tsx
+    │   └── index.css
+    │
+    ├── package.json
+    ├── tsconfig.json
+    ├── vite.config.ts
+    └── tailwind.config.ts
