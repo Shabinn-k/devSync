@@ -12,9 +12,7 @@ import type {
   RefreshTokenPayload,
   LogoutPayload,
   TokenResponse,
-  User,
-  VerifyOTPPayload,
-  ResetPasswordOTPPayload
+  User
 } from '../../../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -76,6 +74,7 @@ apiClient.interceptors.response.use(
 );
 
 export const authApi = {
+  // Auth
   login: (data: LoginPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
 
@@ -102,12 +101,4 @@ export const authApi = {
 
   getMe: () =>
     apiClient.get<ApiResponse<User>>('/auth/me').then(res => res.data),
-
-  // NEW: OTP Verification
-  verifyOTP: (data: VerifyOTPPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-otp', data).then(res => res.data),
-
-  // NEW: Reset Password with OTP
-  resetPasswordWithOTP: (data: ResetPasswordOTPPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password-with-otp', data).then(res => res.data),
 };

@@ -16,7 +16,8 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   unverifiedEmail: string | null;
-  resetEmail: string | null; // Store email for reset flow
+  resetEmail: string | null;
+  resetOTP: string | null;
 
   // Actions
   login: (payload: LoginPayload) => Promise<void>;
@@ -30,6 +31,7 @@ interface AuthState {
   fetchCurrentUser: () => Promise<User | null>;
   setUnverifiedEmail: (email: string | null) => void;
   setResetEmail: (email: string | null) => void;
+  setResetOTP: (otp: string | null) => void;
   clearError: () => void;
 }
 
@@ -69,6 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     error: null,
     unverifiedEmail: null,
     resetEmail: null,
+    resetOTP: null,
 
     login: async (payload: LoginPayload) => {
       set({ isLoading: true, error: null });
@@ -167,14 +170,21 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
+    // Uses the existing verify-email endpoint
     verifyOTP: async (otp: string) => {
       set({ isLoading: true, error: null });
       try {
-        const response = await authApi.verifyOTP({ otp });
+        const email = get().resetEmail;
+        if (!email) {
+          throw new Error('No email found for verification');
+        }
+        
+        // Using verify-email endpoint with OTP
+        const response = await authApi.verifyEmail({ email, otp });
         if (!response.success) {
           throw new Error(response.message || 'Invalid OTP');
         }
-        set({ isLoading: false, error: null });
+        set({ isLoading: false, error: null, resetOTP: otp });
       } catch (err: any) {
         const message = err.response?.data?.message || err.message || 'Invalid OTP';
         set({ error: message, isLoading: false });
@@ -182,14 +192,28 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
+    // Uses the existing reset-password endpoint
     resetPasswordWithOTP: async (newPassword: string) => {
       set({ isLoading: true, error: null });
       try {
-        const response = await authApi.resetPasswordWithOTP({ new_password: newPassword });
+        const email = get().resetEmail;
+        const otp = get().resetOTP;
+        
+        if (!email || !otp) {
+          throw new Error('Missing email or OTP for password reset');
+        }
+
+        const response = await authApi.resetPassword({
+          email,
+          otp,
+          new_password: newPassword,
+          confirm_password: newPassword
+        });
+        
         if (!response.success) {
           throw new Error(response.message || 'Failed to reset password');
         }
-        set({ isLoading: false, error: null, resetEmail: null });
+        set({ isLoading: false, error: null, resetEmail: null, resetOTP: null });
       } catch (err: any) {
         const message = err.response?.data?.message || err.message || 'Failed to reset password';
         set({ error: message, isLoading: false });
@@ -219,6 +243,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         isLoading: false,
         error: null,
         resetEmail: null,
+        resetOTP: null,
       });
     },
 
@@ -246,6 +271,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     setResetEmail: (email: string | null) => {
       set({ resetEmail: email });
+    },
+
+    setResetOTP: (otp: string | null) => {
+      set({ resetOTP: otp });
     },
 
     clearError: () => {

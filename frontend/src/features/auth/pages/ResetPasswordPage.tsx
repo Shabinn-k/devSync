@@ -60,7 +60,7 @@ const ResetPasswordPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-white">Password Reset Successful</h2>
             <p className="mt-2 text-sm text-white/60">
-              Redirecting to login...
+              Your password has been reset. Redirecting to login...
             </p>
           </div>
         </div>

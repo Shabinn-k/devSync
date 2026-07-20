@@ -1,65 +1,67 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthInput } from '../components/AuthInput';
 import { useAuthStore } from '../../../stores/authStore';
 
 const ForgotPasswordPage = () => {
-  const [otp, setOtp] = useState('');
+  const [email, setEmail] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(120);
-  const [canResend, setCanResend] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const navigate = useNavigate();
-  const { verifyOTP, resendOTP, forgotPassword, resetEmail, isLoading, error, clearError } = useAuthStore();
-
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      setCanResend(true);
-      return;
-    }
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const { forgotPassword, isLoading, error, clearError, setResetEmail } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
     clearError();
 
-    if (!otp || otp.length !== 6) {
-      setValidationError('Please enter a valid 6-digit OTP.');
+    if (!email) {
+      setValidationError('Email is required.');
       return;
     }
 
     try {
-      await verifyOTP(otp);
-      navigate('/reset-password');
+      await forgotPassword(email);
+      setResetEmail(email);
+      setIsSubmitted(true);
+      setTimeout(() => navigate('/verify-otp'), 2000);
     } catch {
       // Error handled by store
     }
   };
 
-  const handleResendOTP = async () => {
-    try {
-      if (resetEmail) {
-        await forgotPassword(resetEmail);
-        setTimeLeft(120);
-        setCanResend(false);
-        setValidationError(null);
-      }
-    } catch {
-      // Error handled by store
-    }
-  };
+  if (isSubmitted) {
+    return (
+      <div className="flex min-h-screen flex-col bg-black">
+        <div className="p-6 lg:p-10">
+          <div className="flex items-center gap-2.5">
+            <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
+            <span className="text-sm font-bold tracking-[0.08em] text-white">DEVSYNC</span>
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center px-4 -mt-20">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/20">
+              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Check your email</h2>
+            <p className="mt-2 text-sm text-white/60">
+              We've sent an OTP to:
+              <br />
+              <span className="font-semibold text-white">{email}</span>
+            </p>
+            <p className="mt-4 text-xs text-white/40">
+              Redirecting to OTP verification...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-black">
@@ -78,9 +80,9 @@ const ForgotPasswordPage = () => {
           className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
         >
           <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold text-white">Verify OTP</h2>
+            <h2 className="text-2xl font-bold text-white">Forgot password?</h2>
             <p className="mt-1 text-sm text-white/40">
-              Enter the 6-digit code sent to your email.
+              Enter your email and we'll send you an OTP.
             </p>
           </div>
 
@@ -92,34 +94,12 @@ const ForgotPasswordPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <AuthInput
-              label="OTP Code"
-              type="text"
-              placeholder="Enter 6-digit OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              label="Email address"
+              type="email"
+              placeholder="name@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/40">
-                {timeLeft > 0 ? (
-                  `Resend in ${formatTime(timeLeft)}`
-                ) : (
-                  <span className="text-red-400">OTP expired</span>
-                )}
-              </span>
-              <button
-                type="button"
-                onClick={handleResendOTP}
-                disabled={!canResend || isLoading}
-                className={`text-sm font-semibold transition-colors ${
-                  canResend && !isLoading
-                    ? 'text-white hover:underline'
-                    : 'text-white/30 cursor-not-allowed'
-                }`}
-              >
-                Resend OTP
-              </button>
-            </div>
 
             <motion.button
               type="submit"
@@ -128,7 +108,7 @@ const ForgotPasswordPage = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors duration-200 hover:bg-white/90 disabled:opacity-50"
             >
-              {isLoading ? 'Verifying...' : 'Verify OTP'}
+              {isLoading ? 'Sending...' : 'Send OTP'}
             </motion.button>
 
             <div className="text-center">
