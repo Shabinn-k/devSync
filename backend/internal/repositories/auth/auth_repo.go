@@ -2,34 +2,39 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
-	"devSync/internal/model"
+	"devSync/internal/models"
 )
 
-type AuthRepository interface {
-	// Create a new user account
-	CreateUser(ctx context.Context, user *model.User) error
+var ErrNotFound = errors.New("record not found")
 
-	// Retrieve user by ID
-	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
-
-	// Retrieve user by email
-	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
-
-	// Check if an email already exists
+type Repository interface {
+	// User
+	CreateUser(ctx context.Context, user *models.User) error
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
 	EmailExists(ctx context.Context, email string) (bool, error)
-
-	// Update user's password
+	UsernameExists(ctx context.Context, username string) (bool, error)
+	UpdateUser(ctx context.Context, user *models.User) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
-
-	// Verify user's email
 	VerifyEmail(ctx context.Context, userID uuid.UUID) error
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
 
-	// Update user profile information
-	UpdateUser(ctx context.Context, user *model.User) error
+	// Refresh Token
+	CreateRefreshToken(ctx context.Context, token *models.RefreshToken) error
+	GetRefreshTokenByHash(ctx context.Context, hash string) (*models.RefreshToken, error)
+	RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
+	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
 
-	// Soft delete a user account
-	DeleteUser(ctx context.Context, userID uuid.UUID) error
+	// Password Reset
+	SaveResetToken(ctx context.Context, userID uuid.UUID, token string, expiresAt time.Time) error
+	GetUserByResetToken(ctx context.Context, token string) (*models.User, error)
+	ClearResetToken(ctx context.Context, userID uuid.UUID) error
 }
+
