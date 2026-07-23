@@ -20,8 +20,7 @@ type repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
-
-// ============ USER ============
+ 
 
 func (r *repository) CreateUser(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
@@ -111,8 +110,7 @@ func (r *repository) RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
 func (r *repository) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("user_id = ?", userID).Update("is_revoked", true).Error
 }
-
-// ============ PASSWORD RESET ============
+ 
 
 func (r *repository) SaveResetOTP(ctx context.Context, userID uuid.UUID, otp string, expiresAt time.Time) error {
 	now := time.Now()

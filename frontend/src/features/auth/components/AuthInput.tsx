@@ -1,4 +1,3 @@
-// src/features/auth/components/AuthInput.tsx
 import { forwardRef, useId, useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import { Eye, EyeOff } from 'lucide-react';

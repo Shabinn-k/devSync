@@ -24,11 +24,9 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Request interceptor to add token
+ 
 apiClient.interceptors.request.use(
-  (config) => {
-    // Skip adding token for auth endpoints
+  (config) => { 
     if (config.url?.includes('/auth/')) {
       return config;
     }
@@ -41,16 +39,13 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-
-// Response interceptor to handle token refresh
+ 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    // Don't retry if it's already a retry or refresh token request
+     
     if (originalRequest._retry || originalRequest.url?.includes('/auth/refresh-token')) {
-      // Clear tokens and redirect to login
       localStorage.removeItem('devsync_access_token');
       localStorage.removeItem('devsync_refresh_token');
       localStorage.removeItem('devsync_user');

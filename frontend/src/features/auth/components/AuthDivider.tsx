@@ -1,4 +1,3 @@
-// src/features/auth/components/AuthDivider.tsx
 interface AuthDividerProps {
   label?: string;
 }

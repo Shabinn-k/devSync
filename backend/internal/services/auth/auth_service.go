@@ -164,20 +164,18 @@ func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPReque
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "email verification")
 	return nil
 }
-
-// ForgotPassword - Stores OTP in Redis ONLY
+ 
 func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil // Don't reveal if email exists
+		return nil 
 	}
 
 	code, err := otp.Generate()
 	if err != nil {
 		return err
 	}
-
-	// Store OTP in Redis with 10 min expiration
+ 
 	if err := s.cache.SetOTP(ctx, req.Email, code, otpValidity); err != nil {
 		return err
 	}
@@ -185,8 +183,7 @@ func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPas
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "password reset")
 	return nil
 }
-
-// VerifyOTP - Verifies OTP from Redis ONLY
+ 
 func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	storedOTP, err := s.cache.GetOTP(ctx, email)
 	if err != nil {
@@ -196,45 +193,37 @@ func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	if storedOTP != otp {
 		return errors.New("invalid OTP")
 	}
-
-	// Mark OTP as verified in Redis
+ 
 	if err := s.cache.MarkOTPVerified(ctx, email); err != nil {
 		return err
 	}
 
 	return nil
 }
-
-// ResetPassword - Validates OTP from Redis and resets password
+ 
 func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error {
-	// Check if OTP is verified in Redis
 	verified, err := s.cache.IsOTPVerified(ctx, req.Email)
 	if err != nil || !verified {
 		return errors.New("OTP not verified. Please verify OTP first")
 	}
-
-	// Get user
+ 
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return errors.New("user not found")
 	}
-
-	// Hash new password
+ 
 	hashed, err := bcrypt.Hash(req.NewPassword)
 	if err != nil {
 		return err
 	}
-
-	// Update password
+ 
 	if err := s.repo.UpdatePassword(ctx, user.ID, hashed); err != nil {
 		return err
 	}
-
-	// Clear OTP from Redis
+ 
 	_ = s.cache.DeleteOTP(ctx, req.Email)
 	_ = s.cache.DeleteOTPVerified(ctx, req.Email)
-
-	// Revoke all refresh tokens
+ 
 	return s.repo.RevokeAllUserTokens(ctx, user.ID)
 }
 
@@ -263,13 +252,11 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 	if claims.UserID != storedToken.UserID {
 		return nil, errors.New("invalid refresh token")
 	}
-
-	// Revoke old refresh token
+ 
 	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return nil, err
-	}
-
-	// Issue NEW tokens
+	} 
+	
 	newAccessToken, newRefreshToken, err := s.issueTokens(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, err

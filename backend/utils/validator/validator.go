@@ -23,7 +23,7 @@ func ValidateStruct(s interface{}) map[string]string {
 
 func passwordComplexity(fl validator.FieldLevel) bool {
 	password := fl.Field().String()
-	var hasUpper, hasLower, hasNumber, hasSpecial bool
+	var hasUpper, hasLower, hasNumber bool
 	for _, ch := range password {
 		switch {
 		case unicode.IsUpper(ch):
@@ -32,11 +32,9 @@ func passwordComplexity(fl validator.FieldLevel) bool {
 			hasLower = true
 		case unicode.IsDigit(ch):
 			hasNumber = true
-		case unicode.IsPunct(ch), unicode.IsSymbol(ch):
-			hasSpecial = true
 		}
 	}
-	return hasUpper && hasLower && hasNumber && hasSpecial
+	return hasUpper && hasLower && hasNumber 
 }
 
 func formatErrors(err error) map[string]string {
@@ -71,7 +69,7 @@ func messageFor(fe validator.FieldError) string {
 	case "eqfield":
 		return fmt.Sprintf("%s must match %s.", field, humanize(fe.Param()))
 	case "password_complexity":
-		return "Password must contain an uppercase, lowercase, number, and special character."
+		return "Password must contain an uppercase, lowercase, number."
 	default:
 		return fmt.Sprintf("%s is invalid.", field)
 	}

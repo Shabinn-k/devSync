@@ -95,10 +95,9 @@ func (h *Controller) ResendOTP(c *gin.Context) {
 		response.Error(c, http.StatusTooManyRequests, err.Error())
 		return
 	}
-	response.Success(c, authResponse.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
-}
+	response.Success(c, authResponse.MessageResponse{Message: "A new OTP has been sent to your email"})
+} 
 
-// VerifyOTP verifies OTP for password reset
 func (h *Controller) VerifyOTP(c *gin.Context) {
 	var req authRequest.VerifyOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -109,8 +108,7 @@ func (h *Controller) VerifyOTP(c *gin.Context) {
 		response.ValidationError(c, errs)
 		return
 	}
-
-	// Verify OTP from cache/Redis
+ 
 	if err := h.service.VerifyOTP(c.Request.Context(), req.Email, req.OTP); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
