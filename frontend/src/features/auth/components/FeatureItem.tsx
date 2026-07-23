@@ -1,4 +1,3 @@
-// src/features/auth/components/FeatureItem.tsx
 import type { LucideIcon } from 'lucide-react';
 
 interface FeatureItemProps {
