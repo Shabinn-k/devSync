@@ -19,8 +19,9 @@ export const RegisterForm = () => {
   const navigate = useNavigate();
   const { register: registerUser, isLoading, error, clearError } = useAuthStore();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
     setValidationError(null);
     clearError();
 
@@ -39,17 +40,18 @@ export const RegisterForm = () => {
       return;
     }
 
-    try {
-      await registerUser({
-        full_name: fullName,
-        email,
-        password,
-        confirm_password: confirmPassword,
+    registerUser({
+      full_name: fullName,
+      email,
+      password,
+      confirm_password: confirmPassword,
+    })
+      .then(() => {
+        navigate('/verify-email');
+      })
+      .catch((err) => {
+        console.error('Register error:', err);
       });
-      navigate('/verify-email');
-    } catch {
-      // Error handled by store
-    }
   };
 
   return (
@@ -70,7 +72,7 @@ export const RegisterForm = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-5">
+      <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4 sm:mt-8 sm:gap-5" noValidate>
         <AuthInput
           label="Full name"
           type="text"
@@ -123,15 +125,13 @@ export const RegisterForm = () => {
           </label>
         </div>
 
-        <motion.button
+        <button
           type="submit"
           disabled={isLoading}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
           className="mt-1 w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors duration-200 hover:bg-white/90 sm:py-3.5 disabled:opacity-50"
         >
           {isLoading ? 'Creating Account...' : 'Create Account'}
-        </motion.button>
+        </button>
 
         <AuthDivider label="Or continue with" />
 

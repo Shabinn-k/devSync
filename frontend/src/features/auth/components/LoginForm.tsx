@@ -25,12 +25,18 @@ export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // ✅ IMPORTANT: Prevent page refresh
+    // ✅ THIS PREVENTS PAGE REFRESH
+    e.preventDefault();
+    
+    console.log('🔵 Form submitted - Preventing refresh');
+    console.log('📧 Email:', email);
+
     setValidationError(null);
     clearError();
 
@@ -39,12 +45,23 @@ export const LoginForm = () => {
       return;
     }
 
+    if (isSubmitting || isLoading) {
+      console.log('⏳ Already submitting, skipping...');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
+      console.log('🚀 Calling login API...');
       await login({ email, password });
+      console.log('✅ Login successful!');
       navigate('/dashboard');
-    } catch (err) {
-      // Error handled by store
-      console.error('Login error:', err);
+    } catch (err: any) {
+      console.error('❌ Login failed:', err);
+      // Error already set in store
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -66,12 +83,12 @@ export const LoginForm = () => {
       <p className="mt-1 text-sm text-white/40">Please enter your details.</p>
 
       {(error || validationError) && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           {validationError || error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5" noValidate>
         <AuthInput
           label="Email address"
           type="email"
@@ -88,15 +105,13 @@ export const LoginForm = () => {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <motion.button
+        <button
           type="submit"
-          disabled={isLoading}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          className="mt-1 w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors duration-200 hover:bg-white/90 disabled:opacity-50"
+          disabled={isLoading || isSubmitting}
+          className="mt-1 w-full rounded-full bg-white py-3 text-sm font-semibold text-black transition-colors duration-200 hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Signing In...' : 'Sign In'}
-        </motion.button>
+          {isLoading || isSubmitting ? 'Signing In...' : 'Sign In'}
+        </button>
 
         <AuthDivider label="Or continue with" />
 
