@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"time"
@@ -6,17 +6,20 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	FullName    string     `gorm:"size:100;not null"`
-	Username    string     `gorm:"size:50;uniqueIndex;not null"`
-	Email       string     `gorm:"size:100;uniqueIndex;not null"`
-	PasswordHash string    `gorm:"type:text;not null"`
+	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Username     string     `gorm:"size:50;uniqueIndex;not null"`
+	Email        string     `gorm:"size:100;uniqueIndex;not null"`
+	PasswordHash string     `gorm:"type:text;not null"`
 	
-	IsVerified  bool       `gorm:"default:false"`
-	VerificationOTP string `gorm:"size:10"`
-	OTPExpiresAt *time.Time
+	IsVerified      bool       `gorm:"default:false"`
+	VerificationOTP string     `gorm:"size:10"`
+	OTPExpiresAt    *time.Time
+	LastOTPResendAt *time.Time
+
+	ResetOTP          *string    `gorm:"size:10"`
+	ResetOTPExpiresAt *time.Time
 	
-	ResetToken  *string    `gorm:"size:100;index"`
+	ResetToken          *string    `gorm:"size:100;index"`
 	ResetTokenExpiresAt *time.Time
 	
 	LastLoginAt *time.Time

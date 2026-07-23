@@ -35,8 +35,10 @@ type AppConfig struct {
 }
 
 func LoadConfig() *AppConfig {
+	// Try to load .env from current directory
 	if err := godotenv.Load(); err != nil {
-		log.Println("config: no .env file found, relying on system environment variables")
+		log.Println("⚠️  No .env file found, using system environment variables")
+		log.Println("   Make sure you have .env file in the project root")
 	}
 
 	return &AppConfig{
@@ -76,7 +78,7 @@ func getEnv(key, fallback string) string {
 func mustGetEnv(key string) string {
 	v, ok := os.LookupEnv(key)
 	if !ok || v == "" {
-		log.Fatalf("config: required environment variable %s is not set", key)
+		log.Fatalf("❌ Required environment variable %s is not set\n   Please set it in .env file or as system variable", key)
 	}
 	return v
 }

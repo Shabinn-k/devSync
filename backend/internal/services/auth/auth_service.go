@@ -6,30 +6,34 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"devSync/config"
 	"devSync/internal/dto/mapper"
-	"devSync/internal/dto/request"
-	"devSync/internal/dto/response"
-	"devSync/internal/models"
+	authRequest "devSync/internal/dto/request/auth"
+	authResponse "devSync/internal/dto/response/auth"
+	"devSync/internal/model"
 	"devSync/internal/repositories/auth"
-	"devSync/pkg/bcrypt"
-	"devSync/pkg/jwt"
-	"devSync/pkg/mailer"
-	"devSync/pkg/otp"
+	"devSync/utils/bcrypt"
+	"devSync/utils/jwt"
+	"devSync/utils/otp"
+	"devSync/utils/smtp"
 )
 
-const otpValidity = 10 * time.Minute
+const (
+	otpValidity    = 10 * time.Minute
+	resendCooldown = 60 * time.Second
+)
 
 type Service interface {
-	Register(ctx context.Context, req *request.RegisterRequest) (*response.AuthResponse, error)
-	Login(ctx context.Context, req *request.LoginRequest) (*response.AuthResponse, error)
-	VerifyEmail(ctx context.Context, req *request.VerifyEmailRequest) error
-	ResendOTP(ctx context.Context, req *request.ResendOTPRequest) error
-	ForgotPassword(ctx context.Context, req *request.ForgotPasswordRequest) error
-	ResetPassword(ctx context.Context, req *request.ResetPasswordRequest) error
-	RefreshToken(ctx context.Context, req *request.RefreshTokenRequest) (*response.TokenResponse, error)
-	Logout(ctx context.Context, req *request.LogoutRequest) error
-	GetCurrentUser(ctx context.Context, userID uuid.UUID) (*response.UserResponse, error)
+	Register(ctx context.Context, req *authRequest.RegisterRequest) (*authResponse.UserResponse, error)
+	Login(ctx context.Context, req *authRequest.LoginRequest) (*authResponse.AuthResponse, error)
+	VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailRequest) error
+	ResendOTP(ctx context.Context, req *authRequest.ResendOTPRequest) error
+	ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error
+	ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error
+	RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error)
+	Logout(ctx context.Context, req *authRequest.LogoutRequest) error
+	GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authResponse.UserResponse, error)
 }
 
 type service struct {
@@ -41,7 +45,7 @@ func NewService(repo auth.Repository, cfg *config.AppConfig) Service {
 	return &service{repo: repo, cfg: cfg}
 }
 
-func (s *service) Register(ctx context.Context, req *request.RegisterRequest) (*response.AuthResponse, error) {
+func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest) (*authResponse.UserResponse, error) {
 	exists, _ := s.repo.EmailExists(ctx, req.Email)
 	if exists {
 		return nil, errors.New("email already registered")
@@ -57,17 +61,21 @@ func (s *service) Register(ctx context.Context, req *request.RegisterRequest) (*
 		return nil, err
 	}
 
-	code, _ := otp.Generate()
+	code, err := otp.Generate()
+	if err != nil {
+		return nil, err
+	}
 	expiry := time.Now().Add(otpValidity)
+	now := time.Now()
 
-	user := &models.User{
-		FullName:        req.FullName,
+	user := &model.User{
 		Username:        req.Username,
 		Email:           req.Email,
 		PasswordHash:    hashed,
 		IsVerified:      false,
 		VerificationOTP: code,
 		OTPExpiresAt:    &expiry,
+		LastOTPResendAt: &now,
 		IsActive:        true,
 	}
 
@@ -75,18 +83,13 @@ func (s *service) Register(ctx context.Context, req *request.RegisterRequest) (*
 		return nil, err
 	}
 
-	go mailer.SendOTPEmail(s.cfg, user.Email, code, "email verification")
+	go smtp.SendOTPEmail(s.cfg, user.Email, code, "email verification")
 
-	accessToken, refreshToken, err := s.issueTokens(ctx, user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := mapper.ToAuthResponse(user, accessToken, refreshToken, int64(s.cfg.JWTAccessExpiry.Seconds()))
+	resp := mapper.ToUserResponse(user)
 	return &resp, nil
 }
 
-func (s *service) Login(ctx context.Context, req *request.LoginRequest) (*response.AuthResponse, error) {
+func (s *service) Login(ctx context.Context, req *authRequest.LoginRequest) (*authResponse.AuthResponse, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
@@ -104,7 +107,7 @@ func (s *service) Login(ctx context.Context, req *request.LoginRequest) (*respon
 		return nil, errors.New("account deactivated")
 	}
 
-	s.repo.UpdateLastLogin(ctx, user.ID)
+	_ = s.repo.UpdateLastLogin(ctx, user.ID)
 
 	accessToken, refreshToken, err := s.issueTokens(ctx, user.ID)
 	if err != nil {
@@ -115,64 +118,90 @@ func (s *service) Login(ctx context.Context, req *request.LoginRequest) (*respon
 	return &resp, nil
 }
 
-func (s *service) VerifyEmail(ctx context.Context, req *request.VerifyEmailRequest) error {
+func (s *service) VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return errors.New("invalid OTP")
+		return errors.New("invalid or expired OTP")
 	}
 
-	if user.VerificationOTP != req.OTP || user.OTPExpiresAt == nil || time.Now().After(*user.OTPExpiresAt) {
+	if user.IsVerified {
+		return errors.New("email already verified")
+	}
+
+	if user.OTPExpiresAt == nil || time.Now().After(*user.OTPExpiresAt) {
+		return errors.New("invalid or expired OTP")
+	}
+
+	if !otp.CompareOTP(req.OTP, user.VerificationOTP) {
 		return errors.New("invalid or expired OTP")
 	}
 
 	return s.repo.VerifyEmail(ctx, user.ID)
 }
 
-func (s *service) ResendOTP(ctx context.Context, req *request.ResendOTPRequest) error {
+func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil
 	}
 
-	code, _ := otp.Generate()
+	if user.IsVerified {
+		return nil
+	}
+
+	if user.LastOTPResendAt != nil && time.Since(*user.LastOTPResendAt) < resendCooldown {
+		return errors.New("please wait before requesting another OTP")
+	}
+
+	code, err := otp.Generate()
+	if err != nil {
+		return err
+	}
 	expiry := time.Now().Add(otpValidity)
 
-	user.VerificationOTP = code
-	user.OTPExpiresAt = &expiry
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdateOTP(ctx, user.ID, code, expiry); err != nil {
 		return err
 	}
 
-	go mailer.SendOTPEmail(s.cfg, user.Email, code, "email verification")
+	go smtp.SendOTPEmail(s.cfg, user.Email, code, "email verification")
 	return nil
 }
 
-func (s *service) ForgotPassword(ctx context.Context, req *request.ForgotPasswordRequest) error {
+func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil
 	}
 
-	code, _ := otp.Generate()
+	if user.LastOTPResendAt != nil && time.Since(*user.LastOTPResendAt) < resendCooldown {
+		return errors.New("please wait before requesting another reset code")
+	}
+
+	code, err := otp.Generate()
+	if err != nil {
+		return err
+	}
 	expiry := time.Now().Add(otpValidity)
 
-	user.VerificationOTP = code
-	user.OTPExpiresAt = &expiry
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.SaveResetOTP(ctx, user.ID, code, expiry); err != nil {
 		return err
 	}
 
-	go mailer.SendOTPEmail(s.cfg, user.Email, code, "password reset")
+	go smtp.SendOTPEmail(s.cfg, user.Email, code, "password reset")
 	return nil
 }
 
-func (s *service) ResetPassword(ctx context.Context, req *request.ResetPasswordRequest) error {
+func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return errors.New("invalid OTP")
+		return errors.New("invalid or expired OTP")
 	}
 
-	if user.VerificationOTP != req.OTP || user.OTPExpiresAt == nil || time.Now().After(*user.OTPExpiresAt) {
+	if user.ResetOTP == nil || user.ResetOTPExpiresAt == nil || time.Now().After(*user.ResetOTPExpiresAt) {
+		return errors.New("invalid or expired OTP")
+	}
+
+	if !otp.CompareOTP(req.OTP, *user.ResetOTP) {
 		return errors.New("invalid or expired OTP")
 	}
 
@@ -181,47 +210,78 @@ func (s *service) ResetPassword(ctx context.Context, req *request.ResetPasswordR
 		return err
 	}
 
-	user.PasswordHash = hashed
-	user.VerificationOTP = ""
-	user.OTPExpiresAt = nil
-	if err := s.repo.UpdateUser(ctx, user); err != nil {
+	if err := s.repo.UpdatePassword(ctx, user.ID, hashed); err != nil {
+		return err
+	}
+
+	if err := s.repo.ClearResetOTP(ctx, user.ID); err != nil {
 		return err
 	}
 
 	return s.repo.RevokeAllUserTokens(ctx, user.ID)
 }
 
-func (s *service) RefreshToken(ctx context.Context, req *request.RefreshTokenRequest) (*response.TokenResponse, error) {
+func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error) {
 	claims, err := jwt.ParseToken(req.RefreshToken, s.cfg.JWTRefreshSecret)
-	if err != nil {
+	if err != nil || claims.TokenType != "refresh" {
 		return nil, errors.New("invalid refresh token")
 	}
 
 	hash := jwt.HashToken(req.RefreshToken)
 	storedToken, err := s.repo.GetRefreshTokenByHash(ctx, hash)
-	if err != nil || storedToken.IsRevoked || time.Now().After(storedToken.ExpiresAt) {
+	if err != nil {
 		return nil, errors.New("invalid refresh token")
 	}
 
-	accessToken, err := jwt.GenerateAccessToken(claims.UserID, s.cfg.JWTAccessSecret, s.cfg.JWTAccessExpiry)
+	if storedToken.IsRevoked {
+		_ = s.repo.RevokeAllUserTokens(ctx, storedToken.UserID)
+		return nil, errors.New("invalid refresh token")
+	}
+
+	if time.Now().After(storedToken.ExpiresAt) {
+		_ = s.repo.RevokeRefreshToken(ctx, storedToken.ID)
+		return nil, errors.New("invalid refresh token")
+	}
+
+	if claims.ID != storedToken.ID.String() || claims.UserID != storedToken.UserID {
+		return nil, errors.New("invalid refresh token")
+	}
+
+	// Revoke old refresh token (Rotation)
+	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
+		return nil, err
+	}
+
+	// Issue NEW tokens
+	newAccessToken, newRefreshToken, err := s.issueTokens(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	resp := mapper.ToTokenResponse(accessToken, req.RefreshToken, int64(s.cfg.JWTAccessExpiry.Seconds()))
+	resp := mapper.ToTokenResponse(newAccessToken, newRefreshToken, int64(s.cfg.JWTAccessExpiry.Seconds()))
 	return &resp, nil
 }
 
-func (s *service) Logout(ctx context.Context, req *request.LogoutRequest) error {
-	hash := jwt.HashToken(req.RefreshToken)
-	token, err := s.repo.GetRefreshTokenByHash(ctx, hash)
-	if err != nil {
-		return nil
+func (s *service) Logout(ctx context.Context, req *authRequest.LogoutRequest) error {
+	claims, err := jwt.ParseToken(req.RefreshToken, s.cfg.JWTRefreshSecret)
+	if err != nil || claims.TokenType != "refresh" {
+		return errors.New("invalid refresh token")
 	}
-	return s.repo.RevokeRefreshToken(ctx, token.ID)
+
+	hash := jwt.HashToken(req.RefreshToken)
+	storedToken, err := s.repo.GetRefreshTokenByHash(ctx, hash)
+	if err != nil {
+		return errors.New("invalid refresh token")
+	}
+
+	if storedToken.IsRevoked || storedToken.UserID != claims.UserID || claims.ID != storedToken.ID.String() {
+		return errors.New("invalid refresh token")
+	}
+
+	return s.repo.RevokeRefreshToken(ctx, storedToken.ID)
 }
 
-func (s *service) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*response.UserResponse, error) {
+func (s *service) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authResponse.UserResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -241,7 +301,7 @@ func (s *service) issueTokens(ctx context.Context, userID uuid.UUID) (string, st
 		return "", "", err
 	}
 
-	token := &models.RefreshToken{
+	token := &model.RefreshToken{
 		ID:        jti,
 		UserID:    userID,
 		TokenHash: jwt.HashToken(refreshToken),

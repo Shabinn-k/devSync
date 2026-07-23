@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"devSync/internal/dto/request"
-	"devSync/internal/dto/response"
-	"devSync/internal/services/auth"
-	"devSync/internal/validators"
+	authRequest "devSync/internal/dto/request/auth"
+	authResponse "devSync/internal/dto/response/auth"
 	"devSync/internal/response"
+	"devSync/internal/services/auth"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -22,12 +22,12 @@ func NewController(s auth.Service) *Controller {
 }
 
 func (h *Controller) Register(c *gin.Context) {
-	var req request.RegisterRequest
+	var req authRequest.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
@@ -37,16 +37,19 @@ func (h *Controller) Register(c *gin.Context) {
 		response.Error(c, http.StatusConflict, err.Error())
 		return
 	}
-	response.Created(c, result)
+	response.Created(c, gin.H{
+		"user":    result,
+		"message": "User registered successfully. Please verify your email with the OTP sent.",
+	})
 }
 
 func (h *Controller) Login(c *gin.Context) {
-	var req request.LoginRequest
+	var req authRequest.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
@@ -60,12 +63,12 @@ func (h *Controller) Login(c *gin.Context) {
 }
 
 func (h *Controller) VerifyEmail(c *gin.Context) {
-	var req request.VerifyEmailRequest
+	var req authRequest.VerifyEmailRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
@@ -74,46 +77,52 @@ func (h *Controller) VerifyEmail(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Success(c, response.MessageResponse{Message: "Email verified successfully"})
+	response.Success(c, authResponse.MessageResponse{Message: "Email verified successfully"})
 }
 
 func (h *Controller) ResendOTP(c *gin.Context) {
-	var req request.ResendOTPRequest
+	var req authRequest.ResendOTPRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
 
-	_ = h.service.ResendOTP(c.Request.Context(), &req)
-	response.Success(c, response.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
+	if err := h.service.ResendOTP(c.Request.Context(), &req); err != nil {
+		response.Error(c, http.StatusTooManyRequests, err.Error())
+		return
+	}
+	response.Success(c, authResponse.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
 }
 
 func (h *Controller) ForgotPassword(c *gin.Context) {
-	var req request.ForgotPasswordRequest
+	var req authRequest.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
 
-	_ = h.service.ForgotPassword(c.Request.Context(), &req)
-	response.Success(c, response.MessageResponse{Message: "If the account exists, a reset code has been sent"})
+	if err := h.service.ForgotPassword(c.Request.Context(), &req); err != nil {
+		response.Error(c, http.StatusTooManyRequests, err.Error())
+		return
+	}
+	response.Success(c, authResponse.MessageResponse{Message: "If the account exists, a reset code has been sent"})
 }
 
 func (h *Controller) ResetPassword(c *gin.Context) {
-	var req request.ResetPasswordRequest
+	var req authRequest.ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
@@ -122,16 +131,16 @@ func (h *Controller) ResetPassword(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Success(c, response.MessageResponse{Message: "Password reset successfully"})
+	response.Success(c, authResponse.MessageResponse{Message: "Password reset successfully"})
 }
 
 func (h *Controller) RefreshToken(c *gin.Context) {
-	var req request.RefreshTokenRequest
+	var req authRequest.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
@@ -145,18 +154,21 @@ func (h *Controller) RefreshToken(c *gin.Context) {
 }
 
 func (h *Controller) Logout(c *gin.Context) {
-	var req request.LogoutRequest
+	var req authRequest.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
 		return
 	}
-	if errs := validators.ValidateStruct(&req); errs != nil {
+	if errs := validator.ValidateStruct(&req); errs != nil {
 		response.ValidationError(c, errs)
 		return
 	}
 
-	_ = h.service.Logout(c.Request.Context(), &req)
-	response.Success(c, response.MessageResponse{Message: "Logged out successfully"})
+	if err := h.service.Logout(c.Request.Context(), &req); err != nil {
+		response.Error(c, http.StatusUnauthorized, err.Error())
+		return
+	}
+	response.Success(c, authResponse.MessageResponse{Message: "Logged out successfully"})
 }
 
 func (h *Controller) Me(c *gin.Context) {
@@ -165,7 +177,11 @@ func (h *Controller) Me(c *gin.Context) {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
-	userID := userIDValue.(uuid.UUID)
+	userID, ok := userIDValue.(uuid.UUID)
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	result, err := h.service.GetCurrentUser(c.Request.Context(), userID)
 	if err != nil {

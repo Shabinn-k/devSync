@@ -4,22 +4,23 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"devSync/config"
-	controller "devSync/internal/controllers/auth"
+	"devSync/internal/controllers/auth"
 	"devSync/internal/middleware"
+	authRepo "devSync/internal/repositories/auth"
 )
 
-func RegisterAuthRoutes(router *gin.Engine, h *controller.AuthController, cfg *config.AppConfig) {
-	auth := router.Group("/auth")
+func RegisterAuthRoutes(router *gin.Engine, h *auth.Controller, repo authRepo.Repository, cfg *config.AppConfig) {
+	authGroup := router.Group("/auth")
 	{
-		auth.POST("/register", h.Register)
-		auth.POST("/login", h.Login)
-		auth.POST("/verify-email", h.VerifyEmail)
-		auth.POST("/resend-otp", h.ResendOTP)
-		auth.POST("/forgot-password", h.ForgotPassword)
-		auth.POST("/reset-password", h.ResetPassword)
-		auth.POST("/refresh-token", h.RefreshToken)
-		auth.POST("/logout", h.Logout)
+		authGroup.POST("/register", h.Register)
+		authGroup.POST("/login", h.Login)
+		authGroup.POST("/verify-email", h.VerifyEmail)
+		authGroup.POST("/resend-otp", h.ResendOTP)
+		authGroup.POST("/forgot-password", h.ForgotPassword)
+		authGroup.POST("/reset-password", h.ResetPassword)
+		authGroup.POST("/refresh-token", h.RefreshToken)
+		authGroup.POST("/logout", h.Logout)
 
-		auth.GET("/me", middleware.AuthRequired(cfg), h.Me)
+		authGroup.GET("/me", middleware.AuthRequired(cfg, repo), h.Me)
 	}
 }

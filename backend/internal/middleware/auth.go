@@ -3,19 +3,20 @@ package middleware
 import (
 	"net/http"
 	"strings"
+
 	"github.com/gin-gonic/gin"
+
 	"devSync/config"
-	"devSync/pkg/jwt"
+	authRepo "devSync/internal/repositories/auth"
+	"devSync/internal/response"
+	"devSync/utils/jwt"
 )
 
-func AuthRequired(cfg *config.AppConfig) gin.HandlerFunc {
+func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Missing or invalid Authorization header",
-			})
+			response.Error(c, http.StatusUnauthorized, "Missing or invalid Authorization header")
 			c.Abort()
 			return
 		}
@@ -23,10 +24,20 @@ func AuthRequired(cfg *config.AppConfig) gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		claims, err := jwt.ParseToken(tokenString, cfg.JWTAccessSecret)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Invalid or expired token",
-			})
+			response.Error(c, http.StatusUnauthorized, "Invalid or expired token")
+			c.Abort()
+			return
+		}
+
+		if claims.TokenType != "access" {
+			response.Error(c, http.StatusUnauthorized, "Invalid token type")
+			c.Abort()
+			return
+		}
+
+		user, err := repo.GetUserByID(c.Request.Context(), claims.UserID)
+		if err != nil || !user.IsActive {
+			response.Error(c, http.StatusUnauthorized, "User account is inactive or not found")
 			c.Abort()
 			return
 		}

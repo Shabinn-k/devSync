@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"time"
@@ -8,9 +8,9 @@ import (
 type RefreshToken struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	UserID    uuid.UUID `gorm:"type:uuid;not null;index"`
-	TokenHash string    `gorm:"type:text;not null"`
+	TokenHash string    `gorm:"type:text;not null;index"`
 	ExpiresAt time.Time `gorm:"not null"`
-	IsRevoked bool      `gorm:"default:false"`
+	IsRevoked bool      `gorm:"default:false;index"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	

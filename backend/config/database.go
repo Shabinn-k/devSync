@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"devSync/internal/models"
+	"devSync/internal/model"
 )
 
 func ConnectDatabase(cfg *AppConfig) *gorm.DB {
@@ -30,7 +30,7 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 	}
 
 	// Auto migrate
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.RefreshToken{}); err != nil {
 		log.Fatalf("config: failed to migrate database: %v", err)
 	}
 

@@ -1,14 +1,13 @@
 package mapper
 
 import (
-	"devSync/internal/dto/response"
-	"devSync/internal/models"
+	authResponse "devSync/internal/dto/response/auth"
+	"devSync/internal/model"
 )
 
-func ToUserResponse(user *models.User) response.UserResponse {
-	return response.UserResponse{
+func ToUserResponse(user *model.User) authResponse.UserResponse {
+	return authResponse.UserResponse{
 		ID:         user.ID,
-		FullName:   user.FullName,
 		Username:   user.Username,
 		Email:      user.Email,
 		IsVerified: user.IsVerified,
@@ -17,8 +16,8 @@ func ToUserResponse(user *models.User) response.UserResponse {
 	}
 }
 
-func ToTokenResponse(accessToken, refreshToken string, expiresIn int64) response.TokenResponse {
-	return response.TokenResponse{
+func ToTokenResponse(accessToken, refreshToken string, expiresIn int64) authResponse.TokenResponse {
+	return authResponse.TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
@@ -26,8 +25,8 @@ func ToTokenResponse(accessToken, refreshToken string, expiresIn int64) response
 	}
 }
 
-func ToAuthResponse(user *models.User, accessToken, refreshToken string, expiresIn int64) response.AuthResponse {
-	return response.AuthResponse{
+func ToAuthResponse(user *model.User, accessToken, refreshToken string, expiresIn int64) authResponse.AuthResponse {
+	return authResponse.AuthResponse{
 		User:  ToUserResponse(user),
 		Token: ToTokenResponse(accessToken, refreshToken, expiresIn),
 	}

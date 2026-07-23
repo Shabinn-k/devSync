@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,14 +14,17 @@ import (
 var ErrInvalidToken = errors.New("invalid or expired token")
 
 type Claims struct {
-	UserID uuid.UUID `json:"user_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	TokenType string    `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
 func GenerateAccessToken(userID uuid.UUID, secret string, expiry time.Duration) (string, error) {
 	claims := Claims{
-		UserID: userID,
+		UserID:    userID,
+		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.New().String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -32,7 +36,8 @@ func GenerateAccessToken(userID uuid.UUID, secret string, expiry time.Duration) 
 func GenerateRefreshToken(userID uuid.UUID, secret string, expiry time.Duration) (string, uuid.UUID, error) {
 	jti := uuid.New()
 	claims := Claims{
-		UserID: userID,
+		UserID:    userID,
+		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        jti.String(),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
@@ -47,6 +52,9 @@ func GenerateRefreshToken(userID uuid.UUID, secret string, expiry time.Duration)
 func ParseToken(tokenString, secret string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {

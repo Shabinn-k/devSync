@@ -1,4 +1,4 @@
-package validators
+package validator
 
 import (
 	"fmt"
@@ -110,4 +110,4 @@ func toSnakeCase(field string) string {
 		out.WriteRune(unicode.ToLower(r))
 	}
 	return out.String()
-}
+}	
