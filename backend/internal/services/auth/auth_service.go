@@ -51,11 +51,6 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 		return nil, errors.New("email already registered")
 	}
 
-	exists, _ = s.repo.UsernameExists(ctx, req.Username)
-	if exists {
-		return nil, errors.New("username already taken")
-	}
-
 	hashed, err := bcrypt.Hash(req.Password)
 	if err != nil {
 		return nil, err
@@ -69,7 +64,7 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 	now := time.Now()
 
 	user := &model.User{
-		Username:        req.Username,
+		Name:        req.Name,
 		Email:           req.Email,
 		PasswordHash:    hashed,
 		IsVerified:      false,

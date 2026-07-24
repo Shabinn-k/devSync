@@ -45,14 +45,6 @@ func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User
 	return &user, err
 }
 
-func (r *repository) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	var user model.User
-	err := r.db.WithContext(ctx).Where("username = ?", username).First(&user).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrNotFound
-	}
-	return &user, err
-}
 
 func (r *repository) EmailExists(ctx context.Context, email string) (bool, error) {
 	var count int64
@@ -60,11 +52,6 @@ func (r *repository) EmailExists(ctx context.Context, email string) (bool, error
 	return count > 0, err
 }
 
-func (r *repository) UsernameExists(ctx context.Context, username string) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).Model(&model.User{}).Where("username = ?", username).Count(&count).Error
-	return count > 0, err
-}
 
 func (r *repository) UpdateUser(ctx context.Context, user *model.User) error {
 	user.UpdatedAt = time.Now()

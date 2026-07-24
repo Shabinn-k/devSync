@@ -11,7 +11,6 @@ import (
 var validate = validator.New()
 
 func init() {
-	validate.RegisterValidation("username_format", usernameFormat)
 	validate.RegisterValidation("password_complexity", passwordComplexity)
 }
 
@@ -20,15 +19,6 @@ func ValidateStruct(s interface{}) map[string]string {
 		return formatErrors(err)
 	}
 	return nil
-}
-
-func usernameFormat(fl validator.FieldLevel) bool {
-	for _, ch := range fl.Field().String() {
-		if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' && ch != '.' {
-			return false
-		}
-	}
-	return true
 }
 
 func passwordComplexity(fl validator.FieldLevel) bool {
@@ -80,8 +70,6 @@ func messageFor(fe validator.FieldError) string {
 		return fmt.Sprintf("%s must contain numbers only.", field)
 	case "eqfield":
 		return fmt.Sprintf("%s must match %s.", field, humanize(fe.Param()))
-	case "username_format":
-		return "Username may only contain letters, numbers, underscores, and periods."
 	case "password_complexity":
 		return "Password must contain an uppercase, lowercase, number, and special character."
 	default:

@@ -7,8 +7,7 @@ import (
 
 type UserResponse struct {
 	ID         uuid.UUID `json:"id"`
-	FullName   string    `json:"full_name"`
-	Username   string    `json:"username"`
+	Name   string    `json:"full_name"`
 	Email      string    `json:"email"`
 	IsVerified bool      `json:"is_verified"`
 	IsActive   bool      `json:"is_active"`

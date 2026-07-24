@@ -8,7 +8,7 @@ import (
 func ToUserResponse(user *model.User) authResponse.UserResponse {
 	return authResponse.UserResponse{
 		ID:         user.ID,
-		Username:   user.Username,
+		Name:  		user.Name,
 		Email:      user.Email,
 		IsVerified: user.IsVerified,
 		IsActive:   user.IsActive,
