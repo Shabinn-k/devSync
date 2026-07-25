@@ -27,6 +27,11 @@ export const apiClient = axios.create({
 // Request interceptor to add token
 apiClient.interceptors.request.use(
   (config) => {
+    // Skip adding token for auth endpoints
+    if (config.url?.includes('/auth/')) {
+      return config;
+    }
+    
     const token = localStorage.getItem('devsync_access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -42,11 +47,26 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't retry if it's already a retry or refresh token request
+    if (originalRequest._retry || originalRequest.url?.includes('/auth/refresh-token')) {
+      // Clear tokens and redirect to login
+      localStorage.removeItem('devsync_access_token');
+      localStorage.removeItem('devsync_refresh_token');
+      localStorage.removeItem('devsync_user');
+      window.dispatchEvent(new Event('auth:logout'));
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401) {
       originalRequest._retry = true;
       
       try {
         const refreshToken = localStorage.getItem('devsync_refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
         const response = await apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', {
           refresh_token: refreshToken,
         });
@@ -58,12 +78,15 @@ apiClient.interceptors.response.use(
           
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return apiClient(originalRequest);
+        } else {
+          throw new Error('Refresh failed');
         }
       } catch (refreshError) {
-        window.dispatchEvent(new Event('auth:logout'));
+        // Clear all tokens and redirect to login
         localStorage.removeItem('devsync_access_token');
         localStorage.removeItem('devsync_refresh_token');
         localStorage.removeItem('devsync_user');
+        window.dispatchEvent(new Event('auth:logout'));
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -74,15 +97,14 @@ apiClient.interceptors.response.use(
 );
 
 export const authApi = {
-  // Auth
   login: (data: LoginPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
 
   register: (data: RegisterPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data).then(res => res.data),
 
-  verifyEmail: (data: VerifyEmailPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-email', data).then(res => res.data),
+ verifyEmail: (data: VerifyEmailPayload) =>
+  apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-email', data).then(res => res.data),
 
   resendOTP: (data: ResendOTPPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/resend-otp', data).then(res => res.data),

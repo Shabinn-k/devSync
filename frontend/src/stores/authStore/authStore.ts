@@ -178,7 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         if (!email) {
           throw new Error('No email found for verification');
         }
-        
+
         // Using verify-email endpoint with OTP
         const response = await authApi.verifyEmail({ email, otp });
         if (!response.success) {
@@ -198,7 +198,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         const email = get().resetEmail;
         const otp = get().resetOTP;
-        
+
         if (!email || !otp) {
           throw new Error('Missing email or OTP for password reset');
         }
@@ -209,7 +209,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           new_password: newPassword,
           confirm_password: newPassword
         });
-        
+
         if (!response.success) {
           throw new Error(response.message || 'Failed to reset password');
         }

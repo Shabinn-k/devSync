@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthInput } from '../components/AuthInput';
@@ -7,28 +7,9 @@ import { useAuthStore } from '../../../stores/authStore';
 const VerifyOTPPage = () => {
   const [otp, setOtp] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(120);
-  const [canResend, setCanResend] = useState(false);
 
   const navigate = useNavigate();
   const { verifyOTP, forgotPassword, resetEmail, isLoading, error, clearError } = useAuthStore();
-
-  useEffect(() => {
-    if (timeLeft <= 0) {
-      setCanResend(true);
-      return;
-    }
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +33,6 @@ const VerifyOTPPage = () => {
     try {
       if (resetEmail) {
         await forgotPassword(resetEmail);
-        setTimeLeft(120);
-        setCanResend(false);
         setValidationError(null);
       }
     } catch {
@@ -104,23 +83,12 @@ const VerifyOTPPage = () => {
               onChange={(e) => setOtp(e.target.value)}
             />
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/40">
-                {timeLeft > 0 ? (
-                  `Resend in ${formatTime(timeLeft)}`
-                ) : (
-                  <span className="text-red-400">OTP expired</span>
-                )}
-              </span>
+            <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={handleResendOTP}
-                disabled={!canResend || isLoading}
-                className={`text-sm font-semibold transition-colors ${
-                  canResend && !isLoading
-                    ? 'text-white hover:underline'
-                    : 'text-white/30 cursor-not-allowed'
-                }`}
+                disabled={isLoading}
+                className="text-sm font-semibold text-white/60 hover:text-white transition-colors disabled:opacity-50"
               >
                 Resend OTP
               </button>
@@ -149,4 +117,3 @@ const VerifyOTPPage = () => {
 };
 
 export default VerifyOTPPage;
-    
