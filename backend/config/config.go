@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -35,10 +36,12 @@ type AppConfig struct {
 }
 
 func LoadConfig() *AppConfig {
-	// Try to load .env from current directory
+	// Try loading .env from current directory, then parent directory
 	if err := godotenv.Load(); err != nil {
-		log.Println("⚠️  No .env file found, using system environment variables")
-		log.Println("   Make sure you have .env file in the project root")
+		if err := godotenv.Load("../.env"); err != nil {
+			log.Println("⚠️  No .env file found, using system environment variables")
+			log.Println("   Make sure you have .env file in backend/ or project root")
+		}
 	}
 
 	return &AppConfig{
@@ -70,7 +73,7 @@ func LoadConfig() *AppConfig {
 
 func getEnv(key, fallback string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
-		return v
+		return strings.TrimSpace(v)
 	}
 	return fallback
 }
@@ -80,12 +83,12 @@ func mustGetEnv(key string) string {
 	if !ok || v == "" {
 		log.Fatalf("❌ Required environment variable %s is not set\n   Please set it in .env file or as system variable", key)
 	}
-	return v
+	return strings.TrimSpace(v)
 }
 
 func mustParseDuration(key string, fallback time.Duration) time.Duration {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
-		d, err := time.ParseDuration(v)
+		d, err := time.ParseDuration(strings.TrimSpace(v))
 		if err != nil {
 			log.Fatalf("config: invalid duration for %s: %v", key, err)
 		}

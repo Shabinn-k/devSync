@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -24,7 +25,11 @@ func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFu
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		claims, err := jwt.ParseToken(tokenString, cfg.JWTAccessSecret)
 		if err != nil {
-			response.Error(c, http.StatusUnauthorized, "Invalid or expired token")
+			if errors.Is(err, jwt.ErrExpiredToken) {
+				response.Error(c, http.StatusUnauthorized, "Access token has expired")
+			} else {
+				response.Error(c, http.StatusUnauthorized, "Invalid token")
+			}
 			c.Abort()
 			return
 		}

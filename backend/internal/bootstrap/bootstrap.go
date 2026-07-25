@@ -6,6 +6,7 @@ import (
 
 	"devSync/config"
 	"devSync/internal/controllers/auth"
+	"devSync/internal/middleware"
 	authRepo "devSync/internal/repositories/auth"
 	"devSync/internal/routes"
 	authService "devSync/internal/services/auth"
@@ -13,6 +14,9 @@ import (
 
 func InitRouter(cfg *config.AppConfig, db *gorm.DB) *gin.Engine {
 	router := gin.Default()
+
+	// Apply global middleware
+	router.Use(middleware.CORSMiddleware())
 
 	// Auth module
 	repo := authRepo.NewRepository(db)

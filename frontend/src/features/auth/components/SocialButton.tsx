@@ -1,23 +1,21 @@
-import { type ReactNode } from 'react';
-import { motion } from 'framer-motion';
+// src/features/auth/components/SocialButton.tsx
+import type { ReactNode } from 'react';
 
 interface SocialButtonProps {
   provider: string;
   icon: ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export const SocialButton = ({ provider, icon, onClick }: SocialButtonProps) => {
   return (
-    <motion.button
+    <button
       type="button"
       onClick={onClick}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="flex w-full items-center justify-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition-colors duration-200 hover:bg-white/10"
+      className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.03] py-3 text-xs font-semibold uppercase tracking-wider text-white/80 transition-colors duration-200 hover:border-white/30 hover:bg-white/[0.06] hover:text-white"
     >
       {icon}
-      <span>{provider}</span>
-    </motion.button>
+      {provider}
+    </button>
   );
 };

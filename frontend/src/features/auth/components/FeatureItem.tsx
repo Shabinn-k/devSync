@@ -1,4 +1,5 @@
-import { type LucideIcon } from 'lucide-react';
+// src/features/auth/components/FeatureItem.tsx
+import type { LucideIcon } from 'lucide-react';
 
 interface FeatureItemProps {
   icon: LucideIcon;
@@ -7,11 +8,9 @@ interface FeatureItemProps {
 
 export const FeatureItem = ({ icon: Icon, title }: FeatureItemProps) => {
   return (
-    <div className="flex items-start gap-3">
-      <div className="mt-0.5 rounded-lg bg-white/5 p-1.5">
-        <Icon className="h-3.5 w-3.5 text-white/60" />
-      </div>
-      <span className="text-xs font-medium leading-tight text-white/60">
+    <div className="flex items-start gap-2">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-white/70" strokeWidth={1.75} />
+      <span className="text-[11px] font-medium uppercase leading-snug tracking-wide text-white/70">
         {title}
       </span>
     </div>

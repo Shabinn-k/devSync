@@ -1,10 +1,13 @@
-export const Logo = () => {
+// src/features/auth/components/Logo.tsx
+interface LogoProps {
+  className?: string;
+}
+
+export const Logo = ({ className = '' }: LogoProps) => {
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-        <div className="h-4 w-4 rounded-full bg-white" />
-      </div>
-      <span className="text-sm font-semibold tracking-wider text-white">
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
+      <span className="text-base font-bold tracking-[0.08em] text-white">
         DEVSYNC
       </span>
     </div>

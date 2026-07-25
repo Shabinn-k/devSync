@@ -1,7 +1,11 @@
 export { Logo } from './Logo';
 export { LeftHero } from './LeftHero';
+export { RegisterHero } from './RegisterHero';
+export { RightHero } from './RightHero';
 export { FeatureItem } from './FeatureItem';
 export { LoginForm } from './LoginForm';
+export { RegisterForm } from './RegisterForm';
 export { AuthInput } from './AuthInput';
 export { SocialButton } from './SocialButton';
 export { AuthDivider } from './AuthDivider';
+export { Mascot } from './Mascot';
