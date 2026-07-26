@@ -31,9 +31,9 @@ func SendOTPEmail(cfg *config.AppConfig, toEmail, otp, purpose string) error {
 
 	err := smtp.SendMail(addr, auth, username, []string{cleanTo}, msg)
 	if err != nil {
-		log.Printf("❌ smtp: failed to send email to %s: %v", cleanTo, err)
+		log.Printf("smtp: failed to send email to %s: %v", cleanTo, err)
 		return err
 	}
-	log.Printf("✅ smtp: successfully sent OTP email to %s for %s", cleanTo, purpose)
+	log.Printf("successfully sent OTP email to %s for %s", cleanTo, purpose)
 	return nil
 }
