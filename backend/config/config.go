@@ -3,7 +3,7 @@ package config
 import (
 	"log"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -23,6 +23,12 @@ type AppConfig struct {
 	DBSSLMode  string
 	DBTimezone string
 
+	// Redis
+	RedisHost     string
+	RedisPort     string
+	RedisPassword string
+	RedisDB       int
+
 	JWTAccessSecret  string
 	JWTRefreshSecret string
 	JWTAccessExpiry  time.Duration
@@ -36,12 +42,8 @@ type AppConfig struct {
 }
 
 func LoadConfig() *AppConfig {
-	// Try loading .env from current directory, then parent directory
 	if err := godotenv.Load(); err != nil {
-		if err := godotenv.Load("../.env"); err != nil {
-			log.Println("⚠️  No .env file found, using system environment variables")
-			log.Println("   Make sure you have .env file in backend/ or project root")
-		}
+		log.Println("config: no .env file found, relying on system environment variables")
 	}
 
 	return &AppConfig{
@@ -58,6 +60,12 @@ func LoadConfig() *AppConfig {
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		DBTimezone: getEnv("DB_TIMEZONE", "UTC"),
 
+		// Redis
+		RedisHost:     getEnv("REDIS_HOST", "localhost"),
+		RedisPort:     getEnv("REDIS_PORT", "6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		RedisDB:       getEnvAsInt("REDIS_DB", 0),
+
 		JWTAccessSecret:  mustGetEnv("JWT_ACCESS_SECRET"),
 		JWTRefreshSecret: mustGetEnv("JWT_REFRESH_SECRET"),
 		JWTAccessExpiry:  mustParseDuration("JWT_ACCESS_EXPIRY", 15*time.Minute),
@@ -73,7 +81,7 @@ func LoadConfig() *AppConfig {
 
 func getEnv(key, fallback string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
-		return strings.TrimSpace(v)
+		return v
 	}
 	return fallback
 }
@@ -81,18 +89,27 @@ func getEnv(key, fallback string) string {
 func mustGetEnv(key string) string {
 	v, ok := os.LookupEnv(key)
 	if !ok || v == "" {
-		log.Fatalf("❌ Required environment variable %s is not set\n   Please set it in .env file or as system variable", key)
+		log.Fatalf("config: required environment variable %s is not set", key)
 	}
-	return strings.TrimSpace(v)
+	return v
 }
 
 func mustParseDuration(key string, fallback time.Duration) time.Duration {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
-		d, err := time.ParseDuration(strings.TrimSpace(v))
+		d, err := time.ParseDuration(v)
 		if err != nil {
 			log.Fatalf("config: invalid duration for %s: %v", key, err)
 		}
 		return d
+	}
+	return fallback
+}
+
+func getEnvAsInt(key string, fallback int) int {
+	if v, ok := os.LookupEnv(key); ok && v != "" {
+		if val, err := strconv.Atoi(v); err == nil {
+			return val
+		}
 	}
 	return fallback
 }

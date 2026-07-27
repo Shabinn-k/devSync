@@ -8,6 +8,8 @@ const companies = [
   { name: 'Netflix', color: 'text-white/60' },
   { name: 'Spotify', color: 'text-white/60' },
   { name: 'Adobe', color: 'text-white/60' },
+  { name: 'Jira', color: 'text-white/60' },
+  { name: 'Slack', color: 'text-white/60' },
 ];
 
 export const TrustedBy = () => {

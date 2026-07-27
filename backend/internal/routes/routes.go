@@ -17,6 +17,7 @@ func RegisterAuthRoutes(router *gin.Engine, h *auth.Controller, repo authRepo.Re
 		authGroup.POST("/verify-email", h.VerifyEmail)
 		authGroup.POST("/resend-otp", h.ResendOTP)
 		authGroup.POST("/forgot-password", h.ForgotPassword)
+		authGroup.POST("/verify-otp", h.VerifyOTP)
 		authGroup.POST("/reset-password", h.ResetPassword)
 		authGroup.POST("/refresh-token", h.RefreshToken)
 		authGroup.POST("/logout", h.Logout)

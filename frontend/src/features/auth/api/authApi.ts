@@ -12,7 +12,8 @@ import type {
   RefreshTokenPayload,
   LogoutPayload,
   TokenResponse,
-  User
+  User,
+  VerifyOTPPayload
 } from '../../../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
@@ -111,6 +112,9 @@ export const authApi = {
 
   forgotPassword: (data: ForgotPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/forgot-password', data).then(res => res.data),
+
+   verifyOTP: (data: VerifyOTPPayload) =>
+    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-otp', data).then(res => res.data),
 
   resetPassword: (data: ResetPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password', data).then(res => res.data),

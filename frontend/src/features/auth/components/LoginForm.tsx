@@ -29,8 +29,8 @@ export const LoginForm = () => {
   const navigate = useNavigate();
   const { login, isLoading, error, clearError } = useAuthStore();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // ✅ IMPORTANT: Prevent page refresh
     setValidationError(null);
     clearError();
 
@@ -42,8 +42,9 @@ export const LoginForm = () => {
     try {
       await login({ email, password });
       navigate('/dashboard');
-    } catch {
+    } catch (err) {
       // Error handled by store
+      console.error('Login error:', err);
     }
   };
 
@@ -52,8 +53,15 @@ export const LoginForm = () => {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="w-full"
+      className="w-full max-w-md"
     >
+      <div className="mb-8">
+        <div className="flex items-center gap-2.5">
+          <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
+          <span className="text-base font-bold tracking-[0.08em] text-white">DEVSYNC</span>
+        </div>
+      </div>
+
       <h2 className="text-2xl font-bold text-white">Welcome back</h2>
       <p className="mt-1 text-sm text-white/40">Please enter your details.</p>
 

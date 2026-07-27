@@ -9,7 +9,7 @@ const VerifyOTPPage = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { verifyOTP, forgotPassword, resetEmail, isLoading, error, clearError } = useAuthStore();
+  const { verifyOTP, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +31,7 @@ const VerifyOTPPage = () => {
 
   const handleResendOTP = async () => {
     try {
+      const { forgotPassword, resetEmail } = useAuthStore.getState();
       if (resetEmail) {
         await forgotPassword(resetEmail);
         setValidationError(null);
@@ -61,11 +62,14 @@ const VerifyOTPPage = () => {
             <p className="mt-1 text-sm text-white/40">
               Enter the 6-digit code sent to your email.
             </p>
-            {resetEmail && (
-              <p className="mt-1 text-xs text-white/30">
-                Sent to: {resetEmail}
-              </p>
-            )}
+            {(() => {
+              const { resetEmail } = useAuthStore.getState();
+              return resetEmail && (
+                <p className="mt-1 text-xs text-white/30">
+                  Sent to: {resetEmail}
+                </p>
+              );
+            })()}
           </div>
 
           {(error || validationError) && (

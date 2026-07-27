@@ -7,7 +7,6 @@ import { useAuthStore } from '../../../stores/authStore';
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const navigate = useNavigate();
   const { forgotPassword, isLoading, error, clearError, setResetEmail } = useAuthStore();
@@ -25,43 +24,11 @@ const ForgotPasswordPage = () => {
     try {
       await forgotPassword(email);
       setResetEmail(email);
-      setIsSubmitted(true);
-      setTimeout(() => navigate('/verify-otp'), 2000);
+      navigate('/verify-otp');
     } catch {
       // Error handled by store
     }
   };
-
-  if (isSubmitted) {
-    return (
-      <div className="flex min-h-screen flex-col bg-black">
-        <div className="p-6 lg:p-10">
-          <div className="flex items-center gap-2.5">
-            <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
-            <span className="text-sm font-bold tracking-[0.08em] text-white">DEVSYNC</span>
-          </div>
-        </div>
-        <div className="flex flex-1 items-center justify-center px-4 -mt-20">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/20">
-              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white">Check your email</h2>
-            <p className="mt-2 text-sm text-white/60">
-              We've sent an OTP to:
-              <br />
-              <span className="font-semibold text-white">{email}</span>
-            </p>
-            <p className="mt-4 text-xs text-white/40">
-              Redirecting to OTP verification...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col bg-black">

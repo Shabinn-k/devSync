@@ -26,7 +26,7 @@ interface AuthState {
   resendOTP: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   verifyOTP: (otp: string) => Promise<void>;
-  resetPasswordWithOTP: (newPassword: string) => Promise<void>;
+  resetPasswordWithOTP: (otp: string, newPassword: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<User | null>;
   setUnverifiedEmail: (email: string | null) => void;
@@ -170,7 +170,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    // Uses the existing verify-email endpoint
+    // FIXED: Uses the new /auth/verify-otp endpoint
     verifyOTP: async (otp: string) => {
       set({ isLoading: true, error: null });
       try {
@@ -179,8 +179,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
           throw new Error('No email found for verification');
         }
 
-        // Using verify-email endpoint with OTP
-        const response = await authApi.verifyEmail({ email, otp });
+        // Using the dedicated verify-otp endpoint
+        const response = await authApi.verifyOTP({ email, otp });
+        
         if (!response.success) {
           throw new Error(response.message || 'Invalid OTP');
         }
@@ -192,15 +193,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    // Uses the existing reset-password endpoint
-    resetPasswordWithOTP: async (newPassword: string) => {
+    resetPasswordWithOTP: async (otp: string, newPassword: string) => {
       set({ isLoading: true, error: null });
       try {
         const email = get().resetEmail;
-        const otp = get().resetOTP;
-
-        if (!email || !otp) {
-          throw new Error('Missing email or OTP for password reset');
+        if (!email) {
+          throw new Error('No email found for password reset');
         }
 
         const response = await authApi.resetPassword({

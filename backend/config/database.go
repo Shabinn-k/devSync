@@ -1,10 +1,12 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -36,4 +38,20 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 
 	log.Println("config: database connected and migrated successfully")
 	return db
+}
+
+func ConnectRedis(cfg *AppConfig) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisHost + ":" + cfg.RedisPort,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+
+	// Test connection
+	if err := client.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("config: failed to connect to Redis: %v", err)
+	}
+
+	log.Println("config: Redis connected successfully")
+	return client
 }

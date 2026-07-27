@@ -11,7 +11,7 @@ const ResetPasswordPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const navigate = useNavigate();
-  const { resetPasswordWithOTP, isLoading, error, clearError } = useAuthStore();
+  const { resetPasswordWithOTP, resetOTP, resetEmail, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +33,21 @@ const ResetPasswordPage = () => {
       return;
     }
 
+    if (!resetOTP) {
+      setValidationError('OTP not verified. Please go back and verify.');
+      return;
+    }
+
+    if (!resetEmail) {
+      setValidationError('No email found. Please try again.');
+      return;
+    }
+
     try {
-      await resetPasswordWithOTP(newPassword);
+      await resetPasswordWithOTP(resetOTP, newPassword);
       setIsSubmitted(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch {
+    } catch (err: any) {
       // Error handled by store
     }
   };
@@ -89,6 +99,11 @@ const ResetPasswordPage = () => {
             <p className="mt-1 text-sm text-white/40">
               Create a new password for your account.
             </p>
+            {resetEmail && (
+              <p className="mt-1 text-xs text-white/30">
+                Resetting password for: {resetEmail}
+              </p>
+            )}
           </div>
 
           {(error || validationError) && (

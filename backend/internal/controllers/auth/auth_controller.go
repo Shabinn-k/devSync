@@ -98,6 +98,27 @@ func (h *Controller) ResendOTP(c *gin.Context) {
 	response.Success(c, authResponse.MessageResponse{Message: "If the account exists, a new OTP has been sent"})
 }
 
+// VerifyOTP verifies OTP for password reset
+func (h *Controller) VerifyOTP(c *gin.Context) {
+	var req authRequest.VerifyOTPRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+	if errs := validator.ValidateStruct(&req); errs != nil {
+		response.ValidationError(c, errs)
+		return
+	}
+
+	// Verify OTP from cache/Redis
+	if err := h.service.VerifyOTP(c.Request.Context(), req.Email, req.OTP); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response.Success(c, authResponse.MessageResponse{Message: "OTP verified successfully"})
+}
+
 func (h *Controller) ForgotPassword(c *gin.Context) {
 	var req authRequest.ForgotPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

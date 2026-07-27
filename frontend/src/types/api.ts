@@ -43,6 +43,12 @@ export interface ResendOTPPayload {
   email: string;
 }
 
+// Add this to your existing types
+export interface VerifyOTPPayload {
+  email: string;
+  otp: string;
+}
+
 export interface ForgotPasswordPayload {
   email: string;
 }
