@@ -1,4 +1,3 @@
-// src/features/auth/components/SocialButton.tsx
 import type { ReactNode } from 'react';
 
 interface SocialButtonProps {

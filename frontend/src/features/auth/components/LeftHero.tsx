@@ -1,4 +1,3 @@
-// src/features/auth/components/LeftHero.tsx
 import { CheckSquare, MessageSquare, Lock } from 'lucide-react';
 import { Logo } from './Logo';
 import { FeatureItem } from './FeatureItem';

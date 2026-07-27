@@ -31,11 +31,10 @@ export const LoginForm = () => {
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // ✅ THIS PREVENTS PAGE REFRESH
     e.preventDefault();
     
-    console.log('🔵 Form submitted - Preventing refresh');
-    console.log('📧 Email:', email);
+    console.log('Form submitted - Preventing refresh');
+    console.log('Email:', email);
 
     setValidationError(null);
     clearError();
@@ -53,13 +52,12 @@ export const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('🚀 Calling login API...');
+      console.log('Calling login API...');
       await login({ email, password });
-      console.log('✅ Login successful!');
+      console.log('Login successful!');
       navigate('/dashboard');
     } catch (err: any) {
-      console.error('❌ Login failed:', err);
-      // Error already set in store
+      console.error('Login failed:', err); 
     } finally {
       setIsSubmitting(false);
     }

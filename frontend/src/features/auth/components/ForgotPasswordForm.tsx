@@ -24,8 +24,7 @@ export const ForgotPasswordForm = () => {
         try {
             await forgotPassword(email);
             setIsSubmitted(true);
-        } catch {
-            // Error handled by store
+        } catch { 
         }
     };
 

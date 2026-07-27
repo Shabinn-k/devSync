@@ -1,4 +1,3 @@
-// src/features/auth/components/Logo.tsx
 interface LogoProps {
   className?: string;
 }
