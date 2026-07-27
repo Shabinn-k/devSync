@@ -31,8 +31,7 @@ const VerifyEmailPage = () => {
       await verifyEmail({ email: unverifiedEmail, otp });
       setIsVerified(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch {
-      // Error handled by store
+    } catch { 
     }
   };
 
@@ -40,11 +39,9 @@ const VerifyEmailPage = () => {
     try {
       if (unverifiedEmail) {
         await resendOTP(unverifiedEmail);
-        setValidationError(null);
-        // Show success message
+        setValidationError(null); 
       }
-    } catch {
-      // Error handled by store
+    } catch { 
     }
   };
 

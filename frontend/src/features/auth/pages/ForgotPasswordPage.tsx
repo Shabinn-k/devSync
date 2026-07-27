@@ -25,8 +25,7 @@ const ForgotPasswordPage = () => {
       await forgotPassword(email);
       setResetEmail(email);
       navigate('/verify-otp');
-    } catch {
-      // Error handled by store
+    } catch { 
     }
   };
 
