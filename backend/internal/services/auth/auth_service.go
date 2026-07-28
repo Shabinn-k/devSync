@@ -70,7 +70,7 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 	expiry := time.Now().Add(otpValidity)
 
 	user := &model.User{
-		Name:        req.Name, 
+		Name:            req.Name,
 		Email:           req.Email,
 		PasswordHash:    hashed,
 		IsVerified:      false,
@@ -164,18 +164,18 @@ func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPReque
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "email verification")
 	return nil
 }
- 
+
 func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil 
+		return nil
 	}
 
 	code, err := otp.Generate()
 	if err != nil {
 		return err
 	}
- 
+
 	if err := s.cache.SetOTP(ctx, req.Email, code, otpValidity); err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPas
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "password reset")
 	return nil
 }
- 
+
 func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	storedOTP, err := s.cache.GetOTP(ctx, email)
 	if err != nil {
@@ -193,37 +193,37 @@ func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	if storedOTP != otp {
 		return errors.New("invalid OTP")
 	}
- 
+
 	if err := s.cache.MarkOTPVerified(ctx, email); err != nil {
 		return err
 	}
 
 	return nil
 }
- 
+
 func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error {
 	verified, err := s.cache.IsOTPVerified(ctx, req.Email)
 	if err != nil || !verified {
 		return errors.New("OTP not verified. Please verify OTP first")
 	}
- 
+
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return errors.New("user not found")
 	}
- 
+
 	hashed, err := bcrypt.Hash(req.NewPassword)
 	if err != nil {
 		return err
 	}
- 
+
 	if err := s.repo.UpdatePassword(ctx, user.ID, hashed); err != nil {
 		return err
 	}
- 
+
 	_ = s.cache.DeleteOTP(ctx, req.Email)
 	_ = s.cache.DeleteOTPVerified(ctx, req.Email)
- 
+
 	return s.repo.RevokeAllUserTokens(ctx, user.ID)
 }
 
@@ -252,11 +252,11 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 	if claims.UserID != storedToken.UserID {
 		return nil, errors.New("invalid refresh token")
 	}
- 
+
 	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return nil, err
-	} 
-	
+	}
+
 	newAccessToken, newRefreshToken, err := s.issueTokens(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, err
