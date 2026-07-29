@@ -29,11 +29,9 @@ export const Navbar = () => {
             Resources
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm text-white/60 hover:text-white transition-colors">
-              Login
-            </Link>
+           
             <Link
-              to="/register"
+              to="/login"
               className="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-white hover:text-black"
             >
               Get Started
