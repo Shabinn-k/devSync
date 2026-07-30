@@ -21,7 +21,7 @@ export const RegisterForm = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     setValidationError(null);
     clearError();
 
@@ -111,7 +111,7 @@ export const RegisterForm = () => {
             id="terms"
             checked={agreeTerms}
             onChange={(e) => setAgreeTerms(e.target.checked)}
-            className="h-4 w-4 rounded border-white/10 bg-white/5 text-white focus:ring-white/40"
+            className="h-4 w-4 cursor-pointer rounded border border-white/30 bg-transparent accent-white"
           />
           <label htmlFor="terms" className="text-xs text-white/60">
             I agree to the{' '}
