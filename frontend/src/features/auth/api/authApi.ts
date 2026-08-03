@@ -24,9 +24,11 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
- 
+
+// Request interceptor to add token
 apiClient.interceptors.request.use(
-  (config) => { 
+  (config) => {
+    // Skip adding token for auth endpoints
     if (config.url?.includes('/auth/')) {
       return config;
     }
@@ -39,13 +41,16 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
- 
+
+// Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-     
+    
+    // Don't retry if it's already a retry or refresh token request
     if (originalRequest._retry || originalRequest.url?.includes('/auth/refresh-token')) {
+      // Clear tokens and redirect to login
       localStorage.removeItem('devsync_access_token');
       localStorage.removeItem('devsync_refresh_token');
       localStorage.removeItem('devsync_user');
@@ -93,32 +98,40 @@ apiClient.interceptors.response.use(
 );
 
 export const authApi = {
+  // ============ AUTHENTICATION ============
+  
   login: (data: LoginPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
 
   register: (data: RegisterPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data).then(res => res.data),
 
- verifyEmail: (data: VerifyEmailPayload) =>
-  apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-email', data).then(res => res.data),
+  verifyEmail: (data: VerifyEmailPayload) =>
+    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-email', data).then(res => res.data),
 
   resendOTP: (data: ResendOTPPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/resend-otp', data).then(res => res.data),
 
+  // ============ PASSWORD RESET ============
+
   forgotPassword: (data: ForgotPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/forgot-password', data).then(res => res.data),
 
-   verifyOTP: (data: VerifyOTPPayload) =>
+  verifyOTP: (data: VerifyOTPPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-otp', data).then(res => res.data),
 
   resetPassword: (data: ResetPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password', data).then(res => res.data),
+
+  // ============ TOKEN MANAGEMENT ============
 
   refreshToken: (data: RefreshTokenPayload) =>
     apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', data).then(res => res.data),
 
   logout: (data: LogoutPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/logout', data).then(res => res.data),
+
+  // ============ USER ============
 
   getMe: () =>
     apiClient.get<ApiResponse<User>>('/auth/me').then(res => res.data),

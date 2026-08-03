@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Zap, Shield, GitBranch, Monitor, LayoutGrid, MessageSquare } from 'lucide-react';
+import { Zap, Shield, GitBranch, LayoutGrid, MessageSquare } from 'lucide-react';
 
 const stats = [
   { label: 'Reduced Latency', value: '99.9%', icon: Zap, desc: 'Engineered for excellence' },

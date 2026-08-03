@@ -14,7 +14,11 @@ type User struct {
 	IsVerified      bool       `gorm:"default:false"`
 	VerificationOTP string     `gorm:"size:10"`
 	OTPExpiresAt    *time.Time
- 
+
+	ResetOTP          string     `gorm:"size:10"`
+	ResetOTPExpiresAt *time.Time
+	LastOTPResendAt   *time.Time
+
 	LastLoginAt *time.Time
 	IsActive    bool       `gorm:"default:true"`
 	CreatedAt   time.Time
