@@ -6,8 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	authRequest "devSync/internal/dto/request/auth"
-	authResponse "devSync/internal/dto/response/auth"
+	// "devSync/internal/dto/mapper"
+	authRequest "devSync/internal/dto/request"
+	authResponse "devSync/internal/dto/response"
 	"devSync/internal/response"
 	"devSync/internal/services/auth"
 	"devSync/utils/validator"
@@ -96,7 +97,7 @@ func (h *Controller) ResendOTP(c *gin.Context) {
 		return
 	}
 	response.Success(c, authResponse.MessageResponse{Message: "A new OTP has been sent to your email"})
-} 
+}
 
 func (h *Controller) VerifyOTP(c *gin.Context) {
 	var req authRequest.VerifyOTPRequest
@@ -108,7 +109,7 @@ func (h *Controller) VerifyOTP(c *gin.Context) {
 		response.ValidationError(c, errs)
 		return
 	}
- 
+
 	if err := h.service.VerifyOTP(c.Request.Context(), req.Email, req.OTP); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return

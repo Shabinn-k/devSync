@@ -1,4 +1,4 @@
-package auth
+package request
 
 type RegisterRequest struct {
 	Name        string `json:"full_name" validate:"required,min=3,max=100"`

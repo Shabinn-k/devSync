@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	authResponse "devSync/internal/dto/response/auth"
+	authResponse "devSync/internal/dto/response"
 	"devSync/internal/model"
 )
 
