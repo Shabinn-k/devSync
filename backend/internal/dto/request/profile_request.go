@@ -1,7 +1,7 @@
 package request
 
 type UpdateProfileRequest struct {
-	Name       string `json:"full_name" validate:"omitempty,min=2,max=100"`
+	Name       string `json:"name" validate:"omitempty,min=2,max=100"`
 	Bio            string `json:"bio" validate:"omitempty,max=500"`
 	Skills         string `json:"skills"`          // JSON array: ["React","Go"]
 	GitHubUsername string `json:"github_username" validate:"omitempty,max=100"`

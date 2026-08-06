@@ -170,7 +170,6 @@ Benefits include:
 Indexes will be created on frequently searched columns such as:
 
 - email
-- username
 - organization_id
 - project_id
 - task_id

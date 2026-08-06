@@ -40,7 +40,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   fetchProfileByUsername: async (Name: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await profileApi.getProfileByUsername(Name);
+      const response = await profileApi.getProfileByName(Name);
       if (response.success && response.data) {
         set({ isLoading: false });
         return response.data;

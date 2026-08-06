@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
+// ============ PUBLIC PAGES ============
 import LandingPage from "../features/Landing/pages/LandingPage";
 
+// ============ AUTH PAGES ============
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import VerifyEmailPage from "../features/auth/pages/VerifyEmailPage";
@@ -9,18 +11,22 @@ import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import VerifyOTPPage from "../features/auth/pages/VerifyOTPPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
 
-// import DashboardPage from "../features/dashboard/pages/DashboardPage";
+// ============ PROTECTED PAGES ============
+import DashboardPage from "../features/dashboard/pages/DashboardPage";
+import ProfilePage from "../features/profile/pages/ProfilePage";
 
-// import { ProtectedRoute } from "../components/routes/Guards";
-import { PublicRoute } from "../components/routes/Guards";
+// ============ GUARDS ============
+import { ProtectedRoute, PublicRoute } from "../components/routes/Guards";
 
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* Public Landing */}
+      {/* ============ PUBLIC ROUTES ============ */}
+      
+      {/* Landing Page */}
       <Route path="/" element={<LandingPage />} />
 
-      {/* Authentication */}
+      {/* Authentication Routes */}
       <Route
         path="/login"
         element={
@@ -75,7 +81,8 @@ export const AppRoutes = () => {
         }
       />
 
-      {/* Protected
+      {/* ============ PROTECTED ROUTES ============ */}
+      
       <Route
         path="/dashboard"
         element={
@@ -83,9 +90,18 @@ export const AppRoutes = () => {
             <DashboardPage />
           </ProtectedRoute>
         }
-      /> */}
+      />
 
-      {/* 404 */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============ 404 - FALLBACK ============ */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

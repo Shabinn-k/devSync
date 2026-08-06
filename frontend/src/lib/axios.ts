@@ -1,109 +1,123 @@
-import axios from 'axios';
+import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import type { ApiResponse, TokenResponse } from '../types/api';
+
+// Extend the InternalAxiosRequestConfig type to include _retry
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
-export const apiClient = axios.create({
+// Create axios instance
+export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000,
 });
 
-// Request interceptor to attach Access Token
+// ============ REQUEST INTERCEPTOR ============
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: CustomAxiosRequestConfig) => {
+    console.log('🔵 Request URL:', config.url);
+    console.log('🔵 Request Method:', config.method);
+    
+    // ✅ Skip adding token for auth endpoints (login, register, refresh, etc.)
+    const authEndpoints = ['/auth/login', '/auth/register', '/auth/refresh-token', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email', '/auth/verify-otp', '/auth/resend-otp'];
+    
+    // Check if the request is to an auth endpoint
+    const isAuthEndpoint = authEndpoints.some(endpoint => config.url?.includes(endpoint));
+    
+    if (isAuthEndpoint) {
+      console.log('🔵 Skipping token for auth endpoint');
+      return config;
+    }
+
     const token = localStorage.getItem('devsync_access_token');
-    if (token && config.headers) {
+    console.log('🔵 Token:', token ? '✅ EXISTS' : '❌ MISSING');
+    
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔵 Added Authorization header');
+    } else {
+      console.warn('🔴 No token found for request:', config.url);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: AxiosError) => {
+    console.error('🔴 Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Flag to prevent multiple concurrent token refresh requests
-let isRefreshing = false;
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = [];
-
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else if (token) {
-      promise.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-// Response interceptor to handle token expiration & automatic refresh
+// ============ RESPONSE INTERCEPTOR ============
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  (response) => {
+    console.log('🟢 Response:', response.status, response.config.url);
+    return response;
+  },
+  async (error: AxiosError) => {
+    const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    // If 401 Unauthorized and not already retried
+    console.log('🔴 Response error:', error.response?.status, error.response?.config?.url);
+
+    // Don't retry if it's already a retry or refresh token request
     if (
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url?.includes('/auth/login') &&
-      !originalRequest.url?.includes('/auth/refresh-token')
+      originalRequest._retry ||
+      originalRequest.url?.includes('/auth/refresh-token')
     ) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
+      console.log('🔴 Retry failed or refresh token request, redirecting to login');
+      localStorage.removeItem('devsync_access_token');
+      localStorage.removeItem('devsync_refresh_token');
+      localStorage.removeItem('devsync_user');
+      window.dispatchEvent(new Event('auth:logout'));
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
 
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
+      console.log('🔴 401 Unauthorized, attempting to refresh token');
       originalRequest._retry = true;
-      isRefreshing = true;
-
-      const refreshToken = localStorage.getItem('devsync_refresh_token');
-
-      if (!refreshToken) {
-        isRefreshing = false;
-        localStorage.removeItem('devsync_access_token');
-        localStorage.removeItem('devsync_refresh_token');
-        localStorage.removeItem('devsync_user');
-        window.dispatchEvent(new Event('auth:logout'));
-        return Promise.reject(error);
-      }
 
       try {
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-          refresh_token: refreshToken,
-        });
+        const refreshToken = localStorage.getItem('devsync_refresh_token');
+        console.log('🔵 Refresh token:', refreshToken ? '✅ EXISTS' : '❌ MISSING');
+        
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
 
-        const tokenData = response.data?.data;
-        const newAccessToken = tokenData?.access_token;
-        const newRefreshToken = tokenData?.refresh_token;
+        const response = await apiClient.post<ApiResponse<TokenResponse>>(
+          '/auth/refresh-token',
+          {
+            refresh_token: refreshToken,
+          }
+        );
 
-        if (newAccessToken && newRefreshToken) {
-          localStorage.setItem('devsync_access_token', newAccessToken);
-          localStorage.setItem('devsync_refresh_token', newRefreshToken);
+        if (response.data.success && response.data.data) {
+          const { access_token, refresh_token } = response.data.data;
 
-          apiClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          console.log('🟢 Token refreshed successfully');
+          
+          localStorage.setItem('devsync_access_token', access_token);
+          localStorage.setItem('devsync_refresh_token', refresh_token);
 
-          processQueue(null, newAccessToken);
+          // Retry the original request with new token
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return apiClient(originalRequest);
         } else {
-          throw new Error('Invalid refresh token response');
+          throw new Error('Refresh failed');
         }
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
+      } catch (refreshError) {
+        console.log('🔴 Refresh token failed, redirecting to login');
         localStorage.removeItem('devsync_access_token');
         localStorage.removeItem('devsync_refresh_token');
         localStorage.removeItem('devsync_user');
         window.dispatchEvent(new Event('auth:logout'));
-        return Promise.reject(refreshErr);
-      } finally {
-        isRefreshing = false;
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
       }
     }
 

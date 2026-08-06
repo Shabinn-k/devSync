@@ -11,8 +11,7 @@ export interface ApiResponse<T = any> {
 
 export interface User {
   id: string;
-  full_name: string;
-  username: string;
+  Name: string; 
   email: string;
   is_verified: boolean;
   is_active: boolean;
@@ -28,7 +27,7 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
-  full_name: string;
+  name: string;
   email: string;
   password: string;
   confirm_password: string;

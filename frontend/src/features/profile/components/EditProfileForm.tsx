@@ -25,8 +25,8 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
   useEffect(() => {
     if (profile) {
       setFormData({
-        Name: profile.Name|| '',
-        bio: profile.bio || '',
+        Name: profile.Name || '', 
+        bio: profile.bio ||'',
         skills: profile.skills?.join(', ') || '',
         github_username: profile.github_username || '',
         portfolio_url: profile.portfolio_url || '',
@@ -59,7 +59,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
 
     try {
       await updateProfile({
-        full_name: formData.Name, 
+        Name: formData.Name,
         bio: formData.bio,
         skills: skillsArray,
         github_username: formData.github_username,

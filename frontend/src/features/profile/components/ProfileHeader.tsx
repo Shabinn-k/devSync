@@ -1,4 +1,5 @@
-import { MapPin, Link as LinkIcon, Calendar, Github } from 'lucide-react';
+import { MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
+import { GithubIcon } from './SocialIcons';
 import { ProfileAvatar } from './ProfileAvatar';
 import type { Profile } from '../types/profile';
 
@@ -15,7 +16,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick }: ProfileHea
 
       <div className="flex-1 text-center sm:text-left">
         <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-          <h1 className="text-2xl font-bold text-white">{profile.Name}</h1> 
+          <h1 className="text-2xl font-bold text-white">{profile.Name}</h1>
           {profile.is_verified && (
             <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">
               Verified
@@ -39,7 +40,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick }: ProfileHea
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-white/40 hover:text-white transition-colors"
             >
-              <Github size={14} />
+              <GithubIcon size={14} />
               {profile.github_username}
             </a>
           )}

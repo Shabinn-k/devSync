@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { AuthInput } from '../../auth/components/AuthInput';
 import { useProfileStore } from '../store/profileStore';
 

@@ -11,17 +11,23 @@ import (
 
 func RegisterProfileRoutes(
 	router *gin.Engine,
-	h *profile.Controller,
+	controller *profile.Controller,
 	cfg *config.AppConfig,
-	authRepo authRepo.Repository,
+	repo authRepo.Repository,
 ) {
 	profileGroup := router.Group("/profile")
-	profileGroup.Use(middleware.AuthRequired(cfg, authRepo))
+	profileGroup.Use(middleware.AuthRequired(cfg, repo))
+
 	{
-		profileGroup.GET("/me", h.GetProfile)
-		profileGroup.GET("/:username", h.GetProfileByUsername)
-		profileGroup.PUT("/me", h.UpdateProfile)
-		profileGroup.PUT("/change-password", h.ChangePassword)
-		profileGroup.POST("/avatar", h.UploadAvatar)
+		// Current User
+		profileGroup.GET("/me", controller.GetProfile)
+		profileGroup.PUT("/me", controller.UpdateProfile)
+
+		// Password
+		profileGroup.PUT("/password", controller.ChangePassword)
+
+		// Avatar
+		profileGroup.POST("/avatar", controller.UploadAvatar) 
+ 
 	}
 }

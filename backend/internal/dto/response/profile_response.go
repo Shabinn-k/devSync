@@ -7,7 +7,7 @@ import (
 
 type ProfileResponse struct {
 	ID             uuid.UUID          `json:"id"`
-	Name       string             `json:"full_name"`
+	Name       string             `json:"name"`
 	Email          string             `json:"email"`
 	AvatarURL      string             `json:"avatar_url"`
 	Bio            string             `json:"bio"`

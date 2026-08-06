@@ -35,22 +35,7 @@ func (h *Controller) GetProfile(c *gin.Context) {
 	}
 	response.Success(c, result)
 }
-
-func (h *Controller) GetProfileByUsername(c *gin.Context) {
-	username := c.Param("username")
-	if username == "" {
-		response.Error(c, http.StatusBadRequest, "Username is required")
-		return
-	}
-
-	result, err := h.service.GetProfileByUsername(c.Request.Context(), username)
-	if err != nil {
-		response.Error(c, http.StatusNotFound, "User not found")
-		return
-	}
-	response.Success(c, result)
-}
-
+ 
 func (h *Controller) UpdateProfile(c *gin.Context) {
 	var req request.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

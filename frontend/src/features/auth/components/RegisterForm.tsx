@@ -41,7 +41,7 @@ export const RegisterForm = () => {
     }
 
     registerUser({
-      full_name: fullName,
+      name:fullName,
       email,
       password,
       confirm_password: confirmPassword,

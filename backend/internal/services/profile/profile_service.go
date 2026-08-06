@@ -16,8 +16,7 @@ import (
 )
 
 type Service interface {
-	GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error)
-	GetProfileByUsername(ctx context.Context, username string) (*response.ProfileResponse, error)
+	GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error) 
 	UpdateProfile(ctx context.Context, userID uuid.UUID, req *request.UpdateProfileRequest) (*response.ProfileResponse, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, req *request.ChangePasswordRequest) error
 	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
@@ -39,17 +38,6 @@ func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*response.P
 	}
 
 	profile, _ := s.repo.GetProfileByUserID(ctx, userID)
-
-	return s.mapToProfileResponse(user, profile), nil
-}
-
-func (s *service) GetProfileByUsername(ctx context.Context, username string) (*response.ProfileResponse, error) {
-	user, err := s.repo.GetUserByUsername(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	profile, _ := s.repo.GetProfileByUserID(ctx, user.ID)
 
 	return s.mapToProfileResponse(user, profile), nil
 }

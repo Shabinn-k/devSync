@@ -23,13 +23,11 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
       alert('Please upload a JPEG, PNG, WEBP, or GIF image.');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('File size must be less than 2MB.');
       return;

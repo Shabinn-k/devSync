@@ -7,7 +7,7 @@ import (
 
 type UserResponse struct {
 	ID         uuid.UUID `json:"id"`
-	Name   string    `json:"full_name"`
+	Name       string    `json:"name"`
 	Email      string    `json:"email"`
 	IsVerified bool      `json:"is_verified"`
 	IsActive   bool      `json:"is_active"`
@@ -26,6 +26,7 @@ type AuthResponse struct {
 	Token TokenResponse `json:"token"`
 }
 
+// ✅ Add MessageResponse here
 type MessageResponse struct {
 	Message string `json:"message"`
 }

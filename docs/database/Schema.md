@@ -12,8 +12,7 @@ Primary Key
 
 Columns
 
-- full_name
-- username
+- name
 - email
 - password
 - profile_image

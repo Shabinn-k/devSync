@@ -52,23 +52,29 @@ func NewService(repo auth.Repository, cfg *config.AppConfig, cache cache.Cache) 
 	}
 }
 
+// ============ REGISTER ============
+
 func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest) (*authResponse.UserResponse, error) {
+	// Check if email exists
 	exists, _ := s.repo.EmailExists(ctx, req.Email)
 	if exists {
 		return nil, errors.New("email already registered")
 	}
 
+	// Hash password
 	hashed, err := bcrypt.Hash(req.Password)
 	if err != nil {
 		return nil, err
 	}
 
+	// Generate OTP
 	code, err := otp.Generate()
 	if err != nil {
 		return nil, err
 	}
 	expiry := time.Now().Add(otpValidity)
 
+	// Create user
 	user := &model.User{
 		Name:            req.Name,
 		Email:           req.Email,
@@ -83,32 +89,44 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 		return nil, err
 	}
 
+	// Send OTP email (async)
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "email verification")
 
 	resp := mapper.ToUserResponse(user)
 	return &resp, nil
 }
 
+// ============ LOGIN ============
+
 func (s *service) Login(ctx context.Context, req *authRequest.LoginRequest) (*authResponse.AuthResponse, error) {
+	// Get user by email
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}
+	if user == nil {
+		return nil, errors.New("invalid credentials")
+	}
 
+	// Verify password
 	if err := bcrypt.Compare(user.PasswordHash, req.Password); err != nil {
 		return nil, errors.New("invalid credentials")
 	}
 
+	// Check if email is verified
 	if !user.IsVerified {
 		return nil, errors.New("email not verified")
 	}
 
+	// Check if user is active
 	if !user.IsActive {
 		return nil, errors.New("account deactivated")
 	}
 
+	// Update last login
 	_ = s.repo.UpdateLastLogin(ctx, user.ID)
 
+	// Generate tokens
 	accessToken, refreshToken, err := s.issueTokens(ctx, user.ID)
 	if err != nil {
 		return nil, err
@@ -118,9 +136,14 @@ func (s *service) Login(ctx context.Context, req *authRequest.LoginRequest) (*au
 	return &resp, nil
 }
 
+// ============ VERIFY EMAIL ============
+
 func (s *service) VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
+		return errors.New("invalid or expired OTP")
+	}
+	if user == nil {
 		return errors.New("invalid or expired OTP")
 	}
 
@@ -139,9 +162,14 @@ func (s *service) VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailR
 	return s.repo.VerifyEmail(ctx, user.ID)
 }
 
+// ============ RESEND OTP ============
+
 func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
+		return nil // Don't reveal if email exists
+	}
+	if user == nil {
 		return nil
 	}
 
@@ -165,9 +193,14 @@ func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPReque
 	return nil
 }
 
+// ============ FORGOT PASSWORD ============
+
 func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
+		return nil // Don't reveal if email exists
+	}
+	if user == nil {
 		return nil
 	}
 
@@ -176,6 +209,7 @@ func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPas
 		return err
 	}
 
+	// Store OTP in Redis
 	if err := s.cache.SetOTP(ctx, req.Email, code, otpValidity); err != nil {
 		return err
 	}
@@ -183,6 +217,8 @@ func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPas
 	go smtp.SendOTPEmail(s.cfg, user.Email, code, "password reset")
 	return nil
 }
+
+// ============ VERIFY OTP ============
 
 func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	storedOTP, err := s.cache.GetOTP(ctx, email)
@@ -194,6 +230,7 @@ func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 		return errors.New("invalid OTP")
 	}
 
+	// Mark OTP as verified
 	if err := s.cache.MarkOTPVerified(ctx, email); err != nil {
 		return err
 	}
@@ -201,31 +238,44 @@ func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	return nil
 }
 
+// ============ RESET PASSWORD ============
+
 func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error {
+	// Check if OTP is verified
 	verified, err := s.cache.IsOTPVerified(ctx, req.Email)
 	if err != nil || !verified {
 		return errors.New("OTP not verified. Please verify OTP first")
 	}
 
+	// Get user
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return errors.New("user not found")
 	}
+	if user == nil {
+		return errors.New("user not found")
+	}
 
+	// Hash new password
 	hashed, err := bcrypt.Hash(req.NewPassword)
 	if err != nil {
 		return err
 	}
 
+	// Update password
 	if err := s.repo.UpdatePassword(ctx, user.ID, hashed); err != nil {
 		return err
 	}
 
+	// Clear OTP from Redis
 	_ = s.cache.DeleteOTP(ctx, req.Email)
 	_ = s.cache.DeleteOTPVerified(ctx, req.Email)
 
+	// Revoke all refresh tokens
 	return s.repo.RevokeAllUserTokens(ctx, user.ID)
 }
+
+// ============ REFRESH TOKEN ============
 
 func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error) {
 	claims, err := jwt.ParseToken(req.RefreshToken, s.cfg.JWTRefreshSecret)
@@ -236,6 +286,9 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 	hash := jwt.HashToken(req.RefreshToken)
 	storedToken, err := s.repo.GetRefreshTokenByHash(ctx, hash)
 	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
+	if storedToken == nil {
 		return nil, errors.New("invalid refresh token")
 	}
 
@@ -253,10 +306,12 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 		return nil, errors.New("invalid refresh token")
 	}
 
+	// Revoke old refresh token (rotation)
 	if err := s.repo.RevokeRefreshToken(ctx, storedToken.ID); err != nil {
 		return nil, err
 	}
 
+	// Issue new tokens
 	newAccessToken, newRefreshToken, err := s.issueTokens(ctx, storedToken.UserID)
 	if err != nil {
 		return nil, err
@@ -266,24 +321,37 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 	return &resp, nil
 }
 
+// ============ LOGOUT ============
+
 func (s *service) Logout(ctx context.Context, req *authRequest.LogoutRequest) error {
 	hash := jwt.HashToken(req.RefreshToken)
 	storedToken, err := s.repo.GetRefreshTokenByHash(ctx, hash)
 	if err != nil {
 		return errors.New("invalid refresh token")
 	}
+	if storedToken == nil {
+		return errors.New("invalid refresh token")
+	}
 
 	return s.repo.RevokeRefreshToken(ctx, storedToken.ID)
 }
+
+// ============ GET CURRENT USER ============
 
 func (s *service) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authResponse.UserResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, errors.New("user not found")
 	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
 	resp := mapper.ToUserResponse(user)
 	return &resp, nil
 }
+
+// ============ ISSUE TOKENS ============
 
 func (s *service) issueTokens(ctx context.Context, userID uuid.UUID) (string, string, error) {
 	accessToken, err := jwt.GenerateAccessToken(userID, s.cfg.JWTAccessSecret, s.cfg.JWTAccessExpiry)

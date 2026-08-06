@@ -25,17 +25,7 @@ func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User
 	return &user, err
 }
 
-func (r *repository) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	var user model.User
-	err := r.db.WithContext(ctx).
-		Preload("Profile").
-		Where("username = ? AND is_active = ?", username, true).
-		First(&user).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrNotFound
-	}
-	return &user, err
-}
+ 
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
@@ -63,14 +53,7 @@ func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, passw
 		}).Error
 }
 
-func (r *repository) UsernameExists(ctx context.Context, username string, excludeID uuid.UUID) (bool, error) {
-	var count int64
-	err := r.db.WithContext(ctx).
-		Model(&model.User{}).
-		Where("username = ? AND id != ?", username, excludeID).
-		Count(&count).Error
-	return count > 0, err
-}
+ 
 
 // ============ PROFILE OPERATIONS ============
 

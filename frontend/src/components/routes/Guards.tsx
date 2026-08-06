@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
 interface RouteGuardProps {
@@ -8,6 +8,7 @@ interface RouteGuardProps {
 
 export const ProtectedRoute = ({ children }: RouteGuardProps) => {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -18,7 +19,7 @@ export const ProtectedRoute = ({ children }: RouteGuardProps) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -26,6 +27,7 @@ export const ProtectedRoute = ({ children }: RouteGuardProps) => {
 
 export const PublicRoute = ({ children }: RouteGuardProps) => {
   const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -36,7 +38,9 @@ export const PublicRoute = ({ children }: RouteGuardProps) => {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect to dashboard if already authenticated
+    const from = location.state?.from?.pathname || '/dashboard';
+    return <Navigate to={from} replace />;
   }
 
   return <>{children}</>;
