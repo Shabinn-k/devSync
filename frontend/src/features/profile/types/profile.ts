@@ -1,6 +1,6 @@
 export interface Profile {
   id: string;
-  Name: string;
+  Name: string; 
   email: string;
   avatar_url: string;
   bio: string;
@@ -15,8 +15,7 @@ export interface Profile {
 }
 
 export interface UpdateProfilePayload {
-  full_name?: string;
-  username?: string;
+  Name?: string; 
   bio?: string;
   skills?: string[];
   github_username?: string;

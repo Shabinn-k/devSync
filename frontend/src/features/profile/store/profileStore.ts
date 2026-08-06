@@ -1,17 +1,16 @@
 import { create } from 'zustand';
-import { profileApi } from '../api/ProfileApi';
-import type { Profile, UpdateProfilePayload, ChangePasswordPayload, ProfileStats } from '../types/profile';
+import { profileApi } from '../api/profileApi';
+import type { Profile, UpdateProfilePayload, ChangePasswordPayload } from '../types/profile';
 
 interface ProfileState {
   profile: Profile | null;
-  stats: ProfileStats | null;
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
 
   // Actions
   fetchProfile: () => Promise<void>;
-  fetchProfileByUsername: (username: string) => Promise<Profile | null>;
+  fetchProfileByUsername: (Name: string) => Promise<Profile | null>;
   updateProfile: (data: UpdateProfilePayload) => Promise<void>;
   changePassword: (data: ChangePasswordPayload) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
@@ -20,7 +19,6 @@ interface ProfileState {
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
-  stats: null,
   isLoading: false,
   isSaving: false,
   error: null,
@@ -39,10 +37,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  fetchProfileByUsername: async (username: string) => {
+  fetchProfileByUsername: async (Name: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await profileApi.getProfileByUsername(username);
+      const response = await profileApi.getProfileByUsername(Name);
       if (response.success && response.data) {
         set({ isLoading: false });
         return response.data;
