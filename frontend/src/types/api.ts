@@ -11,7 +11,7 @@ export interface ApiResponse<T = any> {
 
 export interface User {
   id: string;
-  Name: string; 
+  name: string;        // ✅ Changed from 'Name' to 'name' (lowercase)
   email: string;
   is_verified: boolean;
   is_active: boolean;
@@ -42,7 +42,6 @@ export interface ResendOTPPayload {
   email: string;
 }
 
-// Add this to your existing types
 export interface VerifyOTPPayload {
   email: string;
   otp: string;
@@ -69,13 +68,7 @@ export interface LogoutPayload {
 
 // ============ OTP Types ============
 
-export interface VerifyOTPPayload {
-  otp: string;
-}
-
-export interface ResetPasswordOTPPayload {
-  new_password: string;
-}
+// Remove duplicate VerifyOTPPayload - keep only one
 
 // ============ Token Types ============
 

@@ -17,7 +17,7 @@ interface DashboardState {
   clearError: () => void;
 }
 
-export const useDashboardStore = create<DashboardState>((set, get) => ({
+export const useDashboardStore = create<DashboardState>((set, _get) => ({ 
   stats: null,
   activities: [],
   tasks: [],

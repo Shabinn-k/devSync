@@ -21,15 +21,9 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config: CustomAxiosRequestConfig) => {
     console.log('🔵 Request URL:', config.url);
-    console.log('🔵 Request Method:', config.method);
     
-    // ✅ Skip adding token for auth endpoints (login, register, refresh, etc.)
-    const authEndpoints = ['/auth/login', '/auth/register', '/auth/refresh-token', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email', '/auth/verify-otp', '/auth/resend-otp'];
-    
-    // Check if the request is to an auth endpoint
-    const isAuthEndpoint = authEndpoints.some(endpoint => config.url?.includes(endpoint));
-    
-    if (isAuthEndpoint) {
+    // Skip adding token ONLY for login and register
+    if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
       console.log('🔵 Skipping token for auth endpoint');
       return config;
     }
@@ -125,4 +119,5 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ✅ Only export what you need
 export default apiClient;

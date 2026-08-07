@@ -5,7 +5,6 @@ import type {
   LoginPayload,
   RegisterPayload,
   VerifyEmailPayload,
-  ResetPasswordPayload
 } from '../../types/api';
 
 interface AuthState {
@@ -48,7 +47,7 @@ const initialAccessToken = localStorage.getItem('devsync_access_token');
 const initialRefreshToken = localStorage.getItem('devsync_refresh_token');
 const initialUser = getStoredUser();
 
-export const useAuthStore = create<AuthState>((set, get) => {
+export const useAuthStore = create<AuthState>((set, _get) => {
   if (typeof window !== 'undefined') {
     window.addEventListener('auth:logout', () => {
       set({
@@ -174,7 +173,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     verifyOTP: async (otp: string) => {
       set({ isLoading: true, error: null });
       try {
-        const email = get().resetEmail;
+        const email = _get().resetEmail;
         if (!email) {
           throw new Error('No email found for verification');
         }
@@ -196,7 +195,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     resetPasswordWithOTP: async (otp: string, newPassword: string) => {
       set({ isLoading: true, error: null });
       try {
-        const email = get().resetEmail;
+        const email = _get().resetEmail;
         if (!email) {
           throw new Error('No email found for password reset');
         }
@@ -221,7 +220,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     logout: async () => {
       set({ isLoading: true });
-      const currentRefresh = get().refreshToken;
+      const currentRefresh = _get().refreshToken;
       if (currentRefresh) {
         try {
           await authApi.logout({ refresh_token: currentRefresh });

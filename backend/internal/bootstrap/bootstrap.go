@@ -8,12 +8,15 @@ import (
 	"devSync/config"
 	"devSync/internal/cache"
 	"devSync/internal/controllers/auth"
+	"devSync/internal/controllers/dashboard"  // Add this
 	"devSync/internal/controllers/profile"
 	"devSync/internal/middleware"
 	authRepo "devSync/internal/repositories/auth"
+	dashboardRepo "devSync/internal/repositories/dashboard"  // Add this
 	profileRepo "devSync/internal/repositories/profile"
 	"devSync/internal/routes"
 	authService "devSync/internal/services/auth"
+	dashboardService "devSync/internal/services/dashboard"  // Add this
 	profileService "devSync/internal/services/profile"
 )
 
@@ -28,7 +31,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 
 	// Auth module
 	authRepo := authRepo.NewRepository(db)
-	authSvc := authService.NewService(authRepo, cfg, cache)  // ✅ Pass cache here
+	authSvc := authService.NewService(authRepo, cfg, cache)
 	authCtrl := auth.NewController(authSvc)
 	routes.RegisterAuthRoutes(router, authCtrl, authRepo, cfg)
 
@@ -37,6 +40,12 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	profileSvc := profileService.NewService(profileRepo, cfg)
 	profileCtrl := profile.NewController(profileSvc)
 	routes.RegisterProfileRoutes(router, profileCtrl, cfg, authRepo)
+
+	// Dashboard module
+	dashboardRepo := dashboardRepo.Repository(db)
+	dashboardSvc := dashboardService.NewService(dashboardRepo, cfg)
+	dashboardCtrl := dashboard.NewController(dashboardSvc)
+	routes.RegisterDashboardRoutes(router, dashboardCtrl, cfg, authRepo)
 
 	return router
 }

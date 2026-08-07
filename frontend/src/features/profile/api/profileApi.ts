@@ -6,8 +6,8 @@ export const profileApi = {
   getProfile: () =>
     apiClient.get<ApiResponse<Profile>>('/profile/me').then((res) => res.data),
 
-  getProfileByName: (Name: string) =>
-    apiClient.get<ApiResponse<Profile>>(`/profile/${Name}`).then((res) => res.data),
+  getProfileByUsername: (username: string) =>
+    apiClient.get<ApiResponse<Profile>>(`/profile/${username}`).then((res) => res.data),  // ✅ Changed 'Name' to 'username'
 
   updateProfile: (data: UpdateProfilePayload) =>
     apiClient.put<ApiResponse<Profile>>('/profile/me', data).then((res) => res.data),

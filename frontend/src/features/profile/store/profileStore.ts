@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { profileApi } from '../api/profileApi';
 import type { Profile, UpdateProfilePayload, ChangePasswordPayload } from '../types/profile';
+import { useAuthStore } from '../../../stores/authStore';
 
 interface ProfileState {
   profile: Profile | null;
@@ -10,45 +11,45 @@ interface ProfileState {
 
   // Actions
   fetchProfile: () => Promise<void>;
-  fetchProfileByUsername: (Name: string) => Promise<Profile | null>;
   updateProfile: (data: UpdateProfilePayload) => Promise<void>;
   changePassword: (data: ChangePasswordPayload) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
   clearError: () => void;
 }
 
-export const useProfileStore = create<ProfileState>((set, get) => ({
+export const useProfileStore = create<ProfileState>((set, _get) => ({  
   profile: null,
   isLoading: false,
   isSaving: false,
   error: null,
 
   fetchProfile: async () => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) {
+      console.log('🔴 Not authenticated, skipping profile fetch');
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
+      console.log('🔵 Fetching profile...');
       const response = await profileApi.getProfile();
+      console.log('🟢 Profile response:', response);
+      
       if (response.success && response.data) {
         set({ profile: response.data, isLoading: false });
       } else {
         throw new Error(response.message || 'Failed to fetch profile');
       }
     } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch profile', isLoading: false });
-    }
-  },
-
-  fetchProfileByUsername: async (Name: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await profileApi.getProfileByName(Name);
-      if (response.success && response.data) {
-        set({ isLoading: false });
-        return response.data;
+      console.error('🔴 Profile fetch error:', err);
+      if (err.response?.status === 401) {
+        console.log('🔴 401 on profile fetch, logging out');
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return;
       }
-      return null;
-    } catch (err: any) {
       set({ error: err.message || 'Failed to fetch profile', isLoading: false });
-      return null;
     }
   },
 

@@ -73,10 +73,10 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
       <div className="absolute bottom-0 left-0 right-0 border-t border-white/5 p-4">
         <div className="flex items-center gap-3 rounded-lg px-3 py-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white">
-            {profile?.Name?.[0]?.toUpperCase() || user?.Name?.[0]?.toUpperCase() || 'U'}
+            {profile?.name?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-white">{profile?.Name || user?.Name || 'User'}</p>
+            <p className="text-sm font-medium text-white">{profile?.name || user?.name || 'User'}</p>
             <p className="text-xs text-white/40">{profile?.email || user?.email || ''}</p>
           </div>
         </div>

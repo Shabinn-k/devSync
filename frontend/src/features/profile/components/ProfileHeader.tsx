@@ -16,7 +16,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick }: ProfileHea
 
       <div className="flex-1 text-center sm:text-left">
         <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-          <h1 className="text-2xl font-bold text-white">{profile.Name}</h1>
+          <h1 className="text-2xl font-bold text-white">{profile.name}</h1>  {/* ✅ Changed to profile.name */}
           {profile.is_verified && (
             <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">
               Verified

@@ -21,14 +21,17 @@ import { useProfileStore } from '../../profile/store/profileStore';
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { stats, activities, tasks, isLoading, error, fetchAll } = useDashboardStore();
-  const { user } = useAuthStore();
+  const { stats, activities, tasks, fetchAll } = useDashboardStore(); // ✅ Removed 'isLoading' and 'error'
+  const { user, isAuthenticated } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
 
   useEffect(() => {
-    fetchProfile();
-    fetchAll();
-  }, []);
+    if (isAuthenticated) {
+      console.log('✅ User is authenticated, fetching dashboard data');
+      fetchProfile();
+      fetchAll();
+    }
+  }, [isAuthenticated, fetchProfile, fetchAll]);
 
   // Mock data fallback if API fails
   const mockStats = {
@@ -57,6 +60,7 @@ const DashboardPage = () => {
   const displayStats = stats || mockStats;
   const displayActivities = activities.length > 0 ? activities : mockActivities;
   const displayTasks = tasks.length > 0 ? tasks : mockTasks;
+  const displayName = user?.name || profile?.name || 'User';
 
   return (
     <div className="min-h-screen bg-black">
@@ -69,7 +73,7 @@ const DashboardPage = () => {
           {/* Welcome Section */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
-              Welcome back, {profile?.Name || user?.Name || 'User'}! 👋
+              Welcome back, {displayName}! 👋
             </h2>
             <p className="mt-1 text-sm text-white/40">
               Here's what's happening with your workspace today.

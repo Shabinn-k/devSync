@@ -37,7 +37,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
             to="/profile"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white transition-colors hover:bg-white/20"
           >
-            {profile?.Name?.[0]?.toUpperCase() || user?.Name?.[0]?.toUpperCase() || 'U'}
+            {profile?.name?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'U'}
           </Link>
         </div>
       </div>
