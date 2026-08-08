@@ -1,13 +1,17 @@
 package response
 
-type DashboardStatsResponse struct {
+type DashboardResponse struct {
+	Stats      DashboardStats     `json:"stats"`
+	Activities []ActivityResponse `json:"activities"`
+	Tasks      []TaskResponse     `json:"tasks"`
+}
+
+type DashboardStats struct {
 	Projects       int `json:"projects"`
 	Tasks          int `json:"tasks"`
 	Teams          int `json:"teams"`
 	CompletedTasks int `json:"completed_tasks"`
 	ActiveTasks    int `json:"active_tasks"`
-	PendingTasks   int `json:"pending_tasks"`
-	OverdueTasks   int `json:"overdue_tasks"`
 	CompletionRate int `json:"completion_rate"`
 }
 

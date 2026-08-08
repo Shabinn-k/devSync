@@ -5,7 +5,8 @@ import {
   Users, 
   TrendingUp,
   Plus,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { 
   DashboardSidebar, 
@@ -21,7 +22,7 @@ import { useProfileStore } from '../../profile/store/profileStore';
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { stats, activities, tasks, fetchAll } = useDashboardStore(); // ✅ Removed 'isLoading' and 'error'
+  const { stats, activities, tasks, isLoading, error, fetchDashboard } = useDashboardStore(); // ✅ Changed fetchAll to fetchDashboard
   const { user, isAuthenticated } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
 
@@ -29,37 +30,60 @@ const DashboardPage = () => {
     if (isAuthenticated) {
       console.log('✅ User is authenticated, fetching dashboard data');
       fetchProfile();
-      fetchAll();
+      fetchDashboard(); // ✅ Single API call
     }
-  }, [isAuthenticated, fetchProfile, fetchAll]);
+  }, [isAuthenticated, fetchProfile, fetchDashboard]);
 
-  // Mock data fallback if API fails
-  const mockStats = {
-    projects: 12,
-    tasks: 48,
-    teams: 4,
-    completed_tasks: 32,
-    active_tasks: 16,
-    pending_tasks: 8,
-    overdue_tasks: 3,
-    completion_rate: 67,
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black">
+        <DashboardSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <div className="lg:pl-64">
+          <DashboardHeader onMenuClick={() => setIsSidebarOpen(true)} />
+          <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black">
+        <DashboardSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <div className="lg:pl-64">
+          <DashboardHeader onMenuClick={() => setIsSidebarOpen(true)} />
+          <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center text-center">
+            <p className="text-red-400">{error}</p>
+            <button
+              onClick={() => fetchDashboard()}
+              className="mt-4 rounded-full border border-white/10 px-6 py-2 text-sm text-white hover:bg-white/10"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mock data fallback if API returns empty
+  const displayStats = stats || {
+    projects: 0,
+    tasks: 0,
+    teams: 0,
+    completed_tasks: 0,
+    active_tasks: 0,
+    pending_tasks: 0,
+    overdue_tasks: 0,
+    completion_rate: 0,
   };
 
-  const mockActivities = [
-    { id: '1', type: 'task' as const, action: 'completed', title: 'Design system updates', time: '2 hours ago', user: 'You' },
-    { id: '2', type: 'project' as const, action: 'created', title: 'Mobile App Redesign', time: '4 hours ago', user: 'Sarah Chen' },
-    { id: '3', type: 'task' as const, action: 'assigned', title: 'API Integration', time: '6 hours ago', user: 'Mike Johnson' },
-  ];
-
-  const mockTasks = [
-    { id: '1', title: 'Complete user profile design', due_date: 'Today', priority: 'High' as const, status: 'todo' as const },
-    { id: '2', title: 'Fix login page bug', due_date: 'Tomorrow', priority: 'Medium' as const, status: 'in_progress' as const },
-    { id: '3', title: 'Update documentation', due_date: 'Aug 10', priority: 'Low' as const, status: 'todo' as const },
-  ];
-
-  const displayStats = stats || mockStats;
-  const displayActivities = activities.length > 0 ? activities : mockActivities;
-  const displayTasks = tasks.length > 0 ? tasks : mockTasks;
+  const displayActivities = activities?.length > 0 ? activities : [];
+  const displayTasks = tasks?.length > 0 ? tasks : [];
   const displayName = user?.name || profile?.name || 'User';
 
   return (
@@ -92,7 +116,7 @@ const DashboardPage = () => {
               icon={<CheckSquare className="h-5 w-5 text-white/30" />}
               label="Tasks"
               value={displayStats.tasks}
-              subtext={`${displayStats.active_tasks} active`}
+              subtext={`${displayStats.active_tasks || 0} active`}
             />
             <StatsCard 
               icon={<Users className="h-5 w-5 text-white/30" />}
@@ -103,8 +127,8 @@ const DashboardPage = () => {
             <StatsCard 
               icon={<TrendingUp className="h-5 w-5 text-white/30" />}
               label="Completion Rate"
-              value={`${displayStats.completion_rate}%`}
-              subtext={`${displayStats.completed_tasks} tasks done`}
+              value={`${displayStats.completion_rate || 0}%`}
+              subtext={`${displayStats.completed_tasks || 0} tasks done`}
             />
           </div>
 
@@ -119,9 +143,13 @@ const DashboardPage = () => {
                 </button>
               </div>
               <div className="space-y-3">
-                {displayActivities.map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
-                ))}
+                {displayActivities.length > 0 ? (
+                  displayActivities.map((activity) => (
+                    <ActivityItem key={activity.id} activity={activity} />
+                  ))
+                ) : (
+                  <p className="text-sm text-white/30 text-center py-8">No recent activity</p>
+                )}
               </div>
             </div>
 
@@ -134,9 +162,13 @@ const DashboardPage = () => {
                 </button>
               </div>
               <div className="space-y-3">
-                {displayTasks.map((task) => (
-                  <TaskItem key={task.id} task={task} />
-                ))}
+                {displayTasks.length > 0 ? (
+                  displayTasks.map((task) => (
+                    <TaskItem key={task.id} task={task} />
+                  ))
+                ) : (
+                  <p className="text-sm text-white/30 text-center py-8">No upcoming tasks</p>
+                )}
               </div>
             </div>
           </div>

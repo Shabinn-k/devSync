@@ -30,8 +30,10 @@ export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
             id={inputId}
             ref={ref}
             type={resolvedType}
-            className={`w-full rounded-full border bg-white/[0.03] px-5 py-3 text-sm text-white placeholder:text-white/30 outline-none transition-colors duration-200 focus:border-white/40 ${error ? 'border-red-500/60' : 'border-white/15'
-              } ${isPassword ? 'pr-12' : ''} ${className}`}
+            autoComplete={isPassword ? 'current-password' : 'email'}  // ✅ Add autocomplete
+            className={`w-full rounded-full border bg-white/[0.03] px-5 py-3 text-sm text-white placeholder:text-white/30 outline-none transition-colors duration-200 focus:border-white/40 ${
+              error ? 'border-red-500/60' : 'border-white/15'
+            } ${isPassword ? 'pr-12' : ''} ${className}`}
             {...rest}
           />
 

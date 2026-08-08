@@ -1,8 +1,9 @@
 package dashboard
 
 import (
-	"context" 
-
+	"context"
+	"time"
+	"fmt"
 	"github.com/google/uuid"
 
 	"devSync/config"
@@ -11,9 +12,7 @@ import (
 )
 
 type Service interface {
-	GetStats(ctx context.Context, userID uuid.UUID) (*response.DashboardStatsResponse, error)
-	GetActivities(ctx context.Context, userID uuid.UUID, limit int) ([]response.ActivityResponse, error)
-	GetTasks(ctx context.Context, userID uuid.UUID, limit int) ([]response.TaskResponse, error)
+	GetDashboard(ctx context.Context, userID uuid.UUID) (*response.DashboardResponse, error)
 }
 
 type service struct {
@@ -28,13 +27,15 @@ func NewService(repo dashboard.Repository, cfg *config.AppConfig) Service {
 	}
 }
 
-func (s *service) GetStats(ctx context.Context, userID uuid.UUID) (*response.DashboardStatsResponse, error) {
-	// Get real stats from database
+func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response.DashboardResponse, error) {
+	// Get all data in parallel
 	projects, _ := s.repo.CountProjects(ctx, userID)
 	tasks, _ := s.repo.CountTasks(ctx, userID)
 	teams, _ := s.repo.CountTeams(ctx, userID)
 	completedTasks, _ := s.repo.CountCompletedTasks(ctx, userID)
 	activeTasks, _ := s.repo.CountActiveTasks(ctx, userID)
+	activities, _ := s.repo.GetRecentActivities(ctx, userID, 5)
+	upcomingTasks, _ := s.repo.GetUpcomingTasks(ctx, userID, 5)
 
 	// Calculate completion rate
 	completionRate := 0
@@ -42,25 +43,21 @@ func (s *service) GetStats(ctx context.Context, userID uuid.UUID) (*response.Das
 		completionRate = int((float64(completedTasks) / float64(tasks)) * 100)
 	}
 
-	return &response.DashboardStatsResponse{
-		Projects:       projects,
-		Tasks:          tasks,
-		Teams:          teams,
-		CompletedTasks: completedTasks,
-		ActiveTasks:    activeTasks,
-		PendingTasks:   tasks - completedTasks - activeTasks,
-		OverdueTasks:   0,
-		CompletionRate: completionRate,
+	return &response.DashboardResponse{
+		Stats: response.DashboardStats{
+			Projects:       int(projects),
+			Tasks:          int(tasks),
+			Teams:          int(teams),
+			CompletedTasks: int(completedTasks),
+			ActiveTasks:    int(activeTasks),
+			CompletionRate: completionRate,
+		},
+		Activities: s.mapActivities(activities),
+		Tasks:      s.mapTasks(upcomingTasks),
 	}, nil
 }
 
-func (s *service) GetActivities(ctx context.Context, userID uuid.UUID, limit int) ([]response.ActivityResponse, error) {
-	// Get real activities from database
-	activities, err := s.repo.GetRecentActivities(ctx, userID, limit)
-	if err != nil {
-		return []response.ActivityResponse{}, nil
-	}
-
+func (s *service) mapActivities(activities []dashboard.Activity) []response.ActivityResponse {
 	var result []response.ActivityResponse
 	for _, act := range activities {
 		result = append(result, response.ActivityResponse{
@@ -68,20 +65,14 @@ func (s *service) GetActivities(ctx context.Context, userID uuid.UUID, limit int
 			Type:   act.Type,
 			Action: act.Action,
 			Title:  act.Title,
-			Time:   act.CreatedAt.Format("2 hours ago"),
+			Time:   s.formatTime(act.CreatedAt),
 			User:   act.UserName,
 		})
 	}
-	return result, nil
+	return result
 }
 
-func (s *service) GetTasks(ctx context.Context, userID uuid.UUID, limit int) ([]response.TaskResponse, error) {
-	// Get real tasks from database
-	tasks, err := s.repo.GetUpcomingTasks(ctx, userID, limit)
-	if err != nil {
-		return []response.TaskResponse{}, nil
-	}
-
+func (s *service) mapTasks(tasks []dashboard.Task) []response.TaskResponse {
 	var result []response.TaskResponse
 	for _, task := range tasks {
 		result = append(result, response.TaskResponse{
@@ -92,5 +83,23 @@ func (s *service) GetTasks(ctx context.Context, userID uuid.UUID, limit int) ([]
 			Status:   task.Status,
 		})
 	}
-	return result, nil
+	return result
+}
+
+func (s *service) formatTime(t time.Time) string {
+	diff := time.Now().Sub(t)
+	if diff < time.Hour {
+		return "Just now"
+	}
+	if diff < 2*time.Hour {
+		return "1 hour ago"
+	}
+	if diff < 24*time.Hour {
+		return fmt.Sprintf("%d hours ago", int(diff.Hours()))
+	}
+	days := int(diff.Hours() / 24)
+	if days == 1 {
+		return "1 day ago"
+	}
+	return fmt.Sprintf("%d days ago", days)
 }

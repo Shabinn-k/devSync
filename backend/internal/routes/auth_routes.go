@@ -34,7 +34,7 @@ func RegisterAuthRoutes(
 		// Token
 		authGroup.POST("/refresh-token", controller.RefreshToken)
 
-		// Current Logged-in User
+		
 		authGroup.GET(
 			"/me",
 			middleware.AuthRequired(cfg, repo),

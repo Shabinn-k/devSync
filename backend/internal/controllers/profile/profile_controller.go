@@ -21,8 +21,7 @@ func NewController(s profile.Service) *Controller {
 }
 
 func (h *Controller) GetProfile(c *gin.Context) {
-	userID := c.GetString("userID")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := getUserUUID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -48,8 +47,7 @@ func (h *Controller) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userID")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := getUserUUID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -75,8 +73,7 @@ func (h *Controller) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userID := c.GetString("userID")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := getUserUUID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -90,8 +87,7 @@ func (h *Controller) ChangePassword(c *gin.Context) {
 }
 
 func (h *Controller) UploadAvatar(c *gin.Context) {
-	userID := c.GetString("userID")
-	userUUID, err := uuid.Parse(userID)
+	userUUID, err := getUserUUID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -125,7 +121,7 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 	}
 
 	// TODO: Upload to S3 or local storage
-	avatarURL := "/uploads/avatars/" + userID + ".png"
+	avatarURL := "/uploads/avatars/" + userUUID.String() + ".png"
 
 	if err := h.service.UpdateAvatar(c.Request.Context(), userUUID, avatarURL); err != nil {
 		response.Error(c, http.StatusInternalServerError, "Failed to update avatar")
@@ -136,4 +132,18 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		"message":    "Avatar uploaded successfully",
 		"avatar_url": avatarURL,
 	})
+}
+
+func getUserUUID(c *gin.Context) (uuid.UUID, error) {
+	val, exists := c.Get("userID")
+	if !exists {
+		return uuid.Nil, http.ErrNoCookie
+	}
+	if id, ok := val.(uuid.UUID); ok {
+		return id, nil
+	}
+	if idStr, ok := val.(string); ok {
+		return uuid.Parse(idStr)
+	}
+	return uuid.Nil, http.ErrNoCookie
 }

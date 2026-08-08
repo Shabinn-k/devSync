@@ -13,7 +13,7 @@ export const profileApi = {
     apiClient.put<ApiResponse<Profile>>('/profile/me', data).then((res) => res.data),
 
   changePassword: (data: ChangePasswordPayload) =>
-    apiClient.put<ApiResponse<{ message: string }>>('/profile/change-password', data).then((res) => res.data),
+    apiClient.put<ApiResponse<{ message: string }>>('/profile/password', data).then((res) => res.data),
 
   uploadAvatar: (file: File) => {
     const formData = new FormData();

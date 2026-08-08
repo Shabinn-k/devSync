@@ -19,7 +19,7 @@ interface AuthState {
   resetOTP: string | null;
 
   // Actions
-  login: (payload: LoginPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<{ success: boolean; error?: string }>;
   register: (payload: RegisterPayload) => Promise<User>;
   verifyEmail: (payload: VerifyEmailPayload) => Promise<void>;
   resendOTP: (email: string) => Promise<void>;
@@ -47,7 +47,7 @@ const initialAccessToken = localStorage.getItem('devsync_access_token');
 const initialRefreshToken = localStorage.getItem('devsync_refresh_token');
 const initialUser = getStoredUser();
 
-export const useAuthStore = create<AuthState>((set, _get) => {
+export const useAuthStore = create<AuthState>((set, get) => {
   if (typeof window !== 'undefined') {
     window.addEventListener('auth:logout', () => {
       set({
@@ -72,10 +72,11 @@ export const useAuthStore = create<AuthState>((set, _get) => {
     resetEmail: null,
     resetOTP: null,
 
-    login: async (payload: LoginPayload) => {
+    login: async (payload: LoginPayload): Promise<{ success: boolean; error?: string }> => {
       set({ isLoading: true, error: null });
       try {
         const response = await authApi.login(payload);
+        
         if (response.success && response.data) {
           const { user, token } = response.data;
           const { access_token, refresh_token } = token;
@@ -92,13 +93,15 @@ export const useAuthStore = create<AuthState>((set, _get) => {
             isLoading: false,
             error: null,
           });
+          
+          return { success: true };
         } else {
-          throw new Error(response.message || 'Login failed');
+          return { success: false, error: response.message || 'Login failed' };
         }
       } catch (err: any) {
         const message = err.response?.data?.message || err.message || 'Failed to login';
         set({ error: message, isLoading: false });
-        throw new Error(message);
+        return { success: false, error: message };
       }
     },
 
@@ -169,16 +172,14 @@ export const useAuthStore = create<AuthState>((set, _get) => {
       }
     },
 
-    // FIXED: Uses the new /auth/verify-otp endpoint
     verifyOTP: async (otp: string) => {
       set({ isLoading: true, error: null });
       try {
-        const email = _get().resetEmail;
+        const email = get().resetEmail;
         if (!email) {
           throw new Error('No email found for verification');
         }
 
-        // Using the dedicated verify-otp endpoint
         const response = await authApi.verifyOTP({ email, otp });
         
         if (!response.success) {
@@ -195,7 +196,7 @@ export const useAuthStore = create<AuthState>((set, _get) => {
     resetPasswordWithOTP: async (otp: string, newPassword: string) => {
       set({ isLoading: true, error: null });
       try {
-        const email = _get().resetEmail;
+        const email = get().resetEmail;
         if (!email) {
           throw new Error('No email found for password reset');
         }
@@ -220,7 +221,7 @@ export const useAuthStore = create<AuthState>((set, _get) => {
 
     logout: async () => {
       set({ isLoading: true });
-      const currentRefresh = _get().refreshToken;
+      const currentRefresh = get().refreshToken;
       if (currentRefresh) {
         try {
           await authApi.logout({ refresh_token: currentRefresh });

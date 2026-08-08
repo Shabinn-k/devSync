@@ -18,8 +18,6 @@ func RegisterDashboardRoutes(
 	dashboardGroup := router.Group("/dashboard")
 	dashboardGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
-		dashboardGroup.GET("/stats", controller.GetStats)
-		dashboardGroup.GET("/activities", controller.GetActivities)
-		dashboardGroup.GET("/tasks", controller.GetTasks)
+		dashboardGroup.GET("/", controller.GetDashboard)   
 	}
 }

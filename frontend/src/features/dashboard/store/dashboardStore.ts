@@ -9,81 +9,34 @@ interface DashboardState {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
-  fetchStats: () => Promise<void>;
-  fetchActivities: () => Promise<void>;
-  fetchTasks: () => Promise<void>;
-  fetchAll: () => Promise<void>;
+  fetchDashboard: () => Promise<void>;
   clearError: () => void;
 }
 
-export const useDashboardStore = create<DashboardState>((set, _get) => ({ 
+export const useDashboardStore = create<DashboardState>((set, _get) => ({
   stats: null,
   activities: [],
   tasks: [],
   isLoading: false,
   error: null,
 
-  fetchStats: async () => {
+  fetchDashboard: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await dashboardApi.getStats();
+      const response = await dashboardApi.getDashboard();
       if (response.success && response.data) {
-        set({ stats: response.data, isLoading: false });
+        set({
+          stats: response.data.stats,
+          activities: response.data.activities,
+          tasks: response.data.tasks,
+          isLoading: false,
+          error: null,
+        });
       } else {
-        throw new Error(response.message || 'Failed to fetch stats');
+        throw new Error(response.message || 'Failed to fetch dashboard');
       }
     } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch stats', isLoading: false });
-    }
-  },
-
-  fetchActivities: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await dashboardApi.getActivities();
-      if (response.success && response.data) {
-        set({ activities: response.data, isLoading: false });
-      } else {
-        throw new Error(response.message || 'Failed to fetch activities');
-      }
-    } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch activities', isLoading: false });
-    }
-  },
-
-  fetchTasks: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await dashboardApi.getTasks();
-      if (response.success && response.data) {
-        set({ tasks: response.data, isLoading: false });
-      } else {
-        throw new Error(response.message || 'Failed to fetch tasks');
-      }
-    } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch tasks', isLoading: false });
-    }
-  },
-
-  fetchAll: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const [statsRes, activitiesRes, tasksRes] = await Promise.all([
-        dashboardApi.getStats(),
-        dashboardApi.getActivities(),
-        dashboardApi.getTasks(),
-      ]);
-
-      set({
-        stats: statsRes.success && statsRes.data ? statsRes.data : null,
-        activities: activitiesRes.success && activitiesRes.data ? activitiesRes.data : [],
-        tasks: tasksRes.success && tasksRes.data ? tasksRes.data : [],
-        isLoading: false,
-        error: null,
-      });
-    } catch (err: any) {
-      set({ error: err.message || 'Failed to fetch dashboard data', isLoading: false });
+      set({ error: err.message || 'Failed to fetch dashboard', isLoading: false });
     }
   },
 

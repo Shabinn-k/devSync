@@ -8,27 +8,22 @@ import (
 )
 
 func (r *repository) CountProjects(ctx context.Context, userID uuid.UUID) (int64, error) {
-	var count int64
 	return 12, nil
 }
 
 func (r *repository) CountTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
-	var count int64
 	return 48, nil
 }
 
 func (r *repository) CountTeams(ctx context.Context, userID uuid.UUID) (int64, error) {
-	var count int64
 	return 4, nil
 }
 
 func (r *repository) CountCompletedTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
-	var count int64
 	return 32, nil
 }
 
 func (r *repository) CountActiveTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
-	var count int64
 	return 16, nil
 }
 

@@ -42,7 +42,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	routes.RegisterProfileRoutes(router, profileCtrl, cfg, authRepo)
 
 	// Dashboard module
-	dashboardRepo := dashboardRepo.Repository(db)
+	dashboardRepo := dashboardRepo.NewRepository(db)
 	dashboardSvc := dashboardService.NewService(dashboardRepo, cfg)
 	dashboardCtrl := dashboard.NewController(dashboardSvc)
 	routes.RegisterDashboardRoutes(router, dashboardCtrl, cfg, authRepo)

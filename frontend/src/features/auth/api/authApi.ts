@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { apiClient } from '../../../lib/axios';
 import type { 
   ApiResponse, 
   AuthResponse, 
@@ -15,87 +15,6 @@ import type {
   User,
   VerifyOTPPayload
 } from '../../../types/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor to add token
-apiClient.interceptors.request.use(
-  (config) => {
-    // Skip adding token for auth endpoints
-    if (config.url?.includes('/auth/')) {
-      return config;
-    }
-    
-    const token = localStorage.getItem('devsync_access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor to handle token refresh
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // Don't retry if it's already a retry or refresh token request
-    if (originalRequest._retry || originalRequest.url?.includes('/auth/refresh-token')) {
-      // Clear tokens and redirect to login
-      localStorage.removeItem('devsync_access_token');
-      localStorage.removeItem('devsync_refresh_token');
-      localStorage.removeItem('devsync_user');
-      window.dispatchEvent(new Event('auth:logout'));
-      window.location.href = '/login';
-      return Promise.reject(error);
-    }
-
-    if (error.response?.status === 401) {
-      originalRequest._retry = true;
-      
-      try {
-        const refreshToken = localStorage.getItem('devsync_refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        const response = await apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', {
-          refresh_token: refreshToken,
-        });
-        
-        if (response.data.success && response.data.data) {
-          const { access_token, refresh_token } = response.data.data;
-          localStorage.setItem('devsync_access_token', access_token);
-          localStorage.setItem('devsync_refresh_token', refresh_token);
-          
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return apiClient(originalRequest);
-        } else {
-          throw new Error('Refresh failed');
-        }
-      } catch (refreshError) {
-        // Clear all tokens and redirect to login
-        localStorage.removeItem('devsync_access_token');
-        localStorage.removeItem('devsync_refresh_token');
-        localStorage.removeItem('devsync_user');
-        window.dispatchEvent(new Event('auth:logout'));
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-    
-    return Promise.reject(error);
-  }
-);
 
 export const authApi = {
   // ============ AUTHENTICATION ============
