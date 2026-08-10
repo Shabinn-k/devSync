@@ -8,15 +8,15 @@ import (
 	"devSync/config"
 	"devSync/internal/cache"
 	"devSync/internal/controllers/auth"
-	"devSync/internal/controllers/dashboard"  // Add this
+	"devSync/internal/controllers/dashboard"
 	"devSync/internal/controllers/profile"
 	"devSync/internal/middleware"
 	authRepo "devSync/internal/repositories/auth"
-	dashboardRepo "devSync/internal/repositories/dashboard"  // Add this
+	dashboardRepo "devSync/internal/repositories/dashboard"
 	profileRepo "devSync/internal/repositories/profile"
 	"devSync/internal/routes"
 	authService "devSync/internal/services/auth"
-	dashboardService "devSync/internal/services/dashboard"  // Add this
+	dashboardService "devSync/internal/services/dashboard"
 	profileService "devSync/internal/services/profile"
 )
 
@@ -26,7 +26,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	// Middleware
 	router.Use(middleware.CORSMiddleware())
 
-	// Initialize cache
+	// Cache
 	cache := cache.NewRedisCache(redisClient)
 
 	// Auth module
@@ -35,7 +35,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	authCtrl := auth.NewController(authSvc)
 	routes.RegisterAuthRoutes(router, authCtrl, authRepo, cfg)
 
-	// Profile module
+	// ✅ Profile module - Make sure this is registered
 	profileRepo := profileRepo.NewRepository(db)
 	profileSvc := profileService.NewService(profileRepo, cfg)
 	profileCtrl := profile.NewController(profileSvc)

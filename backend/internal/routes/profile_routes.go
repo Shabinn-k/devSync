@@ -17,17 +17,10 @@ func RegisterProfileRoutes(
 ) {
 	profileGroup := router.Group("/profile")
 	profileGroup.Use(middleware.AuthRequired(cfg, repo))
-
 	{
-		// Current User
 		profileGroup.GET("/me", controller.GetProfile)
 		profileGroup.PUT("/me", controller.UpdateProfile)
-
-		// Password
 		profileGroup.PUT("/password", controller.ChangePassword)
-
-		// Avatar
-		profileGroup.POST("/avatar", controller.UploadAvatar) 
- 
+		profileGroup.POST("/avatar", controller.UploadAvatar)
 	}
 }

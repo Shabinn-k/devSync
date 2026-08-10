@@ -11,26 +11,10 @@ import (
 	"devSync/internal/model"
 )
 
-// ============ USER OPERATIONS ============
-
 func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
 	err := r.db.WithContext(ctx).
-		Preload("Profile").
 		Where("id = ? AND is_active = ?", id, true).
-		First(&user).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, ErrNotFound
-	}
-	return &user, err
-}
-
- 
-
-func (r *repository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
-	var user model.User
-	err := r.db.WithContext(ctx).
-		Where("email = ?", email).
 		First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound
@@ -53,10 +37,6 @@ func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, passw
 		}).Error
 }
 
- 
-
-// ============ PROFILE OPERATIONS ============
-
 func (r *repository) GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*model.UserProfile, error) {
 	var profile model.UserProfile
 	err := r.db.WithContext(ctx).
@@ -78,7 +58,6 @@ func (r *repository) UpdateProfile(ctx context.Context, profile *model.UserProfi
 }
 
 func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error {
-	// First try to update existing profile
 	result := r.db.WithContext(ctx).
 		Model(&model.UserProfile{}).
 		Where("user_id = ?", userID).
@@ -91,7 +70,6 @@ func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarU
 		return result.Error
 	}
 
-	// If no profile exists, create one
 	if result.RowsAffected == 0 {
 		profile := &model.UserProfile{
 			UserID:    userID,

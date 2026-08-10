@@ -11,16 +11,15 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("user not found")
-	ErrProfileNotFound = errors.New("profile not found") 
+	ErrNotFound        = errors.New("user not found")
+	ErrProfileNotFound = errors.New("profile not found")
 )
 
 type Repository interface {
 	// User operations
-	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) 
-	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
-	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error 
+	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 
 	// Profile operations
 	GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*model.UserProfile, error)

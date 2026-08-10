@@ -11,24 +11,27 @@ import (
 	"devSync/internal/dto/request"
 	"devSync/internal/dto/response"
 	"devSync/internal/model"
-	profileRepo "devSync/internal/repositories/profile"
+	"devSync/internal/repositories/profile"
 	"devSync/utils/bcrypt"
 )
 
 type Service interface {
-	GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error) 
+	GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error)
 	UpdateProfile(ctx context.Context, userID uuid.UUID, req *request.UpdateProfileRequest) (*response.ProfileResponse, error)
 	ChangePassword(ctx context.Context, userID uuid.UUID, req *request.ChangePasswordRequest) error
 	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
 }
 
 type service struct {
-	repo profileRepo.Repository
+	repo profile.Repository
 	cfg  *config.AppConfig
 }
 
-func NewService(repo profileRepo.Repository, cfg *config.AppConfig) Service {
-	return &service{repo: repo, cfg: cfg}
+func NewService(repo profile.Repository, cfg *config.AppConfig) Service {
+	return &service{
+		repo: repo,
+		cfg:  cfg,
+	}
 }
 
 func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error) {
@@ -58,48 +61,48 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *requ
 	}
 
 	// Get or create profile
-	userProfile, err := s.repo.GetProfileByUserID(ctx, userID)
-	if err != nil && !errors.Is(err, profileRepo.ErrProfileNotFound) {
+	profile, err := s.repo.GetProfileByUserID(ctx, userID)
+	if err != nil  {
 		return nil, err
 	}
 
-	if userProfile == nil {
-		userProfile = &model.UserProfile{
+	if profile == nil {
+		profile = &model.UserProfile{
 			UserID: userID,
 		}
 	}
 
 	// Update profile fields
 	if req.Bio != "" {
-		userProfile.Bio = req.Bio
+		profile.Bio = req.Bio
 	}
 	if req.GitHubUsername != "" {
-		userProfile.GitHubUsername = req.GitHubUsername
+		profile.GitHubUsername = req.GitHubUsername
 	}
 	if req.PortfolioURL != "" {
-		userProfile.PortfolioURL = req.PortfolioURL
+		profile.PortfolioURL = req.PortfolioURL
 	}
 	if req.Location != "" {
-		userProfile.Location = req.Location
+		profile.Location = req.Location
 	}
 	if req.Skills != "" {
-		userProfile.Skills = req.Skills
+		profile.Skills = req.Skills
 	}
 	if req.SocialLinks != "" {
-		userProfile.SocialLinks = req.SocialLinks
+		profile.SocialLinks = req.SocialLinks
 	}
 
-	if userProfile.ID == uuid.Nil {
-		if err := s.repo.CreateProfile(ctx, userProfile); err != nil {
+	if profile.ID == uuid.Nil {
+		if err := s.repo.CreateProfile(ctx, profile); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := s.repo.UpdateProfile(ctx, userProfile); err != nil {
+		if err := s.repo.UpdateProfile(ctx, profile); err != nil {
 			return nil, err
 		}
 	}
 
-	return s.mapToProfileResponse(user, userProfile), nil
+	return s.mapToProfileResponse(user, profile), nil
 }
 
 func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req *request.ChangePasswordRequest) error {
@@ -157,7 +160,7 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 
 	return &response.ProfileResponse{
 		ID:             user.ID,
-		Name:       user.Name, 
+		Name:           user.Name,
 		Email:          user.Email,
 		AvatarURL:      avatarURL,
 		Bio:            bio,
