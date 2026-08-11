@@ -40,59 +40,40 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
       console.error('Failed to upload avatar:', error);
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const getInitials = () => {
     if (!profile) return 'U';
-    return profile.Name
-      ?.split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'U';
+    return profile.name?.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
   };
 
   return (
-    <div className="relative">
-      <div
-        className={`relative ${sizeMap[size]} rounded-full ring-2 ring-white/10 overflow-hidden bg-white/5`}
-      >
+    <div className="relative group">
+      <div className={`relative ${sizeMap[size]} rounded-full ring-4 ring-white/10 overflow-hidden bg-gradient-to-br from-white/10 to-white/5`}>
         {profile?.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={profile.Name}
-            className="h-full w-full object-cover"
-          />
+          <img src={profile.avatar_url} alt={profile.name} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-medium text-white/60">
-            {getInitials()}
+          <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/60">{getInitials()}</div>
+        )}
+        {isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
           </div>
         )}
-
-        {isUploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <Loader2 className="h-6 w-6 animate-spin text-white" />
+        {editable && !isUploading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <Camera className="h-8 w-8 text-white" />
           </div>
         )}
       </div>
-
       {editable && (
         <>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="absolute -bottom-1 -right-1 rounded-full bg-white p-1.5 text-black shadow-lg transition-all hover:scale-105 disabled:opacity-50"
-          >
+          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="absolute -bottom-1 -right-1 rounded-full bg-white p-1.5 text-black shadow-lg transition-all hover:scale-110 disabled:opacity-50">
             <Camera className="h-3.5 w-3.5" />
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleFileChange} className="hidden" />
         </>
       )}
     </div>

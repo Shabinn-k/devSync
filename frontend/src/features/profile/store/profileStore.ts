@@ -9,7 +9,6 @@ interface ProfileState {
   isSaving: boolean;
   error: string | null;
 
-  // Actions
   fetchProfile: () => Promise<void>;
   updateProfile: (data: UpdateProfilePayload) => Promise<void>;
   changePassword: (data: ChangePasswordPayload) => Promise<void>;
@@ -17,7 +16,7 @@ interface ProfileState {
   clearError: () => void;
 }
 
-export const useProfileStore = create<ProfileState>((set, _get) => ({  
+export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   isLoading: false,
   isSaving: false,
@@ -56,14 +55,20 @@ export const useProfileStore = create<ProfileState>((set, _get) => ({
   updateProfile: async (data: UpdateProfilePayload) => {
     set({ isSaving: true, error: null });
     try {
+      console.log('🔵 Updating profile with data:', data);
       const response = await profileApi.updateProfile(data);
+      console.log('🟢 Update response:', response);
+      
       if (response.success && response.data) {
         set({ profile: response.data, isSaving: false });
+        console.log('🟢 Profile updated successfully');
       } else {
         throw new Error(response.message || 'Failed to update profile');
       }
     } catch (err: any) {
-      set({ error: err.message || 'Failed to update profile', isSaving: false });
+      console.error('🔴 Update profile error:', err);
+      const message = err.response?.data?.message || err.message || 'Failed to update profile';
+      set({ error: message, isSaving: false });
       throw err;
     }
   },
@@ -77,7 +82,8 @@ export const useProfileStore = create<ProfileState>((set, _get) => ({
       }
       set({ isSaving: false });
     } catch (err: any) {
-      set({ error: err.message || 'Failed to change password', isSaving: false });
+      const message = err.response?.data?.message || err.message || 'Failed to change password';
+      set({ error: message, isSaving: false });
       throw err;
     }
   },
@@ -96,7 +102,8 @@ export const useProfileStore = create<ProfileState>((set, _get) => ({
       }
       throw new Error(response.message || 'Failed to upload avatar');
     } catch (err: any) {
-      set({ error: err.message || 'Failed to upload avatar', isSaving: false });
+      const message = err.response?.data?.message || err.message || 'Failed to upload avatar';
+      set({ error: message, isSaving: false });
       throw err;
     }
   },

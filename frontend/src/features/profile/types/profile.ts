@@ -1,6 +1,6 @@
 export interface Profile {
   id: string;
-  name: string;         
+  name: string;
   email: string;
   avatar_url: string;
   bio: string;
@@ -15,8 +15,7 @@ export interface Profile {
 }
 
 export interface UpdateProfilePayload {
-  name?: string;        
-  username?: string;
+  name?: string;
   bio?: string;
   skills?: string[];
   github_username?: string;
@@ -36,4 +35,13 @@ export interface ProfileStats {
   tasks: number;
   teams: number;
   completed_tasks: number;
+  active_tasks: number;
+}
+
+export interface ActivityItem {
+  id: string;
+  type: 'task' | 'project' | 'team' | 'profile';
+  action: string;
+  title: string;
+  time: string;
 }
