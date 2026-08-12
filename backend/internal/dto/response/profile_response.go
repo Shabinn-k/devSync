@@ -20,3 +20,17 @@ type ProfileResponse struct {
 	CreatedAt      time.Time          `json:"created_at"`
 	UpdatedAt      time.Time          `json:"updated_at"`
 }
+
+// ✅ Add GitHub contributions response
+type GitHubContribution struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+	Level int    `json:"level"`
+}
+
+type GitHubContributionsResponse struct {
+	Username      string               `json:"username"`
+	Total         int                  `json:"total"`
+	Contributions []GitHubContribution `json:"contributions"`
+	AveragePerDay int                  `json:"average_per_day"`
+}

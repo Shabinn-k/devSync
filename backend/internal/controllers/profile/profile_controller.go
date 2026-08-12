@@ -2,6 +2,8 @@ package profile
 
 import (
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -99,7 +101,6 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Validate file type
 	allowedTypes := []string{"image/jpeg", "image/png", "image/webp", "image/gif"}
 	fileType := file.Header.Get("Content-Type")
 	allowed := false
@@ -114,14 +115,27 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// Validate file size (max 2MB)
 	if file.Size > 2*1024*1024 {
 		response.Error(c, http.StatusBadRequest, "File size too large. Max 2MB")
 		return
 	}
 
-	// TODO: Upload to S3 or local storage
-	avatarURL := "/uploads/avatars/" + userUUID.String() + ".png"
+	uploadDir := "./uploads/avatars"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		response.Error(c, http.StatusInternalServerError, "Failed to create upload directory")
+		return
+	}
+
+	ext := filepath.Ext(file.Filename)
+	filename := userUUID.String() + ext
+	filePath := filepath.Join(uploadDir, filename)
+
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		response.Error(c, http.StatusInternalServerError, "Failed to save avatar")
+		return
+	}
+
+	avatarURL := "/uploads/avatars/" + filename
 
 	if err := h.service.UpdateAvatar(c.Request.Context(), userUUID, avatarURL); err != nil {
 		response.Error(c, http.StatusInternalServerError, "Failed to update avatar")
@@ -132,6 +146,21 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		"message":    "Avatar uploaded successfully",
 		"avatar_url": avatarURL,
 	})
+}
+
+func (h *Controller) GetGitHubContributions(c *gin.Context) {
+	userUUID, err := getUserUUID(c)
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	result, err := h.service.GetGitHubContributions(c.Request.Context(), userUUID)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	response.Success(c, result)
 }
 
 func getUserUUID(c *gin.Context) (uuid.UUID, error) {

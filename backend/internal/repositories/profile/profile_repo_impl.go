@@ -80,3 +80,19 @@ func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarU
 
 	return nil
 }
+
+// ✅ Add this method
+func (r *repository) GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error) {
+	var profile model.UserProfile
+	err := r.db.WithContext(ctx).
+		Select("github_username").
+		Where("user_id = ?", userID).
+		First(&profile).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", ErrProfileNotFound
+		}
+		return "", err
+	}
+	return profile.GitHubUsername, nil
+}

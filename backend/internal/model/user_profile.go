@@ -10,11 +10,11 @@ type UserProfile struct {
 	UserID         uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex"`
 	AvatarURL      string     `gorm:"type:text"`
 	Bio            string     `gorm:"type:text"`
-	Skills         string     `gorm:"type:text"`        // JSON array: ["React","Go","TypeScript"]
+	Skills         string     `gorm:"type:text"`        
 	GitHubUsername string     `gorm:"size:100"`
 	PortfolioURL   string     `gorm:"size:200"`
 	Location       string     `gorm:"size:100"`
-	SocialLinks    string     `gorm:"type:text"`        // JSON object: {"linkedin":"url","github":"url"}
+	SocialLinks    string     `gorm:"type:text"`        
 
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

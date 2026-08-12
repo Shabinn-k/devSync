@@ -1,23 +1,26 @@
 import { create } from 'zustand';
 import { profileApi } from '../api/profileApi';
-import type { Profile, UpdateProfilePayload, ChangePasswordPayload } from '../types/profile';
+import type { Profile, UpdateProfileRequest, ChangePasswordRequest, ProfileStats } from '../types/profile';
 import { useAuthStore } from '../../../stores/authStore';
 
 interface ProfileState {
   profile: Profile | null;
+  stats: ProfileStats | null;
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
 
+  
   fetchProfile: () => Promise<void>;
-  updateProfile: (data: UpdateProfilePayload) => Promise<void>;
-  changePassword: (data: ChangePasswordPayload) => Promise<void>;
+  updateProfile: (data: UpdateProfileRequest) => Promise<void>;
+  changePassword: (data: ChangePasswordRequest) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
-  clearError: () => void;
+  clearError: () => void;  // ✅ Add this
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
+  stats: null,
   isLoading: false,
   isSaving: false,
   error: null,
@@ -32,14 +35,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       console.log('🔵 Fetching profile...');
-      const response = await profileApi.getProfile();
-      console.log('🟢 Profile response:', response);
+      const profile = await profileApi.getMe();
+      console.log('🟢 Profile fetched:', profile);
       
-      if (response.success && response.data) {
-        set({ profile: response.data, isLoading: false });
-      } else {
-        throw new Error(response.message || 'Failed to fetch profile');
-      }
+      set({ profile, isLoading: false });
     } catch (err: any) {
       console.error('🔴 Profile fetch error:', err);
       if (err.response?.status === 401) {
@@ -52,37 +51,30 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  updateProfile: async (data: UpdateProfilePayload) => {
+  updateProfile: async (data: UpdateProfileRequest) => {
     set({ isSaving: true, error: null });
     try {
-      console.log('🔵 Updating profile with data:', data);
-      const response = await profileApi.updateProfile(data);
-      console.log('🟢 Update response:', response);
-      
-      if (response.success && response.data) {
-        set({ profile: response.data, isSaving: false });
-        console.log('🟢 Profile updated successfully');
-      } else {
-        throw new Error(response.message || 'Failed to update profile');
-      }
+      console.log('🔵 Updating profile:', data);
+      const updatedProfile = await profileApi.updateMe(data);
+      console.log('🟢 Profile updated:', updatedProfile);
+      set({ profile: updatedProfile, isSaving: false });
     } catch (err: any) {
-      console.error('🔴 Update profile error:', err);
       const message = err.response?.data?.message || err.message || 'Failed to update profile';
+      console.error('🔴 Update profile error:', message);
       set({ error: message, isSaving: false });
       throw err;
     }
   },
 
-  changePassword: async (data: ChangePasswordPayload) => {
+  changePassword: async (data: ChangePasswordRequest) => {
     set({ isSaving: true, error: null });
     try {
-      const response = await profileApi.changePassword(data);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to change password');
-      }
+      await profileApi.changePassword(data);
+      console.log('🟢 Password changed successfully');
       set({ isSaving: false });
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to change password';
+      console.error('🔴 Change password error:', message);
       set({ error: message, isSaving: false });
       throw err;
     }
@@ -91,22 +83,30 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   uploadAvatar: async (file: File) => {
     set({ isSaving: true, error: null });
     try {
-      const response = await profileApi.uploadAvatar(file);
-      if (response.success && response.data) {
-        const avatarUrl = response.data.avatar_url;
-        set((state) => ({
-          profile: state.profile ? { ...state.profile, avatar_url: avatarUrl } : null,
-          isSaving: false,
-        }));
-        return avatarUrl;
+      console.log('🔵 Uploading avatar:', file.name);
+      const avatarUrl = await profileApi.uploadAvatar(file);
+      console.log('🟢 Avatar uploaded:', avatarUrl);
+      
+      set((state) => ({
+        profile: state.profile ? { ...state.profile, avatar_url: avatarUrl } : null,
+        isSaving: false,
+      }));
+
+      const { user } = useAuthStore.getState();
+      if (user) {
+        const updatedUser = { ...user, avatar_url: avatarUrl };
+        localStorage.setItem('devsync_user', JSON.stringify(updatedUser));
+        useAuthStore.setState({ user: updatedUser });
       }
-      throw new Error(response.message || 'Failed to upload avatar');
+
+      return avatarUrl;
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to upload avatar';
+      console.error('🔴 Upload avatar error:', message);
       set({ error: message, isSaving: false });
       throw err;
     }
   },
 
-  clearError: () => set({ error: null }),
+  clearError: () => set({ error: null }),  // ✅ Add this
 }));

@@ -1,73 +1,103 @@
-import {  MapPin, Globe } from 'lucide-react';
-import { GithubIcon, LinkedinIcon, TwitterIcon } from './SocialIcons';
+import { Mail, MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
+import { GithubIcon } from './SocialIcons';
+import { SocialLink } from './SocialLink';
 import type { Profile } from '../types/profile';
 
-interface ProfileInformationProps {
+interface ProfileInfoProps {
   profile: Profile;
 }
 
-export const ProfileInformation = ({ profile }: ProfileInformationProps) => {
+// Shared shape both lucide-react icons and our custom SVG icons satisfy —
+// avoids the `as unknown as typeof Mail` cast that would otherwise be
+// needed to mix the two icon sources in one array. `React.ElementType` is
+// the standard way to type "any component/tag" polymorphically — lucide's
+// forwardRef-wrapped icons and our plain function components both qualify.
+type IconComponent = React.ElementType;
+
+interface InfoRow {
+  icon: IconComponent;
+  label: string;
+  value: string | null | undefined;
+  href?: string;
+}
+
+export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
+  const rows: InfoRow[] = [
+    { icon: Mail, label: 'Email', value: profile.email },
+    { icon: MapPin, label: 'Location', value: profile.location },
+    {
+      icon: GithubIcon,
+      label: 'GitHub',
+      value: profile.github_username ? `@${profile.github_username}` : null,
+      href: profile.github_username ? `https://github.com/${profile.github_username}` : undefined,
+    },
+    {
+      icon: LinkIcon,
+      label: 'Website',
+      value: profile.portfolio_url,
+      href: profile.portfolio_url ?? undefined,
+    },
+    { icon: Calendar, label: 'Joined', value: new Date(profile.created_at).toLocaleDateString() },
+  ].filter((row) => row.value);
+
   return (
     <div className="space-y-6">
-      {/* About Section */}
-      {profile.bio && (
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-2">About</h3>
-          <p className="text-sm text-white/70 leading-relaxed">{profile.bio}</p>
-        </div>
-      )}
-
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {profile.location && (
-          <div className="flex items-center gap-3 text-sm text-white/60">
-            <MapPin className="h-4 w-4 text-white/30" />
-            <span>{profile.location}</span>
-          </div>
-        )}
-        {profile.github_username && (
-          <a href={`https://github.com/${profile.github_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-white/60 hover:text-white transition-colors">
-            <GithubIcon size={16} />
-            <span>{profile.github_username}</span>
-          </a>
-        )}
-        {profile.portfolio_url && (
-          <a href={profile.portfolio_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm text-white/60 hover:text-white transition-colors">
-            <Globe className="h-4 w-4 text-white/30" />
-            <span>Portfolio</span>
-          </a>
-        )}
-      </div>
+      {/* About / Profile Information */}
+      <section>
+        <h3 className="mb-3 text-sm font-medium text-white/60">Profile Information</h3>
+        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+          {rows.map((row) => (
+            <div key={row.label} className="flex items-start gap-2.5">
+              <row.icon className="mt-0.5 h-4 w-4 shrink-0 text-white/30" />
+              <div>
+                <dt className="text-xs text-white/30">{row.label}</dt>
+                {row.href ? (
+                  <dd>
+                    <a
+                      href={row.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-white/80 hover:text-white"
+                    >
+                      {row.value}
+                    </a>
+                  </dd>
+                ) : (
+                  <dd className="text-sm text-white/80">{row.value}</dd>
+                )}
+              </div>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       {/* Skills */}
       {profile.skills && profile.skills.length > 0 && (
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-2">Skills</h3>
-          <div className="flex flex-wrap gap-2">
-            {profile.skills.map((skill, index) => (
-              <span key={index} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">{skill}</span>
+        <section>
+          <h3 className="text-sm font-medium text-white/60">Skills</h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {profile.skills.map((skill: string, index: number) => (
+              <span
+                key={index}
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition-colors hover:bg-white/10"
+              >
+                {skill}
+              </span>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Social Links */}
+      {/* Additional social links beyond GitHub/Website (e.g. Twitter, LinkedIn if present) */}
       {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-        <div>
-          <h3 className="text-xs font-medium uppercase tracking-wider text-white/40 mb-2">Connect</h3>
-          <div className="flex flex-wrap gap-3">
-            {Object.entries(profile.social_links).map(([platform, url]) => {
-              const IconMap: Record<string, any> = { github: GithubIcon, linkedin: LinkedinIcon, twitter: TwitterIcon };
-              const Icon = IconMap[platform.toLowerCase()] || Globe;
-              return (
-                <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/60 hover:border-white/30 hover:bg-white/10 hover:text-white transition-all">
-                  <Icon size={14} />
-                  {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                </a>
-              );
-            })}
+        <section>
+          <h3 className="text-sm font-medium text-white/60">Social Links</h3>
+          <div className="mt-2 flex flex-wrap gap-4">
+            {Object.entries(profile.social_links).map(([platform, url]) => (
+              <SocialLink key={platform} platform={platform} url={url} />
+            ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

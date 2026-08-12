@@ -23,7 +23,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
 
   useEffect(() => {
     if (profile) {
-      // ✅ Parse social_links if it's a string
       let socialLinksDisplay = '';
       if (profile.social_links) {
         if (typeof profile.social_links === 'string') {
@@ -59,13 +58,11 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
     setLocalError(null);
     clearError();
 
-    // ✅ Parse skills
     const skillsArray = formData.skills
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
 
-    // ✅ Parse social links from "key: value" format
     const socialLinks: Record<string, string> = {};
     if (formData.social_links.trim()) {
       formData.social_links.split('\n').forEach((line) => {
@@ -80,7 +77,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       });
     }
 
-    // ✅ Build payload - ONLY send fields that have changed
+    // ✅ Build payload matching backend expectations
     const payload: Record<string, any> = {};
     
     if (formData.name !== profile?.name) payload.name = formData.name;
@@ -89,13 +86,13 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
     if (formData.github_username !== profile?.github_username) payload.github_username = formData.github_username;
     if (formData.portfolio_url !== profile?.portfolio_url) payload.portfolio_url = formData.portfolio_url;
     
-    // ✅ Skills as comma-separated string
+    // ✅ Skills: Send as JSON string array matching backend expectations
     const currentSkills = profile?.skills?.join(', ') || '';
     if (formData.skills !== currentSkills) {
-      payload.skills = skillsArray.join(',');
+      payload.skills = JSON.stringify(skillsArray);
     }
     
-    // ✅ Social links as JSON string
+    // ✅ Social links: Send as JSON string
     const currentSocialLinks = profile?.social_links || {};
     const currentSocialStr = JSON.stringify(currentSocialLinks);
     const newSocialStr = JSON.stringify(socialLinks);
@@ -103,7 +100,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       payload.social_links = newSocialStr;
     }
 
-    // ✅ Only update if there are changes
+    // ✅ Only send if there are changes
     if (Object.keys(payload).length === 0) {
       setLocalError('No changes to save');
       return;
@@ -122,94 +119,137 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
   const displayError = error || localError;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-4">
-      <div className="flex items-center justify-between sticky top-0 bg-[#0a0a0a] py-2 z-10">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-5"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-white/10 p-1.5"><User className="h-4 w-4 text-white" /></div>
-          <h2 className="text-lg font-bold text-white">Edit Profile</h2>
+          <User className="h-4 w-4 text-white/40" />
+          <h2 className="text-sm font-medium text-white">Edit Profile</h2>
         </div>
-        <button onClick={onClose} className="rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white"><X size={18} /></button>
+        <button
+          onClick={onClose}
+          className="rounded p-1 text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {displayError && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-400">
+        <div className="rounded border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-400">
           {displayError}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <AuthInput
-          label="Full Name"
-          type="text"
-          placeholder="John Doe"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="py-2 text-sm"
-        />
-        
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium uppercase tracking-wider text-white/60">Bio</label>
+        {/* Row 1: Name */}
+        <div className="space-y-1">
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+            Full Name
+          </label>
+          <input
+            type="text"
+            placeholder="John Doe"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+          />
+        </div>
+
+        {/* Row 2: Bio */}
+        <div className="space-y-1">
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+            Bio
+          </label>
           <textarea
             placeholder="Tell us about yourself..."
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-            rows={3}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none transition-colors duration-200 focus:border-white/40"
+            rows={2}
+            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
           />
         </div>
 
-        <AuthInput
-          label="Skills (comma separated)"
-          type="text"
-          placeholder="React, TypeScript, Go"
-          value={formData.skills}
-          onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-          className="py-2 text-sm"
-        />
+        {/* Row 3: Skills */}
+        <div className="space-y-1">
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+            Skills (comma separated)
+          </label>
+          <input
+            type="text"
+            placeholder="React, TypeScript, Go"
+            value={formData.skills}
+            onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
+            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+          />
+        </div>
 
-        <AuthInput
-          label="GitHub Username"
-          type="text"
-          placeholder="johndoe"
-          value={formData.github_username}
-          onChange={(e) => setFormData({ ...formData, github_username: e.target.value })}
-          className="py-2 text-sm"
-        />
+        {/* Row 4: GitHub + Location */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+              GitHub Username
+            </label>
+            <input
+              type="text"
+              placeholder="johndoe"
+              value={formData.github_username}
+              onChange={(e) => setFormData({ ...formData, github_username: e.target.value })}
+              className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+              Location
+            </label>
+            <input
+              type="text"
+              placeholder="San Francisco, CA"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+            />
+          </div>
+        </div>
 
-        <AuthInput
-          label="Portfolio URL"
-          type="text"
-          placeholder="https://johndoe.dev"
-          value={formData.portfolio_url}
-          onChange={(e) => setFormData({ ...formData, portfolio_url: e.target.value })}
-          className="py-2 text-sm"
-        />
+        {/* Row 5: Portfolio */}
+        <div className="space-y-1">
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+            Portfolio URL
+          </label>
+          <input
+            type="text"
+            placeholder="https://johndoe.dev"
+            value={formData.portfolio_url}
+            onChange={(e) => setFormData({ ...formData, portfolio_url: e.target.value })}
+            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+          />
+        </div>
 
-        <AuthInput
-          label="Location"
-          type="text"
-          placeholder="San Francisco, CA"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          className="py-2 text-sm"
-        />
-
-        <div className="space-y-1.5">
-          <label className="block text-xs font-medium uppercase tracking-wider text-white/60">Social Links</label>
+        {/* Row 6: Social Links */}
+        <div className="space-y-1">
+          <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
+            Social Links
+          </label>
           <textarea
-            placeholder="github: https://github.com/johndoe&#10;linkedin: https://linkedin.com/in/johndoe"
+            placeholder="github: https://github.com/johndoe"
             value={formData.social_links}
             onChange={(e) => setFormData({ ...formData, social_links: e.target.value })}
-            rows={3}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none transition-colors duration-200 focus:border-white/40"
+            rows={2}
+            className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
           />
-          <p className="text-[10px] text-white/20">Format: platform: url (one per line)</p>
+          <p className="text-[9px] text-white/20">Format: platform: url (one per line)</p>
         </div>
 
+        {/* Save Button */}
         <button
           type="submit"
           disabled={isSaving}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-2.5 text-sm font-semibold text-black transition-all hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex w-full items-center justify-center gap-2 rounded bg-white py-2.5 text-sm font-medium text-black transition-all hover:bg-white/90 disabled:opacity-50"
         >
           {isSaving ? (
             <>

@@ -1,7 +1,12 @@
 export { ProfileAvatar } from './ProfileAvatar';
 export { ProfileHeader } from './ProfileHeader';
+export { ProfileInfo } from './ProfileInfo';
 export { ProfileStats } from './ProfileStats';
-export { ProfileInformation } from './ProfileInfo';
+export { ProfileActivity } from './ProfileActivity';
+export { ProfileWorkspace } from './ProfileWorkspace';
+export { ProfileIntegrations } from './ProfileIntegrations';
+export { ProfileSecurity } from './ProfileSecurity';
+export { ProfileModal } from './ProfileModal';
 export { EditProfileForm } from './EditProfileForm';
 export { ChangePasswordForm } from './ChangePasswordForm';
-export { GithubIcon, LinkedinIcon, TwitterIcon } from './SocialIcons';
+export { GithubIcon, LinkedinIcon, GlobeIcon, X } from './SocialIcons';

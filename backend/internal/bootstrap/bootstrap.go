@@ -23,10 +23,11 @@ import (
 func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
 	router := gin.Default()
 
-	// Middleware
 	router.Use(middleware.CORSMiddleware())
 
-	// Cache
+	// Static files route for uploads (avatars, attachments)
+	router.Static("/uploads", "./uploads")
+
 	cache := cache.NewRedisCache(redisClient)
 
 	// Auth module
@@ -35,7 +36,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	authCtrl := auth.NewController(authSvc)
 	routes.RegisterAuthRoutes(router, authCtrl, authRepo, cfg)
 
-	// ✅ Profile module - Make sure this is registered
+	// Profile module - with GitHub contributions
 	profileRepo := profileRepo.NewRepository(db)
 	profileSvc := profileService.NewService(profileRepo, cfg)
 	profileCtrl := profile.NewController(profileSvc)
