@@ -1,4 +1,3 @@
-// import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Bell, Menu } from 'lucide-react';
 import { useProfileStore } from '../../profile/store/profileStore';
@@ -11,6 +10,27 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
   const { profile } = useProfileStore();
   const { user } = useAuthStore();
+ 
+  const avatarUrl = profile?.avatar_url;
+   
+  const getFullAvatarUrl = (url?: string | null) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const backendBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    const cleanBase = backendBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    return `${cleanBase}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  const fullAvatarUrl = getFullAvatarUrl(avatarUrl);
+  
+  // ✅ Get name for initials (from profile first, then user)
+  const displayName = profile?.name || user?.name || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'U';
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-black/95 backdrop-blur-sm">
@@ -35,9 +55,20 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
           </button>
           <Link
             to="/profile"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white transition-colors hover:bg-white/20"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white transition-colors hover:bg-white/20 overflow-hidden"
           >
-            {profile?.name?.[0]?.toUpperCase() || user?.name?.[0]?.toUpperCase() || 'U'}
+            {fullAvatarUrl ? (
+              <img 
+                src={fullAvatarUrl} 
+                alt={displayName} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span className="text-sm font-medium text-white">{initials}</span>
+            )}
           </Link>
         </div>
       </div>

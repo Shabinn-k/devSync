@@ -13,8 +13,7 @@ export const profileApi = {
     return res.data.data;
   },
 
-  updateMe: async (payload: Record<string, any>): Promise<Profile> => {
-    // ✅ Send only the fields that exist in the backend request DTO
+  updateMe: async (payload: Record<string, any>): Promise<Profile> => { 
     const cleanPayload: Record<string, any> = {};
     
     if (payload.name !== undefined) cleanPayload.name = payload.name;
