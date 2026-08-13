@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { 
   LayoutGrid, MessageSquare, GitBranch, FileText,
   GitPullRequest, Shield, Bell, BarChart3,
-  Clock, Users, Zap, Lock
 } from 'lucide-react';
 
 const features = [

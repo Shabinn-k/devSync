@@ -46,7 +46,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.list();
-      // ✅ Fix: Ensure we always return an array
       set({ organizations: data || [], isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to fetch organizations', isLoading: false });
@@ -57,7 +56,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.getMyOrganizations();
-      // ✅ Fix: Ensure we always return an array
       set({ organizations: data || [], isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to fetch organizations', isLoading: false });
@@ -68,7 +66,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.getById(id);
-      // ✅ Fix: Ensure we handle null/undefined
       set({ currentOrganization: data || null, isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to fetch organization', isLoading: false });
@@ -79,7 +76,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isSaving: true, error: null });
     try {
       const org = await organizationApi.create(data);
-      // ✅ Fix: Ensure org exists before adding
       if (org) {
         set((state) => ({
           organizations: [org, ...state.organizations],
@@ -99,7 +95,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isSaving: true, error: null });
     try {
       const updated = await organizationApi.update(id, data);
-      // ✅ Fix: Only update if we got data back
       if (updated) {
         set((state) => ({
           organizations: state.organizations.map((org) => (org.id === id ? updated : org)),
@@ -136,7 +131,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.getMembers(organizationId);
-      // ✅ Fix: Ensure we always return an array
       set({ members: data || [], isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to fetch members', isLoading: false });
@@ -147,7 +141,6 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     set({ isSaving: true, error: null });
     try {
       const member = await organizationApi.addMember(organizationId, data);
-      // ✅ Fix: Only update if we got data back
       if (member) {
         set((state) => ({
           members: [...state.members, member],

@@ -99,7 +99,6 @@ const OrganizationDetailPage = () => {
   return (
     <div className="min-h-screen bg-black px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* Back Button */}
         <button
           onClick={() => navigate('/organizations')}
           className="group mb-6 flex items-center gap-2 text-sm text-white/40 transition-all hover:text-white"
@@ -117,7 +116,6 @@ const OrganizationDetailPage = () => {
           </div>
         )}
 
-        {/* Header */}
         <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8">
           <div className="flex items-start justify-between">
             <div>
@@ -175,7 +173,6 @@ const OrganizationDetailPage = () => {
           </div>
         </div>
 
-        {/* Members Section */}
         <div className="mt-6 rounded-2xl border border-white/5 bg-white/5 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-white/60">Members</h3>
@@ -236,7 +233,6 @@ const OrganizationDetailPage = () => {
         </div>
       </div>
 
-      {/* Add Member Modal */}
       {showAddMember && id && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/95 p-6">
@@ -249,7 +245,6 @@ const OrganizationDetailPage = () => {
         </div>
       )}
 
-      {/* Edit Organization Modal */}
       {showEditModal && currentOrganization && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/95 p-6">
@@ -262,7 +257,6 @@ const OrganizationDetailPage = () => {
         </div>
       )}
 
-      {/* Delete Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-black/95 p-6">

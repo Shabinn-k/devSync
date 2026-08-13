@@ -18,7 +18,7 @@ interface ProfileState {
   clearError: () => void;  
 }
 
-export const useProfileStore = create<ProfileState>((set, get) => ({
+export const useProfileStore = create<ProfileState>((set) => ({
   profile: null,
   stats: null,
   isLoading: false,

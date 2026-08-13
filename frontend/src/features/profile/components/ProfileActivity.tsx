@@ -1,12 +1,9 @@
 import { Activity as ActivityIcon, CheckCircle2, FolderPlus, Users, UserPen, RefreshCw } from 'lucide-react';
 
-// This mirrors the shape of `activity_logs` (action, entity_type, created_at)
-// so it slots in cleanly once an activity endpoint/store exists — nothing
-// here is invented, it's the extensibility seam the brief asked for.
 export interface ActivityItem {
   id: string;
-  action: string;       // e.g. "task.completed", "project.created", "team.joined"
-  label: string;         // human-readable line, e.g. "Completed a task"
+  action: string;      
+  label: string;         
   createdAt: string;
 }
 

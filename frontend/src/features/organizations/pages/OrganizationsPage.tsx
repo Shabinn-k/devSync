@@ -17,7 +17,6 @@ const OrganizationsPage = () => {
   return (
     <div className="min-h-screen bg-black px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/dashboard')}
@@ -38,7 +37,6 @@ const OrganizationsPage = () => {
         <h1 className="text-2xl font-bold text-white">Organizations</h1>
         <p className="mt-1 text-sm text-white/40">Manage your organizations and teams</p>
 
-        {/* Content */}
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-white/40" />
@@ -74,7 +72,6 @@ const OrganizationsPage = () => {
         )}
       </div>
 
-      {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/95 p-6">

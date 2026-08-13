@@ -22,19 +22,18 @@ import { useProfileStore } from '../../profile/store/profileStore';
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { stats, activities, tasks, isLoading, error, fetchDashboard } = useDashboardStore(); // ✅ Changed fetchAll to fetchDashboard
+  const { stats, activities, tasks, isLoading, error, fetchDashboard } = useDashboardStore(); 
   const { user, isAuthenticated } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('✅ User is authenticated, fetching dashboard data');
+      console.log('User is authenticated, fetching dashboard data');
       fetchProfile();
-      fetchDashboard(); // ✅ Single API call
+      fetchDashboard(); 
     }
   }, [isAuthenticated, fetchProfile, fetchDashboard]);
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black">
@@ -49,7 +48,6 @@ const DashboardPage = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-black">
@@ -70,7 +68,6 @@ const DashboardPage = () => {
     );
   }
 
-  // Mock data fallback if API returns empty
   const displayStats = stats || {
     projects: 0,
     tasks: 0,
@@ -94,7 +91,6 @@ const DashboardPage = () => {
         <DashboardHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
         <main className="p-4 sm:p-6 lg:p-8">
-          {/* Welcome Section */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
               Welcome back, {displayName}
@@ -104,7 +100,6 @@ const DashboardPage = () => {
             </p>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatsCard 
               icon={<FolderKanban className="h-5 w-5 text-white/30" />}
@@ -132,9 +127,7 @@ const DashboardPage = () => {
             />
           </div>
 
-          {/* Two Column Layout */}
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {/* Recent Activity */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
@@ -153,7 +146,6 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            {/* Upcoming Tasks */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-white">Upcoming Tasks</h3>
@@ -173,7 +165,6 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

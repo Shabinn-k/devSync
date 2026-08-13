@@ -1,9 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 
-// ============ PUBLIC PAGES ============
 import LandingPage from "../features/Landing/pages/LandingPage";
 
-// ============ AUTH PAGES ============
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import VerifyEmailPage from "../features/auth/pages/VerifyEmailPage";
@@ -13,22 +11,17 @@ import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
 import OrganizationsPage from '../features/organizations/pages/OrganizationsPage';
 import OrganizationDetailPage from '../features/organizations/pages/OrganizationDetailPage';
 
-// ============ PROTECTED PAGES ============
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import ProfilePage from "../features/profile/pages/ProfilePage";
 
-// ============ GUARDS ============
 import { ProtectedRoute, PublicRoute } from "../components/routes/Guards";
 
 export const AppRoutes = () => {
   return (
     <Routes>
-      {/* ============ PUBLIC ROUTES ============ */}
-      
-      {/* Landing Page */}
+    
       <Route path="/" element={<LandingPage />} />
 
-      {/* Authentication Routes */}
       <Route
         path="/login"
         element={
@@ -82,8 +75,6 @@ export const AppRoutes = () => {
           </PublicRoute>
         }
       />
-
-      {/* ============ PROTECTED ROUTES ============ */}
       
       <Route
         path="/dashboard"
@@ -120,7 +111,6 @@ export const AppRoutes = () => {
   }
 />
 
-      {/* ============ 404 - FALLBACK ============ */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -25,7 +25,6 @@ export const CreateOrganizationModal = ({ onClose, onSuccess }: CreateOrganizati
     e.preventDefault();
     setError(null);
 
-    // Generate slug from name if not provided
     const slug = formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
     try {
@@ -47,7 +46,6 @@ export const CreateOrganizationModal = ({ onClose, onSuccess }: CreateOrganizati
       transition={{ duration: 0.3 }}
       className="space-y-5"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-white/40" />
@@ -75,7 +73,6 @@ export const CreateOrganizationModal = ({ onClose, onSuccess }: CreateOrganizati
           value={formData.name}
           onChange={(e) => {
             setFormData({ ...formData, name: e.target.value });
-            // Auto-generate slug from name
             if (!formData.slug) {
               const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
               setFormData((prev) => ({ ...prev, slug }));

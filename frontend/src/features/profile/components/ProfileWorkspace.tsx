@@ -1,9 +1,5 @@
 import { FolderKanban, ArrowUpRight } from 'lucide-react';
 
-// Mirrors project_members join → projects (SDD-style: name, role, status,
-// last activity). No fetch is wired here yet — same extensibility pattern
-// as ProfileActivity. Pass `projects` once a workspace/project-list query
-// exists in profileStore or a shared dashboard store.
 export interface WorkspaceProject {
   id: string;
   name: string;

@@ -7,7 +7,7 @@ interface ProfileHeaderProps {
   profile: Profile;
   isOwnProfile: boolean;
   onEditClick?: () => void;
-  isOnline?: boolean; // no presence store shown yet — defaults to hidden, not fabricated
+  isOnline?: boolean; 
 }
 
 const formatExternalUrl = (url?: string | null): string => {
@@ -30,9 +30,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick, isOnline }: 
       <div className="flex-1 text-center sm:text-left">
         <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
           <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
-          {/* NOTE: no `username` field exists on Profile today — omitted
-              rather than invented, per the "don't fabricate fields" rule.
-              Add it here once the backend/type supports it. */}
+        
           {profile.is_verified && (
             <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">
               Verified

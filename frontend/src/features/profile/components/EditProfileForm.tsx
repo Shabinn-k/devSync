@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, User, Save, Loader2 } from 'lucide-react';
-import { AuthInput } from '../../auth/components/AuthInput';
 import { useProfileStore } from '../store/profileStore';
 
 interface EditProfileFormProps {
@@ -107,7 +106,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       });
     }
 
-    // ✅ Build payload matching backend expectations
     const payload: Record<string, any> = {};
     
     if (formData.name !== profile?.name) payload.name = formData.name;
@@ -122,13 +120,11 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
     if (cleanUsername !== profile?.github_username) payload.github_username = cleanUsername;
     if (formData.portfolio_url !== profile?.portfolio_url) payload.portfolio_url = formData.portfolio_url;
     
-    // ✅ Skills: Send as JSON string array matching backend expectations
     const currentSkills = profile?.skills?.join(', ') || '';
     if (formData.skills !== currentSkills) {
       payload.skills = JSON.stringify(skillsArray);
     }
     
-    // ✅ Social links: Send as JSON string
     const currentSocialLinks = profile?.social_links || {};
     const currentSocialStr = JSON.stringify(currentSocialLinks);
     const newSocialStr = JSON.stringify(socialLinks);
@@ -136,7 +132,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       payload.social_links = newSocialStr;
     }
 
-    // ✅ Only send if there are changes
     if (Object.keys(payload).length === 0) {
       setLocalError('No changes to save');
       return;
@@ -161,7 +156,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       transition={{ duration: 0.3 }}
       className="space-y-5"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-white/40" />
@@ -182,7 +176,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        {/* Row 1: Name */}
         <div className="space-y-1">
           <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
             Full Name
@@ -196,7 +189,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           />
         </div>
 
-        {/* Row 2: Bio */}
         <div className="space-y-1">
           <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
             Bio
@@ -210,7 +202,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           />
         </div>
 
-        {/* Row 3: Skills */}
         <div className="space-y-1">
           <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
             Skills (comma separated)
@@ -224,7 +215,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           />
         </div>
 
-        {/* Row 4: GitHub + Location */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
@@ -252,7 +242,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           </div>
         </div>
 
-        {/* Row 5: Portfolio */}
         <div className="space-y-1">
           <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
             Portfolio URL
@@ -266,7 +255,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           />
         </div>
 
-        {/* Row 6: Social Links */}
         <div className="space-y-1">
           <label className="block text-[10px] font-medium uppercase tracking-wider text-white/40">
             Social Links
@@ -281,7 +269,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           <p className="text-[9px] text-white/20">Format: platform: url (one per line)</p>
         </div>
 
-        {/* Save Button */}
         <button
           type="submit"
           disabled={isSaving}

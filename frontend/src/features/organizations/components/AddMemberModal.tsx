@@ -23,7 +23,6 @@ export const AddMemberModal = ({ organizationId, onClose, onSuccess }: AddMember
     setLocalError(null);
     clearError();
 
-    // ✅ Fix: Validate at least one identifier
     if (!email.trim() && !userId.trim()) {
       setLocalError('Please provide an email or User ID');
       return;
@@ -31,7 +30,6 @@ export const AddMemberModal = ({ organizationId, onClose, onSuccess }: AddMember
 
     try {
       await addMember(organizationId, {
-        // ✅ Fix: Only send non-empty fields
         ...(userId.trim() && { user_id: userId.trim() }),
         ...(email.trim() && { email: email.trim() }),
         role,
@@ -52,7 +50,6 @@ export const AddMemberModal = ({ organizationId, onClose, onSuccess }: AddMember
       transition={{ duration: 0.3 }}
       className="space-y-5"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-white/40" />

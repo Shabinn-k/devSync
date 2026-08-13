@@ -23,7 +23,6 @@ const getContributionColor = (count: number, level: number) => {
 
 const dayLabels = ['Mon', 'Wed', 'Fri'];
 
-// ✅ Helper to extract just the username from full URL or username
 const extractUsername = (input: string): string => {
   if (!input) return '';
   let username = input.replace(/^https?:\/\/github\.com\//, '');
@@ -38,7 +37,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
   const [error, setError] = useState<string | null>(null);
   const [totalContributions, setTotalContributions] = useState(0);
   
-  // ✅ Extract clean username
   const cleanUsername = githubUsername ? extractUsername(githubUsername) : '';
 
   useEffect(() => {
@@ -79,7 +77,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     fetchContributions();
   }, [cleanUsername]);
 
-  // If no username or error - show clean error state
   if (!cleanUsername || error) {
     return (
       <div className="rounded-2xl border border-white/5 bg-white/5 p-5">
@@ -118,7 +115,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     );
   }
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-white/5 bg-white/5 p-5">
@@ -141,7 +137,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     );
   }
 
-  // No contributions
   if (contributions.length === 0) {
     return (
       <div className="rounded-2xl border border-white/5 bg-white/5 p-5">
@@ -164,7 +159,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     );
   }
 
-  // Group contributions into weeks
   const weeks: Contribution[][] = [];
   for (let i = 0; i < contributions.length; i += 7) {
     weeks.push(contributions.slice(i, i + 7));
@@ -176,7 +170,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
 
   return (
     <div className="rounded-2xl border border-white/5 bg-white/5 p-5">
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <div className="rounded-lg bg-white/5 p-1.5">
@@ -199,10 +192,8 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
         </div>
       </div>
 
-      {/* Contribution Grid */}
       <div className="w-full overflow-x-auto">
         <div className="flex gap-1.5">
-          {/* Day labels */}
           <div className="flex flex-col gap-1.5 pr-1.5 pt-1.5">
             {dayLabels.map((label, i) => (
               <div key={i} className="h-[18px] w-4 text-[8px] text-white/20 flex items-center">
@@ -211,7 +202,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
             ))}
           </div>
           
-          {/* Contribution weeks */}
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-1.5">
               {week.map((day, dayIndex) => (
@@ -226,7 +216,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
         </div>
       </div>
 
-      {/* Legend */}
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-[9px] text-white/20">Less</span>

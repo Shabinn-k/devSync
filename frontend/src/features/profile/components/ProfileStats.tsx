@@ -2,11 +2,6 @@ import { FolderKanban, CheckSquare, Users, Star } from 'lucide-react';
 import type { ProfileStats as ProfileStatsType } from '../types/profile';
 
 interface ProfileStatsProps {
-  // Optional on purpose: no stats-fetching call exists in profileStore today
-  // (fetchProfile/updateProfile/changePassword/uploadAvatar only). Rendering
-  // this with `stats` absent shows a clean "—" instead of a fabricated 0,
-  // per the "do not invent numbers" rule — 0 reads as "zero tasks", which
-  // is a false claim if the data was never actually fetched.
   stats?: ProfileStatsType;
 }
 

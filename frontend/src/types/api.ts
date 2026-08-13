@@ -1,5 +1,3 @@
-// ============ API Response Types ============
-
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
@@ -7,19 +5,15 @@ export interface ApiResponse<T = any> {
   errors?: Record<string, string[]>;
 }
 
-// ============ User Types ============
-
 export interface User {
   id: string;
-  name: string;        // ✅ Changed from 'Name' to 'name' (lowercase)
+  name: string;
   email: string;
   is_verified: boolean;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 }
-
-// ============ Auth Payload Types ============
 
 export interface LoginPayload {
   email: string;
@@ -66,20 +60,12 @@ export interface LogoutPayload {
   refresh_token: string;
 }
 
-// ============ OTP Types ============
-
-// Remove duplicate VerifyOTPPayload - keep only one
-
-// ============ Token Types ============
-
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
   token_type: string;
   expires_in: number;
 }
-
-// ============ Auth Response Types ============
 
 export interface AuthResponse {
   user: User;

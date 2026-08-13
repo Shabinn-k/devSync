@@ -1,11 +1,3 @@
-// RECONSTRUCTED FILE — not shown to me in the original conversation.
-// Your ProfilePage.tsx comment said "✅ ONLY use custom icons" for GitHub/
-// LinkedIn/Twitter rather than lucide-react's generic icons, which is why
-// these exist as their own file instead of just using lucide's <Github />.
-// Simple inline SVGs, sized/colored via currentColor so they inherit
-// whatever text color class is applied by the parent (matches how they're
-// used everywhere: `text-white/40`, `hover:text-white`, etc.)
-
 interface IconProps {
   size?: number;
   className?: string;
@@ -50,8 +42,6 @@ export const TwitterIcon = ({ size = 16, className }: IconProps) => (
   </svg>
 );
 
-// Alias so `import { X } from './SocialIcons'` (used in your barrel/original
-// ProfilePage) still resolves — same icon as TwitterIcon.
 export const X = TwitterIcon;
 
 export const GlobeIcon = ({ size = 16, className }: IconProps) => (

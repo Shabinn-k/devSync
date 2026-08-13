@@ -27,14 +27,12 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
 
     setUploadError(null);
 
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       setUploadError('Please upload a JPEG, PNG, WEBP, or GIF image.');
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       setUploadError('File size must be less than 2MB.');
       return;

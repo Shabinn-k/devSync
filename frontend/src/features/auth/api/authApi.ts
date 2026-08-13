@@ -17,7 +17,6 @@ import type {
 } from '../../../types/api';
 
 export const authApi = {
-  // ============ AUTHENTICATION ============
   
   login: (data: LoginPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
@@ -31,7 +30,6 @@ export const authApi = {
   resendOTP: (data: ResendOTPPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/resend-otp', data).then(res => res.data),
 
-  // ============ PASSWORD RESET ============
 
   forgotPassword: (data: ForgotPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/forgot-password', data).then(res => res.data),
@@ -42,15 +40,11 @@ export const authApi = {
   resetPassword: (data: ResetPasswordPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password', data).then(res => res.data),
 
-  // ============ TOKEN MANAGEMENT ============
-
   refreshToken: (data: RefreshTokenPayload) =>
     apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', data).then(res => res.data),
 
   logout: (data: LogoutPayload) =>
     apiClient.post<ApiResponse<MessageResponse>>('/auth/logout', data).then(res => res.data),
-
-  // ============ USER ============
 
   getMe: () =>
     apiClient.get<ApiResponse<User>>('/auth/me').then(res => res.data),

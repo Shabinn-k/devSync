@@ -54,7 +54,6 @@ export const ChangePasswordForm = ({ onClose }: ChangePasswordFormProps) => {
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-white/10 p-2">
@@ -73,7 +72,6 @@ export const ChangePasswordForm = ({ onClose }: ChangePasswordFormProps) => {
         </button>
       </div>
 
-      {/* Success */}
       {success && (
         <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 p-2 text-xs text-green-400">
           <CheckCircle2 className="h-4 w-4" />
@@ -81,14 +79,12 @@ export const ChangePasswordForm = ({ onClose }: ChangePasswordFormProps) => {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-400">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
         <AuthInput
           label="Current Password"

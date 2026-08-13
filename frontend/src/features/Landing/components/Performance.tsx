@@ -31,8 +31,7 @@ export const Performance = () => {
             Every interface is designed with a focus on information density and visual clarity.
           </motion.p>
         </div>
-
-        {/* Stats */}
+ 
         <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {stats.map((stat, index) => (
             <motion.div
@@ -51,7 +50,6 @@ export const Performance = () => {
           ))}
         </div>
 
-        {/* Demo Cards */}
         <div className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, x: -20 }}

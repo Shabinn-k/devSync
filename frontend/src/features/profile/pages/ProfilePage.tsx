@@ -61,7 +61,6 @@ const ProfilePage = () => {
           Back to Dashboard
         </button>
 
-        {/* Header */}
         <div className="rounded-2xl border border-white/5 bg-white/5 p-6 sm:p-8">
           <ProfileHeader
             profile={profile}
@@ -70,17 +69,14 @@ const ProfilePage = () => {
           />
         </div>
 
-        {/* Stats */}
         <div className="mt-6">
           <ProfileStats />
         </div>
 
-        {/* ✅ GitHub Contributions - Full width */}
         <div className="mt-6">
           <GitHubContributions githubUsername={profile.github_username || undefined} />
         </div>
 
-        {/* Main two-column layout on desktop, stacked on mobile/tablet */}
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <div className="rounded-2xl border border-white/5 bg-white/5 p-6">

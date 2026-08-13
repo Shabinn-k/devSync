@@ -8,7 +8,6 @@ import {
   X
 } from 'lucide-react';
 import { useAuthStore } from '../../../stores/authStore';
-import { useProfileStore } from '../../profile/store/profileStore';
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -24,8 +23,7 @@ const navigation = [
 ];
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
-  const { user, logout } = useAuthStore();
-  const { profile } = useProfileStore();
+  const {  logout } = useAuthStore();
 
   const handleLogout = async () => {
     await logout();

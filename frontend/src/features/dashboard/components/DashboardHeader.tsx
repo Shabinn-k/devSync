@@ -23,7 +23,6 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
 
   const fullAvatarUrl = getFullAvatarUrl(avatarUrl);
   
-  // ✅ Get name for initials (from profile first, then user)
   const displayName = profile?.name || user?.name || 'User';
   const initials = displayName
     .split(' ')

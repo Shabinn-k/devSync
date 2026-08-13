@@ -15,10 +15,8 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
-// ============ REQUEST INTERCEPTOR ============
 apiClient.interceptors.request.use(
   (config: CustomAxiosRequestConfig) => {
-    // Skip for login/register
     if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
       return config;
     }
@@ -36,13 +34,11 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ============ RESPONSE INTERCEPTOR ============
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    // If it's a refresh token request that failed
     if (originalRequest.url?.includes('/auth/refresh-token')) {
       localStorage.removeItem('devsync_access_token');
       localStorage.removeItem('devsync_refresh_token');
@@ -51,7 +47,6 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // If already retried
     if (originalRequest._retry) {
       localStorage.removeItem('devsync_access_token');
       localStorage.removeItem('devsync_refresh_token');
@@ -60,7 +55,6 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401
     if (error.response?.status === 401) {
       originalRequest._retry = true;
 
@@ -70,7 +64,6 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token');
         }
 
-        // Get new tokens
         const response = await axios.post<ApiResponse<TokenResponse>>(
           `${API_BASE_URL}/auth/refresh-token`,
           { refresh_token: refreshToken },
@@ -80,18 +73,15 @@ apiClient.interceptors.response.use(
         if (response.data.success && response.data.data) {
           const { access_token, refresh_token } = response.data.data;
           
-          // Store new tokens
           localStorage.setItem('devsync_access_token', access_token);
           localStorage.setItem('devsync_refresh_token', refresh_token);
           
-          // ✅ IMPORTANT: Update the original request headers
           if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
             originalRequest.headers.set('Authorization', `Bearer ${access_token}`);
           } else {
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
           }
           
-          // ✅ Retry with NEW token
           return apiClient(originalRequest);
         }
       } catch (refreshError) {

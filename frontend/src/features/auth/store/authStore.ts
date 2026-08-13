@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { authApi } from '../../features/auth/api/authApi';
+import { authApi } from '../api/authApi';
 import type {
   User,
   LoginPayload,
   RegisterPayload,
   VerifyEmailPayload,
-} from '../../types/api';
+} from '../../../types/api';
 
 interface AuthState {
   user: User | null;
@@ -18,7 +18,6 @@ interface AuthState {
   resetEmail: string | null;
   resetOTP: string | null;
 
-  // Actions
   login: (payload: LoginPayload) => Promise<{ success: boolean; error?: string }>;
   register: (payload: RegisterPayload) => Promise<User>;
   verifyEmail: (payload: VerifyEmailPayload) => Promise<void>;
@@ -226,7 +225,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         try {
           await authApi.logout({ refresh_token: currentRefresh });
         } catch {
-          // Ignore
+          
         }
       }
       localStorage.removeItem('devsync_access_token');

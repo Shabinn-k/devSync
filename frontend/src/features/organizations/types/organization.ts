@@ -43,10 +43,9 @@ export interface UpdateOrganizationRequest {
   location?: string;
 }
 
-// ✅ Fix: Backend accepts both user_id OR email
 export interface AddMemberRequest {
-  user_id?: string;  // Optional
-  email?: string;    // Optional
+  user_id?: string;  
+  email?: string;   
   role: OrganizationRole;
 }
 

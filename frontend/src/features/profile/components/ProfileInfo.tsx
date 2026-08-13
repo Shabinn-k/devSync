@@ -7,11 +7,6 @@ interface ProfileInfoProps {
   profile: Profile;
 }
 
-// Shared shape both lucide-react icons and our custom SVG icons satisfy —
-// avoids the `as unknown as typeof Mail` cast that would otherwise be
-// needed to mix the two icon sources in one array. `React.ElementType` is
-// the standard way to type "any component/tag" polymorphically — lucide's
-// forwardRef-wrapped icons and our plain function components both qualify.
 type IconComponent = React.ElementType;
 
 interface InfoRow {
@@ -42,7 +37,6 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
 
   return (
     <div className="space-y-6">
-      {/* About / Profile Information */}
       <section>
         <h3 className="mb-3 text-sm font-medium text-white/60">Profile Information</h3>
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -71,7 +65,6 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
         </dl>
       </section>
 
-      {/* Skills */}
       {profile.skills && profile.skills.length > 0 && (
         <section>
           <h3 className="text-sm font-medium text-white/60">Skills</h3>
@@ -88,7 +81,6 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
         </section>
       )}
 
-      {/* Additional social links beyond GitHub/Website (e.g. Twitter, LinkedIn if present) */}
       {profile.social_links && Object.keys(profile.social_links).length > 0 && (
         <section>
           <h3 className="text-sm font-medium text-white/60">Social Links</h3>

@@ -5,13 +5,11 @@ import { ArrowRight, Zap, Shield, GitBranch } from 'lucide-react';
 export const Hero = () => {
   return (
     <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
+\      <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
       
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center">
         
-          {/* Heading */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -25,7 +23,6 @@ export const Hero = () => {
             </span>
           </motion.h1>
 
-          {/* Description */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -37,7 +34,6 @@ export const Hero = () => {
             distraction-free environment.
           </motion.p>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -59,7 +55,6 @@ export const Hero = () => {
             </Link>
           </motion.div>
 
-          {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

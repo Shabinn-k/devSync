@@ -22,9 +22,6 @@ const socialColors: Record<string, string> = {
 export const SocialLink = ({ platform, url }: SocialLinkProps) => {
   const normalizedPlatform = platform.toLowerCase();
 
-  // Skip twitter if you don't want it
-  // if (normalizedPlatform === 'twitter') return null;
-
   const icon = socialIcons[normalizedPlatform] || <GlobeIcon size={16} />;
   const color = socialColors[normalizedPlatform] || 'hover:text-white';
   const label = platform.charAt(0).toUpperCase() + platform.slice(1);

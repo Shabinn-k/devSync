@@ -16,10 +16,6 @@ interface IntegrationRow {
   connectedLabel: string | null;
 }
 
-// "Connected" is derived from fields that already exist on Profile
-// (github_username, portfolio_url, social_links) — nothing fabricated.
-// LinkedIn only shows as connected if it's present in social_links, since
-// there's no dedicated linkedin_url field on the model today.
 const formatExternalUrl = (url?: string | null): string | null => {
   if (!url) return null;
   return url.match(/^https?:\/\//i) ? url : `https://${url}`;

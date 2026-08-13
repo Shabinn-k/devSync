@@ -8,13 +8,12 @@ export const Navbar = () => {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-black/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        {/* Logo */}
+
         <Link to="/" className="flex items-center gap-2.5">
           <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
           <span className="text-sm font-bold tracking-[0.08em] text-white">DEVSYNC</span>
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden items-center gap-8 lg:flex">
           <Link to="/features" className="text-sm text-white/60 hover:text-white transition-colors">
             Features
@@ -39,7 +38,6 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="lg:hidden text-white/60 hover:text-white"
@@ -48,7 +46,6 @@ export const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isOpen && (
         <div className="border-t border-white/5 bg-black/95 px-4 py-6 lg:hidden">
           <div className="flex flex-col space-y-4">
