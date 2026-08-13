@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -94,26 +93,55 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *requ
 	if req.Location != "" {
 		userProfile.Location = req.Location
 	}
-	if req.Skills != "" {
-		var parsedSkills []string
-		if err := json.Unmarshal([]byte(req.Skills), &parsedSkills); err == nil {
-			bytes, _ := json.Marshal(parsedSkills)
-			userProfile.Skills = string(bytes)
-		} else {
-			parts := strings.Split(req.Skills, ",")
-			var clean []string
-			for _, p := range parts {
-				p = strings.TrimSpace(p)
-				if p != "" {
-					clean = append(clean, p)
+	if req.Skills != nil {
+		var cleanSkills []string
+		switch v := req.Skills.(type) {
+		case string:
+			if err := json.Unmarshal([]byte(v), &cleanSkills); err != nil {
+				parts := strings.Split(v, ",")
+				for _, p := range parts {
+					p = strings.TrimSpace(p)
+					if p != "" {
+						cleanSkills = append(cleanSkills, p)
+					}
 				}
 			}
-			bytes, _ := json.Marshal(clean)
-			userProfile.Skills = string(bytes)
+		case []interface{}:
+			for _, item := range v {
+				if str, ok := item.(string); ok && strings.TrimSpace(str) != "" {
+					cleanSkills = append(cleanSkills, strings.TrimSpace(str))
+				}
+			}
+		case []string:
+			cleanSkills = v
 		}
+		bytes, _ := json.Marshal(cleanSkills)
+		userProfile.Skills = string(bytes)
 	}
-	if req.SocialLinks != "" {
-		userProfile.SocialLinks = req.SocialLinks
+	if req.SocialLinks != nil {
+		cleanSocial := make(map[string]string)
+		switch v := req.SocialLinks.(type) {
+		case string:
+			var parsed map[string]string
+			if err := json.Unmarshal([]byte(v), &parsed); err == nil {
+				cleanSocial = parsed
+			} else {
+				var innerStr string
+				if err := json.Unmarshal([]byte(v), &innerStr); err == nil {
+					_ = json.Unmarshal([]byte(innerStr), &cleanSocial)
+				}
+			}
+		case map[string]interface{}:
+			for k, val := range v {
+				if strVal, ok := val.(string); ok && strings.TrimSpace(strVal) != "" {
+					cleanSocial[k] = strings.TrimSpace(strVal)
+				}
+			}
+		case map[string]string:
+			cleanSocial = v
+		}
+		bytes, _ := json.Marshal(cleanSocial)
+		userProfile.SocialLinks = string(bytes)
 	}
 
 	if userProfile.ID == uuid.Nil {
@@ -169,7 +197,6 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 
 		if profile.Skills != "" {
 			if err := json.Unmarshal([]byte(profile.Skills), &skills); err != nil {
-
 				parts := strings.Split(profile.Skills, ",")
 				for _, p := range parts {
 					p = strings.TrimSpace(p)
@@ -180,7 +207,12 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 			}
 		}
 		if profile.SocialLinks != "" {
-			_ = json.Unmarshal([]byte(profile.SocialLinks), &socialLinks)
+			if err := json.Unmarshal([]byte(profile.SocialLinks), &socialLinks); err != nil {
+				var innerStr string
+				if err := json.Unmarshal([]byte(profile.SocialLinks), &innerStr); err == nil {
+					_ = json.Unmarshal([]byte(innerStr), &socialLinks)
+				}
+			}
 		}
 	}
 
@@ -208,11 +240,13 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 	}
 }
 
-
 func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) (*response.GitHubContributionsResponse, error) {
 	username, err := s.repo.GetGitHubUsername(ctx, userID)
-	if err != nil {
-		return nil, errors.New("github username not found")
+	if err != nil || username == "" {
+		profile, pErr := s.repo.GetProfileByUserID(ctx, userID)
+		if pErr == nil && profile != nil {
+			username = profile.GitHubUsername
+		}
 	}
 
 	if username == "" {
@@ -223,6 +257,9 @@ func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) 
 
 	contributions, total, err := s.fetchContributions(ctx, username)
 	if err != nil {
+		// Surface the real error instead of silently returning a fake
+		// all-zero grid — a fabricated "success" response is worse than
+		// an explicit error the frontend can show to the user.
 		return nil, err
 	}
 
@@ -234,144 +271,33 @@ func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) 
 	}, nil
 }
 
+// fetchContributions pulls real contribution-calendar data from a
+// community-maintained JSON mirror of GitHub's contribution graph
+// (https://github-contributions-api.jogruber.de). This returns the
+// same data you see on your GitHub profile, unlike scraping GitHub's
+// HTML (which changes without notice and silently breaks) or using
+// the public events API (which only reflects the last ~100 public
+// events, not your actual contribution calendar).
 func (s *service) fetchContributions(ctx context.Context, username string) ([]response.GitHubContribution, int, error) {
-	contributions, total, err := s.fetchFromContributionPage(ctx, username)
-	if err == nil && len(contributions) > 0 {
-		return contributions, total, nil
-	}
-	return s.fetchFromAPI(ctx, username)
-}
-
-func (s *service) fetchFromContributionPage(ctx context.Context, username string) ([]response.GitHubContribution, int, error) {
-	url := fmt.Sprintf("https://github.com/users/%s/contributions", username)
+	url := fmt.Sprintf("https://github-contributions-api.jogruber.de/v4/%s?y=last", username)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	req.Header.Set("Accept", "text/html,application/xhtml+xml")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound {
-			return nil, 0, errors.New("GitHub user not found")
-		}
-		return nil, 0, fmt.Errorf("GitHub contribution page returned status %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	htmlStr := string(body)
-
-	toolTipRegex := regexp.MustCompile(`<tool-tip[^>]*for="([^"]*)"[^>]*>(.*?)</tool-tip>`)
-	toolTipMatches := toolTipRegex.FindAllStringSubmatch(htmlStr, -1)
-	toolTipCountMap := make(map[string]int)
-	countRegex := regexp.MustCompile(`(\d+)\s+contribution`)
-
-	for _, tm := range toolTipMatches {
-		if len(tm) >= 3 {
-			targetID := tm[1]
-			text := tm[2]
-			if cm := countRegex.FindStringSubmatch(text); len(cm) >= 2 {
-				cnt, _ := strconv.Atoi(cm[1])
-				toolTipCountMap[targetID] = cnt
-			}
-		}
-	}
-
-	dayTagRegex := regexp.MustCompile(`<(td|rect)[^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*>`)
-	dayTags := dayTagRegex.FindAllString(htmlStr, -1)
-
-	if len(dayTags) == 0 {
-		dayTagRegex = regexp.MustCompile(`<(td|rect)[^>]*data-date="([^"]*)"[^>]*>`)
-		dayTags = dayTagRegex.FindAllString(htmlStr, -1)
-	}
-
-	if len(dayTags) == 0 {
-		return nil, 0, fmt.Errorf("no contribution data found")
-	}
-
-	reDate := regexp.MustCompile(`data-date="([^"]+)"`)
-	reLevel := regexp.MustCompile(`data-level="([^"]+)"`)
-	reCount := regexp.MustCompile(`data-count="([^"]+)"`)
-	reID := regexp.MustCompile(`id="([^"]+)"`)
-
-	var contributions []response.GitHubContribution
-	total := 0
-
-	for _, tag := range dayTags {
-		dateMatch := reDate.FindStringSubmatch(tag)
-		if len(dateMatch) < 2 {
-			continue
-		}
-		date := dateMatch[1]
-
-		level := 0
-		if levelMatch := reLevel.FindStringSubmatch(tag); len(levelMatch) >= 2 {
-			level, _ = strconv.Atoi(levelMatch[1])
-		}
-
-		count := 0
-		if countMatch := reCount.FindStringSubmatch(tag); len(countMatch) >= 2 {
-			count, _ = strconv.Atoi(countMatch[1])
-		} else if idMatch := reID.FindStringSubmatch(tag); len(idMatch) >= 2 {
-			if c, ok := toolTipCountMap[idMatch[1]]; ok {
-				count = c
-			} else if level > 0 {
-				count = level
-			}
-		} else if level > 0 {
-			count = level
-		}
-
-		contributions = append(contributions, response.GitHubContribution{
-			Date:  date,
-			Count: count,
-			Level: level,
-		})
-		total += count
-	}
-
-	if len(contributions) == 0 {
-		return nil, 0, fmt.Errorf("no valid contribution records extracted")
-	}
-
-	if len(contributions) > 56 {
-		contributions = contributions[len(contributions)-56:]
-	}
-
-	return contributions, total, nil
-}
-
-func (s *service) fetchFromAPI(ctx context.Context, username string) ([]response.GitHubContribution, int, error) {
-	url := fmt.Sprintf("https://api.github.com/users/%s/events/public?per_page=100", username)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "DevSync/1.0")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("failed to reach GitHub contributions service: %w", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, 0, errors.New("GitHub user not found")
+	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("API status: %d", resp.StatusCode)
+		return nil, 0, fmt.Errorf("GitHub contributions service returned status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -379,45 +305,40 @@ func (s *service) fetchFromAPI(ctx context.Context, username string) ([]response
 		return nil, 0, err
 	}
 
-	var events []map[string]interface{}
-	if err := json.Unmarshal(body, &events); err != nil {
-		return nil, 0, err
+	var payload struct {
+		Error         string `json:"error"`
+		Contributions []struct {
+			Date  string `json:"date"`
+			Count int    `json:"count"`
+			Level int    `json:"level"`
+		} `json:"contributions"`
 	}
 
-	contributionsMap := make(map[string]int)
-	today := time.Now()
-	oneYearAgo := today.AddDate(-1, 0, 0)
-
-	for _, event := range events {
-		createdAt, ok := event["created_at"].(string)
-		if !ok {
-			continue
-		}
-		date, err := time.Parse(time.RFC3339, createdAt)
-		if err != nil {
-			continue
-		}
-		if date.After(oneYearAgo) && date.Before(today) {
-			dateKey := date.Format("2006-01-02")
-			contributionsMap[dateKey]++
-		}
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, 0, fmt.Errorf("failed to parse contributions response: %w", err)
 	}
 
-	var contributions []response.GitHubContribution
+	if payload.Error != "" {
+		return nil, 0, fmt.Errorf("GitHub contributions service error: %s", payload.Error)
+	}
+	if len(payload.Contributions) == 0 {
+		return nil, 0, errors.New("no contribution data found for this username")
+	}
+
+	// Return the full year (matches GitHub's own contribution graph),
+	// instead of truncating to a handful of weeks — a short slice left
+	// the grid looking like a tiny cluster in the corner of the card.
+	all := payload.Contributions
+
+	contributions := make([]response.GitHubContribution, 0, len(all))
 	total := 0
-
-	for i := 56; i >= 0; i-- {
-		date := today.AddDate(0, 0, -i)
-		dateKey := date.Format("2006-01-02")
-		count := contributionsMap[dateKey]
-		level := getContributionLevel(count)
-
+	for _, c := range all {
 		contributions = append(contributions, response.GitHubContribution{
-			Date:  dateKey,
-			Count: count,
-			Level: level,
+			Date:  c.Date,
+			Count: c.Count,
+			Level: c.Level,
 		})
-		total += count
+		total += c.Count
 	}
 
 	return contributions, total, nil
@@ -435,22 +356,6 @@ func cleanGitHubUsername(username string) string {
 		username = parts[0]
 	}
 	return strings.TrimSpace(username)
-}
-
-func getContributionLevel(count int) int {
-	if count == 0 {
-		return 0
-	}
-	if count <= 2 {
-		return 1
-	}
-	if count <= 4 {
-		return 2
-	}
-	if count <= 6 {
-		return 3
-	}
-	return 4
 }
 
 func calculateAverage(contributions []response.GitHubContribution) int {

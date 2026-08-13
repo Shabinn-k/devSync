@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -10,8 +11,11 @@ import (
 
 var validate = validator.New()
 
+var slugRegex = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+
 func init() {
 	validate.RegisterValidation("password_complexity", passwordComplexity)
+	validate.RegisterValidation("slug_format", slugFormat)
 }
 
 func ValidateStruct(s interface{}) map[string]string {
@@ -34,7 +38,19 @@ func passwordComplexity(fl validator.FieldLevel) bool {
 			hasNumber = true
 		}
 	}
-	return hasUpper && hasLower && hasNumber 
+	return hasUpper && hasLower && hasNumber
+}
+
+// slugFormat validates that a slug is lowercase letters, numbers, and
+// single hyphens between segments only — e.g. "acme-corp", "team-42".
+// No leading/trailing hyphens, no consecutive hyphens, no uppercase,
+// no spaces or special characters.
+func slugFormat(fl validator.FieldLevel) bool {
+	slug := fl.Field().String()
+	if slug == "" {
+		return true // let `required` handle emptiness
+	}
+	return slugRegex.MatchString(slug)
 }
 
 func formatErrors(err error) map[string]string {
@@ -70,6 +86,12 @@ func messageFor(fe validator.FieldError) string {
 		return fmt.Sprintf("%s must match %s.", field, humanize(fe.Param()))
 	case "password_complexity":
 		return "Password must contain an uppercase, lowercase, number."
+	case "slug_format":
+		return fmt.Sprintf("%s can only contain lowercase letters, numbers, and hyphens (e.g. acme-corp).", field)
+	case "url":
+		return fmt.Sprintf("%s must be a valid URL.", field)
+	case "oneof":
+		return fmt.Sprintf("%s must be one of: %s.", field, fe.Param())
 	default:
 		return fmt.Sprintf("%s is invalid.", field)
 	}
@@ -96,4 +118,4 @@ func toSnakeCase(field string) string {
 		out.WriteRune(unicode.ToLower(r))
 	}
 	return out.String()
-}	
+}

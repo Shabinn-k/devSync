@@ -60,7 +60,9 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
           level: Math.min(Math.max(c.level, 0), 4) as 0 | 1 | 2 | 3 | 4,
         }));
 
-        setContributions(parsed.slice(-56));
+        // Show the full year the backend returns — matches GitHub's own
+        // contribution graph instead of a cramped 8-week slice.
+        setContributions(parsed);
         setTotalContributions(res.total || 0);
         setError(null);
       } catch (err: any) {
@@ -87,7 +89,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
             </div>
             <div>
               <h3 className="text-sm font-medium text-white">Contributions</h3>
-              <p className="text-[10px] text-white/30">Last 56 days</p>
+              <p className="text-[10px] text-white/30">Last 12 months</p>
             </div>
           </div>
         </div>
@@ -125,7 +127,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
             </div>
             <div>
               <h3 className="text-sm font-medium text-white">Contributions</h3>
-              <p className="text-[10px] text-white/30">Last 56 days</p>
+              <p className="text-[10px] text-white/30">Last 12 months</p>
             </div>
           </div>
         </div>
@@ -147,21 +149,30 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
             </div>
             <div>
               <h3 className="text-sm font-medium text-white">Contributions</h3>
-              <p className="text-[10px] text-white/30">Last 56 days</p>
+              <p className="text-[10px] text-white/30">Last 12 months</p>
             </div>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-6">
           <Calendar className="h-6 w-6 text-white/20 mb-2" />
-          <p className="text-sm text-white/30">No contributions in the last 56 days</p>
+          <p className="text-sm text-white/30">No contributions in the last 12 months</p>
         </div>
       </div>
     );
   }
 
-  const weeks: Contribution[][] = [];
-  for (let i = 0; i < contributions.length; i += 7) {
-    weeks.push(contributions.slice(i, i + 7));
+  // Pad the front of the grid so the first week starts on Sunday, matching
+  // GitHub's own layout (columns are calendar weeks, not raw 7-day chunks).
+  const paddedContributions: (Contribution | null)[] = [...contributions];
+  const firstDate = new Date(contributions[0].date);
+  const firstDayOfWeek = firstDate.getDay(); // 0 = Sunday
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    paddedContributions.unshift(null);
+  }
+
+  const weeks: (Contribution | null)[][] = [];
+  for (let i = 0; i < paddedContributions.length; i += 7) {
+    weeks.push(paddedContributions.slice(i, i + 7));
   }
 
   const averagePerDay = contributions.length > 0 
@@ -177,7 +188,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
           </div>
           <div>
             <h3 className="text-sm font-medium text-white">Contributions</h3>
-            <p className="text-[10px] text-white/30">Last 56 days</p>
+            <p className="text-[10px] text-white/30">Last 12 months</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -193,24 +204,28 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
       </div>
 
       <div className="w-full overflow-x-auto">
-        <div className="flex gap-1.5">
-          <div className="flex flex-col gap-1.5 pr-1.5 pt-1.5">
+        <div className="flex gap-1">
+          <div className="flex flex-col gap-1 pr-1.5 pt-1.5 flex-shrink-0">
             {dayLabels.map((label, i) => (
-              <div key={i} className="h-[18px] w-4 text-[8px] text-white/20 flex items-center">
+              <div key={i} className="h-[11px] w-6 text-[8px] text-white/20 flex items-center">
                 {label}
               </div>
             ))}
           </div>
           
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-1.5">
-              {week.map((day, dayIndex) => (
-                <div
-                  key={`${weekIndex}-${dayIndex}`}
-                  className={`h-[18px] w-[18px] rounded-sm ${getContributionColor(day.count, day.level)} transition-all hover:scale-110 hover:ring-1 hover:ring-white/30 cursor-default`}
-                  title={`${day.count} contributions on ${day.date}`}
-                />
-              ))}
+            <div key={weekIndex} className="flex flex-col gap-1">
+              {week.map((day, dayIndex) =>
+                day ? (
+                  <div
+                    key={`${weekIndex}-${dayIndex}`}
+                    className={`h-[11px] w-[11px] rounded-sm ${getContributionColor(day.count, day.level)} transition-all hover:scale-125 hover:ring-1 hover:ring-white/30 cursor-default`}
+                    title={`${day.count} contributions on ${day.date}`}
+                  />
+                ) : (
+                  <div key={`${weekIndex}-${dayIndex}`} className="h-[11px] w-[11px]" />
+                )
+              )}
             </div>
           ))}
         </div>

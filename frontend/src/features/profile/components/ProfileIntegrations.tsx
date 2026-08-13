@@ -25,7 +25,17 @@ export const ProfileIntegrations = ({ profile, isOwnProfile, onEditClick }: Prof
   const findSocialLink = (platformKey: string): string | null => {
     if (!profile.social_links) return null;
     const target = platformKey.toLowerCase();
-    for (const [key, val] of Object.entries(profile.social_links)) {
+    let links: Record<string, string> = {};
+    if (typeof profile.social_links === 'string') {
+      try {
+        links = JSON.parse(profile.social_links);
+      } catch {
+        return null;
+      }
+    } else if (typeof profile.social_links === 'object') {
+      links = profile.social_links;
+    }
+    for (const [key, val] of Object.entries(links)) {
       if (key.toLowerCase() === target && val) {
         return val;
       }

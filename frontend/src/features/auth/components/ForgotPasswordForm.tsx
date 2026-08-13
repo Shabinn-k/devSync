@@ -104,7 +104,7 @@ export const ForgotPasswordForm = () => {
                 <AuthInput
                     label="Email address"
                     type="email"
-                    placeholder="name@company.com"
+                    placeholder="name@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="py-2 text-sm"

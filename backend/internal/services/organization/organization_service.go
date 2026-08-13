@@ -74,7 +74,7 @@ func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.Cre
 		return nil, err
 	}
 
-	return s.mapToResponse(org), nil
+	return s.mapToResponse(ctx, org), nil
 }
 
 func (s *service) GetByID(ctx context.Context, userID, id uuid.UUID) (*response.OrganizationDetailResponse, error) {
@@ -93,7 +93,7 @@ func (s *service) GetByID(ctx context.Context, userID, id uuid.UUID) (*response.
 		return nil, err
 	}
 
-	return s.mapToDetailResponse(org, members), nil
+	return s.mapToDetailResponse(ctx, org, members), nil
 }
 
 func (s *service) GetBySlug(ctx context.Context, slug string) (*response.OrganizationResponse, error) {
@@ -101,7 +101,7 @@ func (s *service) GetBySlug(ctx context.Context, slug string) (*response.Organiz
 	if err != nil {
 		return nil, err
 	}
-	return s.mapToResponse(org), nil
+	return s.mapToResponse(ctx, org), nil
 }
 
 func (s *service) Update(ctx context.Context, userID, orgID uuid.UUID, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error) {
@@ -131,7 +131,7 @@ func (s *service) Update(ctx context.Context, userID, orgID uuid.UUID, req *requ
 		return nil, err
 	}
 
-	return s.mapToResponse(org), nil
+	return s.mapToResponse(ctx, org), nil
 }
 
 func (s *service) Delete(ctx context.Context, userID, orgID uuid.UUID) error {
@@ -157,7 +157,7 @@ func (s *service) List(ctx context.Context, userID uuid.UUID, page, limit int) (
 
 	result := make([]response.OrganizationResponse, len(orgs))
 	for i, org := range orgs {
-		result[i] = *s.mapToResponse(&org)
+		result[i] = *s.mapToResponse(ctx, &org)
 	}
 
 	return result, total, nil
@@ -267,7 +267,7 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 
 	result := make([]response.OrganizationResponse, len(orgs))
 	for i, org := range orgs {
-		result[i] = *s.mapToResponse(&org)
+		result[i] = *s.mapToResponse(ctx, &org)
 	}
 
 	return result, nil
@@ -282,8 +282,8 @@ func (s *service) isAdmin(ctx context.Context, orgID, userID uuid.UUID) bool {
 	return member.Role == model.RoleAdmin && member.IsActive
 }
 
-func (s *service) mapToResponse(org *model.Organization) *response.OrganizationResponse {
-	memberCount, _ := s.orgRepo.GetMemberCount(context.Background(), org.ID)
+func (s *service) mapToResponse(ctx context.Context, org *model.Organization) *response.OrganizationResponse {
+	memberCount, _ := s.orgRepo.GetMemberCount(ctx, org.ID)
 	
 	return &response.OrganizationResponse{
 		ID:          org.ID,
@@ -301,14 +301,14 @@ func (s *service) mapToResponse(org *model.Organization) *response.OrganizationR
 	}
 }
 
-func (s *service) mapToDetailResponse(org *model.Organization, members []model.OrganizationMember) *response.OrganizationDetailResponse {
+func (s *service) mapToDetailResponse(ctx context.Context, org *model.Organization, members []model.OrganizationMember) *response.OrganizationDetailResponse {
 	memberResponses := make([]response.OrganizationMemberResponse, len(members))
 	for i, m := range members {
 		memberResponses[i] = *s.mapToMemberResponse(&m)
 	}
 
 	return &response.OrganizationDetailResponse{
-		OrganizationResponse: *s.mapToResponse(org),
+		OrganizationResponse: *s.mapToResponse(ctx, org),
 		Members:              memberResponses,
 	}
 }

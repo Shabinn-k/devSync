@@ -81,23 +81,39 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
         </section>
       )}
 
-      {profile.social_links && Object.keys(profile.social_links).length > 0 && (
-        <section>
-          <h3 className="text-sm font-medium text-white/60">Social Links</h3>
-          <div className="mt-2 flex flex-wrap gap-4">
-            {Object.entries(profile.social_links)
-              .filter(([platform]) => {
-                if (platform.toLowerCase() === 'github' && profile.github_username) {
-                  return false;
-                }
-                return true;
-              })
-              .map(([platform, url]) => (
+      {(() => {
+        let socialLinksMap: Record<string, string> = {};
+        if (profile.social_links) {
+          if (typeof profile.social_links === 'string') {
+            try {
+              socialLinksMap = JSON.parse(profile.social_links);
+            } catch {
+              socialLinksMap = {};
+            }
+          } else if (typeof profile.social_links === 'object') {
+            socialLinksMap = profile.social_links;
+          }
+        }
+        const entries = Object.entries(socialLinksMap).filter(([platform]) => {
+          if (platform.toLowerCase() === 'github' && profile.github_username) {
+            return false;
+          }
+          return true;
+        });
+
+        if (entries.length === 0) return null;
+
+        return (
+          <section>
+            <h3 className="text-sm font-medium text-white/60">Social Links</h3>
+            <div className="mt-2 flex flex-wrap gap-4">
+              {entries.map(([platform, url]) => (
                 <SocialLink key={platform} platform={platform} url={url} />
               ))}
-          </div>
-        </section>
-      )}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 };

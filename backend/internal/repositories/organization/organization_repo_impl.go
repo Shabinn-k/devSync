@@ -20,6 +20,9 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, org *model.Organization) error {
+	if org.ID == uuid.Nil {
+		org.ID = uuid.New()
+	}
 	return r.db.WithContext(ctx).Create(org).Error
 }
 
@@ -71,6 +74,7 @@ func (r *repository) List(ctx context.Context, userID uuid.UUID, limit, offset i
 
 	err := r.db.WithContext(ctx).
 		Model(&model.Organization{}).
+		Select("organizations.*").
 		Joins("JOIN organization_members ON organization_members.organization_id = organizations.id").
 		Where("organization_members.user_id = ? AND organization_members.is_active = ? AND organizations.is_active = ?", userID, true, true).
 		Limit(limit).
@@ -92,6 +96,9 @@ func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64
 
 
 func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMember) error {
+	if member.ID == uuid.Nil {
+		member.ID = uuid.New()
+	}
 	var existing model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND user_id = ? AND is_active = ?", member.OrganizationID, member.UserID, true).
@@ -169,6 +176,7 @@ func (r *repository) GetUserOrganizations(ctx context.Context, userID uuid.UUID)
 	var orgs []model.Organization
 	err := r.db.WithContext(ctx).
 		Model(&model.Organization{}).
+		Select("organizations.*").
 		Joins("JOIN organization_members ON organization_members.organization_id = organizations.id").
 		Where("organization_members.user_id = ? AND organization_members.is_active = ? AND organizations.is_active = ?", userID, true, true).
 		Order("organizations.created_at DESC").

@@ -1,13 +1,13 @@
 package request
 
 type UpdateProfileRequest struct {
-    Name           string `json:"name"`
-    Bio            string `json:"bio"`
-    Skills         string `json:"skills"`         
-    GitHubUsername string `json:"github_username"`
-    PortfolioURL   string `json:"portfolio_url"`
-    Location       string `json:"location"`
-    SocialLinks    string `json:"social_links"`
+	Name           string      `json:"name"`
+	Bio            string      `json:"bio"`
+	Skills         interface{} `json:"skills"`
+	GitHubUsername string      `json:"github_username"`
+	PortfolioURL   string      `json:"portfolio_url"`
+	Location       string      `json:"location"`
+	SocialLinks    interface{} `json:"social_links"`
 }
 
 type ChangePasswordRequest struct {

@@ -84,7 +84,7 @@ export const RegisterForm = () => {
         <AuthInput
           label="Email address"
           type="email"
-          placeholder="name@company.com"
+          placeholder="name@gmail.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />

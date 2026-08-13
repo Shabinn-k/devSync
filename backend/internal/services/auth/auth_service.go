@@ -247,49 +247,51 @@ func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPassw
 }
 
 func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error) {
-    claims, err := jwt.ParseToken(req.RefreshToken, s.cfg.JWTRefreshSecret)
-    if err != nil {
-        return nil, errors.New("invalid refresh token")
-    }
+	claims, err := jwt.ParseToken(req.RefreshToken, s.cfg.JWTRefreshSecret)
+	if err != nil {
+		return nil, errors.New("invalid refresh token")
+	}
 
-    if claims.TokenType != "refresh" {
-        return nil, errors.New("invalid token type")
-    }
+	if claims.TokenType != "refresh" {
+		return nil, errors.New("invalid token type")
+	}
 
-    user, err := s.repo.GetUserByID(ctx, claims.UserID)
-    if err != nil {
-        return nil, errors.New("user not found")
-    }
+	oldHash := jwt.HashToken(req.RefreshToken)
+	oldToken, err := s.repo.GetRefreshTokenByHash(ctx, oldHash)
+	if err != nil || oldToken == nil || oldToken.IsRevoked || time.Now().After(oldToken.ExpiresAt) {
+		return nil, errors.New("invalid or revoked refresh token")
+	}
 
-    newAccessToken, err := jwt.GenerateAccessToken(user.ID, s.cfg.JWTAccessSecret, s.cfg.JWTAccessExpiry)
-    if err != nil {
-        return nil, err
-    }
+	user, err := s.repo.GetUserByID(ctx, claims.UserID)
+	if err != nil || user == nil || !user.IsActive {
+		return nil, errors.New("user account inactive or not found")
+	}
 
-    newRefreshToken, jti, err := jwt.GenerateRefreshToken(user.ID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
-    if err != nil {
-        return nil, err
-    }
+	newAccessToken, err := jwt.GenerateAccessToken(user.ID, s.cfg.JWTAccessSecret, s.cfg.JWTAccessExpiry)
+	if err != nil {
+		return nil, err
+	}
 
-    newToken := &model.RefreshToken{
-        ID:        jti,
-        UserID:    user.ID,
-        TokenHash: jwt.HashToken(newRefreshToken),
-        ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
-        IsRevoked: false,
-    }
-    if err := s.repo.CreateRefreshToken(ctx, newToken); err != nil {
-        return nil, err
-    }
+	newRefreshToken, jti, err := jwt.GenerateRefreshToken(user.ID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
+	if err != nil {
+		return nil, err
+	}
 
-    oldHash := jwt.HashToken(req.RefreshToken)
-    oldToken, err := s.repo.GetRefreshTokenByHash(ctx, oldHash)
-    if err == nil && oldToken != nil {
-        _ = s.repo.RevokeRefreshToken(ctx, oldToken.ID)
-    }
+	newToken := &model.RefreshToken{
+		ID:        jti,
+		UserID:    user.ID,
+		TokenHash: jwt.HashToken(newRefreshToken),
+		ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
+		IsRevoked: false,
+	}
+	if err := s.repo.CreateRefreshToken(ctx, newToken); err != nil {
+		return nil, err
+	}
 
-    resp := mapper.ToTokenResponse(newAccessToken, newRefreshToken, int64(s.cfg.JWTAccessExpiry.Seconds()))
-    return &resp, nil
+	_ = s.repo.RevokeRefreshToken(ctx, oldToken.ID)
+
+	resp := mapper.ToTokenResponse(newAccessToken, newRefreshToken, int64(s.cfg.JWTAccessExpiry.Seconds()))
+	return &resp, nil
 }
 
 func (s *service) Logout(ctx context.Context, req *authRequest.LogoutRequest) error {
