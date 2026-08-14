@@ -36,8 +36,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
     try {
       console.log('Fetching profile...');
       const profile = await profileApi.getMe();
-      console.log('Profile fetched:', profile);
-      
+  
       set({ profile, isLoading: false });
     } catch (err: any) {
       console.error('Profile fetch error:', err);

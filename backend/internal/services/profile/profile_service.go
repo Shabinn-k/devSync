@@ -257,9 +257,6 @@ func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) 
 
 	contributions, total, err := s.fetchContributions(ctx, username)
 	if err != nil {
-		// Surface the real error instead of silently returning a fake
-		// all-zero grid — a fabricated "success" response is worse than
-		// an explicit error the frontend can show to the user.
 		return nil, err
 	}
 
@@ -271,13 +268,6 @@ func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) 
 	}, nil
 }
 
-// fetchContributions pulls real contribution-calendar data from a
-// community-maintained JSON mirror of GitHub's contribution graph
-// (https://github-contributions-api.jogruber.de). This returns the
-// same data you see on your GitHub profile, unlike scraping GitHub's
-// HTML (which changes without notice and silently breaks) or using
-// the public events API (which only reflects the last ~100 public
-// events, not your actual contribution calendar).
 func (s *service) fetchContributions(ctx context.Context, username string) ([]response.GitHubContribution, int, error) {
 	url := fmt.Sprintf("https://github-contributions-api.jogruber.de/v4/%s?y=last", username)
 
@@ -324,10 +314,7 @@ func (s *service) fetchContributions(ctx context.Context, username string) ([]re
 	if len(payload.Contributions) == 0 {
 		return nil, 0, errors.New("no contribution data found for this username")
 	}
-
-	// Return the full year (matches GitHub's own contribution graph),
-	// instead of truncating to a handful of weeks — a short slice left
-	// the grid looking like a tiny cluster in the corner of the card.
+	
 	all := payload.Contributions
 
 	contributions := make([]response.GitHubContribution, 0, len(all))

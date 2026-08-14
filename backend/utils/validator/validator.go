@@ -41,14 +41,10 @@ func passwordComplexity(fl validator.FieldLevel) bool {
 	return hasUpper && hasLower && hasNumber
 }
 
-// slugFormat validates that a slug is lowercase letters, numbers, and
-// single hyphens between segments only — e.g. "acme-corp", "team-42".
-// No leading/trailing hyphens, no consecutive hyphens, no uppercase,
-// no spaces or special characters.
 func slugFormat(fl validator.FieldLevel) bool {
 	slug := fl.Field().String()
 	if slug == "" {
-		return true // let `required` handle emptiness
+		return true 
 	}
 	return slugRegex.MatchString(slug)
 }

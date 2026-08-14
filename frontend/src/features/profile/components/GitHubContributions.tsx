@@ -51,7 +51,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
       setError(null);
 
       try {
-        console.log('🔵 Fetching GitHub contributions via backend API...');
+        console.log('Fetching GitHub contributions via backend API...');
         const res = await profileApi.getGitHubContributions();
         
         const parsed: Contribution[] = (res.contributions || []).map((c) => ({
@@ -60,8 +60,6 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
           level: Math.min(Math.max(c.level, 0), 4) as 0 | 1 | 2 | 3 | 4,
         }));
 
-        // Show the full year the backend returns — matches GitHub's own
-        // contribution graph instead of a cramped 8-week slice.
         setContributions(parsed);
         setTotalContributions(res.total || 0);
         setError(null);
@@ -161,11 +159,9 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     );
   }
 
-  // Pad the front of the grid so the first week starts on Sunday, matching
-  // GitHub's own layout (columns are calendar weeks, not raw 7-day chunks).
   const paddedContributions: (Contribution | null)[] = [...contributions];
   const firstDate = new Date(contributions[0].date);
-  const firstDayOfWeek = firstDate.getDay(); // 0 = Sunday
+  const firstDayOfWeek = firstDate.getDay(); 
   for (let i = 0; i < firstDayOfWeek; i++) {
     paddedContributions.unshift(null);
   }

@@ -32,9 +32,6 @@ export const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    console.log('Form submitted - Preventing refresh');
-    console.log('Email:', email);
 
     setValidationError(null);
     clearError();
@@ -45,7 +42,7 @@ export const LoginForm = () => {
     }
 
     if (isSubmitting || isLoading) {
-      console.log('⏳ Already submitting, skipping...');
+      console.log('Already submitting, skipping...');
       return;
     }
 
