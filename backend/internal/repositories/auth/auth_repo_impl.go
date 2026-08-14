@@ -88,7 +88,6 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Update("last_login_at", now).Error
 }
 
-// ============ REFRESH TOKEN ============
 
 func (r *repository) CreateRefreshToken(ctx context.Context, token *model.RefreshToken) error {
 	return r.db.WithContext(ctx).Create(token).Error

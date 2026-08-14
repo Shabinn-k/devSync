@@ -33,5 +33,4 @@ type OrganizationMemberResponse struct {
 type OrganizationDetailResponse struct {
 	OrganizationResponse
 	Members []OrganizationMemberResponse `json:"members"`
-	// Teams   []TeamResponse               `json:"teams,omitempty"`
 }

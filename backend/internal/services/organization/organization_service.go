@@ -273,7 +273,6 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 	return result, nil
 }
 
-// ============ HELPERS ============
 
 func (s *service) isAdmin(ctx context.Context, orgID, userID uuid.UUID) bool {
 	member, err := s.orgRepo.GetMember(ctx, orgID, userID)

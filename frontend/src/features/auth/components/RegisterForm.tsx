@@ -76,7 +76,7 @@ export const RegisterForm = () => {
         <AuthInput
           label="Full name"
           type="text"
-          placeholder="John Doe"
+          placeholder="Manu Ram"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
         />

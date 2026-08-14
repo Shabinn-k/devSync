@@ -182,7 +182,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           </label>
           <input
             type="text"
-            placeholder="John Doe"
+            placeholder="Manu Ram"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
@@ -222,7 +222,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
             </label>
             <input
               type="text"
-              placeholder="johndoe"
+              placeholder="manuram"
               value={formData.github_username}
               onChange={(e) => setFormData({ ...formData, github_username: e.target.value })}
               className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
@@ -248,7 +248,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
           </label>
           <input
             type="text"
-            placeholder="https://johndoe.dev"
+            placeholder="https://manu.dev"
             value={formData.portfolio_url}
             onChange={(e) => setFormData({ ...formData, portfolio_url: e.target.value })}
             className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
@@ -260,7 +260,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
             Social Links
           </label>
           <textarea
-            placeholder="github: https://github.com/johndoe"
+            placeholder="github: https://github.com/manu"
             value={formData.social_links}
             onChange={(e) => setFormData({ ...formData, social_links: e.target.value })}
             rows={2}
