@@ -16,18 +16,15 @@ var (
 )
 
 type Repository interface {
-	// User operations
 	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
 	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
 
-	// Profile operations
 	GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*model.UserProfile, error)
 	CreateProfile(ctx context.Context, profile *model.UserProfile) error
 	UpdateProfile(ctx context.Context, profile *model.UserProfile) error
 	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
 	
-	// ✅ Add this method
 	GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error)
 }
 

@@ -9,7 +9,7 @@ import (
 )
 
 type Repository interface {
-	// Stats
+	
 	CountProjects(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountTasks(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountTeams(ctx context.Context, userID uuid.UUID) (int64, error)
@@ -27,7 +27,6 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-// Activity represents a recent activity
 type Activity struct {
 	ID        string
 	Type      string
@@ -37,7 +36,6 @@ type Activity struct {
 	CreatedAt time.Time
 }
 
-// Task represents a task
 type Task struct {
 	ID       string
 	Title    string

@@ -18,7 +18,7 @@ func RegisterOrganizationRoutes(
 	orgGroup := router.Group("/organizations")
 	orgGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
-		// Organization CRUD
+
 		orgGroup.POST("", controller.Create)
 		orgGroup.GET("", controller.List)
 		orgGroup.GET("/me", controller.GetUserOrganizations)
@@ -27,7 +27,6 @@ func RegisterOrganizationRoutes(
 		orgGroup.PUT("/:id", controller.Update)
 		orgGroup.DELETE("/:id", controller.Delete)
 
-		// Members
 		orgGroup.POST("/:id/members", controller.AddMember)
 		orgGroup.GET("/:id/members", controller.GetMembers)
 		orgGroup.PUT("/:id/members/:memberId", controller.UpdateMemberRole)

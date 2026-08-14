@@ -19,6 +19,5 @@ type UserProfile struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 
-	// Relationship
 	User User `gorm:"foreignKey:UserID"`
 }

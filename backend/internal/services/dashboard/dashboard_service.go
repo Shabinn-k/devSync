@@ -2,9 +2,9 @@ package dashboard
 
 import (
 	"context"
-	"time"
 	"fmt"
 	"github.com/google/uuid"
+	"time"
 
 	"devSync/config"
 	"devSync/internal/dto/response"
@@ -28,7 +28,6 @@ func NewService(repo dashboard.Repository, cfg *config.AppConfig) Service {
 }
 
 func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response.DashboardResponse, error) {
-	// Get all data in parallel
 	projects, _ := s.repo.CountProjects(ctx, userID)
 	tasks, _ := s.repo.CountTasks(ctx, userID)
 	teams, _ := s.repo.CountTeams(ctx, userID)
@@ -37,7 +36,6 @@ func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response
 	activities, _ := s.repo.GetRecentActivities(ctx, userID, 5)
 	upcomingTasks, _ := s.repo.GetUpcomingTasks(ctx, userID, 5)
 
-	// Calculate completion rate
 	completionRate := 0
 	if tasks > 0 {
 		completionRate = int((float64(completedTasks) / float64(tasks)) * 100)

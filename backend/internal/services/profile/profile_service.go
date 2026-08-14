@@ -46,8 +46,6 @@ func NewService(repo profileRepo.Repository, cfg *config.AppConfig) Service {
 	}
 }
 
-// ============ EXISTING METHODS ============
-
 func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
@@ -171,7 +169,7 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 
 		if profile.Skills != "" {
 			if err := json.Unmarshal([]byte(profile.Skills), &skills); err != nil {
-				// Fallback for legacy comma-separated values
+
 				parts := strings.Split(profile.Skills, ",")
 				for _, p := range parts {
 					p = strings.TrimSpace(p)
@@ -210,7 +208,6 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 	}
 }
 
-// ============ GITHUB CONTRIBUTIONS ============
 
 func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) (*response.GitHubContributionsResponse, error) {
 	username, err := s.repo.GetGitHubUsername(ctx, userID)
@@ -276,7 +273,6 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 
 	htmlStr := string(body)
 
-	// 1. Match tooltips for exact count parsing
 	toolTipRegex := regexp.MustCompile(`<tool-tip[^>]*for="([^"]*)"[^>]*>(.*?)</tool-tip>`)
 	toolTipMatches := toolTipRegex.FindAllStringSubmatch(htmlStr, -1)
 	toolTipCountMap := make(map[string]int)
@@ -293,7 +289,6 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 		}
 	}
 
-	// 2. Match day elements (<td ...> or <rect ...>) with ContributionCalendar-day class
 	dayTagRegex := regexp.MustCompile(`<(td|rect)[^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*>`)
 	dayTags := dayTagRegex.FindAllString(htmlStr, -1)
 

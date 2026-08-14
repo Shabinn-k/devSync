@@ -23,7 +23,6 @@ func RegisterProfileRoutes(
 		profileGroup.PUT("/password", controller.ChangePassword)
 		profileGroup.POST("/avatar", controller.UploadAvatar)
 		
-		// ✅ Add GitHub contributions endpoint
 		profileGroup.GET("/me/github", controller.GetGitHubContributions)
 		profileGroup.GET("/github/contributions", controller.GetGitHubContributions)
 	}

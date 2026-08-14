@@ -21,7 +21,6 @@ type ProfileResponse struct {
 	UpdatedAt      time.Time          `json:"updated_at"`
 }
 
-// ✅ Add GitHub contributions response
 type GitHubContribution struct {
 	Date  string `json:"date"`
 	Count int    `json:"count"`

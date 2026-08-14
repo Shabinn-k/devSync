@@ -18,7 +18,6 @@ func NewController(s dashboard.Service) *Controller {
 	return &Controller{service: s}
 }
 
-// GetDashboard returns all dashboard data in one call
 func (h *Controller) GetDashboard(c *gin.Context) {
 	val, exists := c.Get("userID")
 	if !exists {

@@ -16,7 +16,6 @@ import (
 )
 
 type Service interface {
-	// Organization
 	Create(ctx context.Context, userID uuid.UUID, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error)
 	GetByID(ctx context.Context, userID, id uuid.UUID) (*response.OrganizationDetailResponse, error)
 	GetBySlug(ctx context.Context, slug string) (*response.OrganizationResponse, error)
@@ -24,7 +23,6 @@ type Service interface {
 	Delete(ctx context.Context, userID, orgID uuid.UUID) error
 	List(ctx context.Context, userID uuid.UUID, page, limit int) ([]response.OrganizationResponse, int64, error)
 
-	// Members
 	AddMember(ctx context.Context, userID, orgID uuid.UUID, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error)
 	GetMembers(ctx context.Context, userID, orgID uuid.UUID) ([]response.OrganizationMemberResponse, error)
 	UpdateMemberRole(ctx context.Context, userID, orgID uuid.UUID, memberID uuid.UUID, role string) error
@@ -34,7 +32,7 @@ type Service interface {
 
 type service struct {
 	orgRepo  organization.Repository
-	authRepo auth.Repository // ✅ Use auth repo instead of user repo
+	authRepo auth.Repository 
 	cfg      *config.AppConfig
 }
 
@@ -46,10 +44,8 @@ func NewService(orgRepo organization.Repository, authRepo auth.Repository, cfg *
 	}
 }
 
-// ============ ORGANIZATION ============
-
 func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error) {
-	// Check if slug exists
+
 	if _, err := s.orgRepo.GetBySlug(ctx, req.Slug); err == nil {
 		return nil, organization.ErrDuplicateSlug
 	}
@@ -68,7 +64,6 @@ func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.Cre
 		return nil, err
 	}
 
-	// Add creator as admin
 	member := &model.OrganizationMember{
 		OrganizationID: org.ID,
 		UserID:         userID,
@@ -168,8 +163,6 @@ func (s *service) List(ctx context.Context, userID uuid.UUID, page, limit int) (
 	return result, total, nil
 }
 
-// ============ MEMBERS ============
-
 func (s *service) AddMember(ctx context.Context, userID, orgID uuid.UUID, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error) {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return nil, errors.New("unauthorized: admin role required")
@@ -194,7 +187,6 @@ func (s *service) AddMember(ctx context.Context, userID, orgID uuid.UUID, req *r
 		return nil, errors.New("valid user ID or email is required")
 	}
 
-	// ✅ Check if user exists using auth repo
 	user, err := s.authRepo.GetUserByID(ctx, targetUserID)
 	if err != nil {
 		return nil, errors.New("user not found")

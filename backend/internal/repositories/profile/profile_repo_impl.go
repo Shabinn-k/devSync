@@ -81,7 +81,6 @@ func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarU
 	return nil
 }
 
-// ✅ Add this method
 func (r *repository) GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error) {
 	var profile model.UserProfile
 	err := r.db.WithContext(ctx).

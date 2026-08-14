@@ -26,7 +26,6 @@ type AuthResponse struct {
 	Token TokenResponse `json:"token"`
 }
 
-// ✅ Add MessageResponse here
 type MessageResponse struct {
 	Message string `json:"message"`
 }

@@ -11,8 +11,6 @@ import (
 	"devSync/internal/model"
 )
 
-// ============ REPOSITORY STRUCT ============
-
 type repository struct {
 	db *gorm.DB
 }
@@ -20,8 +18,6 @@ type repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
-
-// ============ ORGANIZATION OPERATIONS ============
 
 func (r *repository) Create(ctx context.Context, org *model.Organization) error {
 	return r.db.WithContext(ctx).Create(org).Error
@@ -85,7 +81,6 @@ func (r *repository) List(ctx context.Context, userID uuid.UUID, limit, offset i
 	return orgs, total, err
 }
 
-// ✅ ============ ADD THIS MISSING METHOD ============
 func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
@@ -95,10 +90,8 @@ func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64
 	return count, err
 }
 
-// ============ MEMBER OPERATIONS ============
 
 func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMember) error {
-	// Check if member already exists
 	var existing model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND user_id = ? AND is_active = ?", member.OrganizationID, member.UserID, true).

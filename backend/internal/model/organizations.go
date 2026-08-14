@@ -18,7 +18,6 @@ type Organization struct {
 	CreatedAt   time.Time `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime"`
 
-	// Relationships
 	Owner   User                 `gorm:"foreignKey:CreatedBy"`
 	Members []OrganizationMember `gorm:"foreignKey:OrganizationID"`
 }

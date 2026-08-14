@@ -17,7 +17,7 @@ var (
 )
 
 type Repository interface {
-	// Organization operations
+
 	Create(ctx context.Context, org *model.Organization) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error)
 	GetBySlug(ctx context.Context, slug string) (*model.Organization, error)
@@ -26,7 +26,6 @@ type Repository interface {
 	List(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Organization, int64, error)
 	GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64, error) // ✅ Add this
 
-	// Member operations
 	AddMember(ctx context.Context, member *model.OrganizationMember) error
 	GetMember(ctx context.Context, orgID, userID uuid.UUID) (*model.OrganizationMember, error)
 	GetMemberByID(ctx context.Context, orgID, memberID uuid.UUID) (*model.OrganizationMember, error)
