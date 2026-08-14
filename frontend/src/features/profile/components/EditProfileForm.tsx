@@ -63,16 +63,46 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const detectPlatformFromUrl = (urlStr: string): string => {
+      const lower = urlStr.toLowerCase();
+      if (lower.includes('linkedin.com')) return 'linkedin';
+      if (lower.includes('twitter.com') || lower.includes('x.com')) return 'twitter';
+      if (lower.includes('github.com')) return 'github';
+      if (lower.includes('youtube.com')) return 'youtube';
+      if (lower.includes('facebook.com')) return 'facebook';
+      if (lower.includes('instagram.com')) return 'instagram';
+      return 'website';
+    };
+
     const socialLinks: Record<string, string> = {};
     if (formData.social_links.trim()) {
       formData.social_links.split('\n').forEach((line) => {
-        const [key, ...value] = line.split(':');
-        if (key && value.length) {
-          const trimmedKey = key.trim();
-          const trimmedValue = value.join(':').trim();
-          if (trimmedKey && trimmedValue) {
-            socialLinks[trimmedKey] = trimmedValue;
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+
+        let platform = '';
+        let url = '';
+
+        if (trimmedLine.includes(':')) {
+          const colonIndex = trimmedLine.indexOf(':');
+          const possiblePlatform = trimmedLine.slice(0, colonIndex).trim();
+          const possibleUrl = trimmedLine.slice(colonIndex + 1).trim();
+
+          if (possiblePlatform.toLowerCase() === 'http' || possiblePlatform.toLowerCase() === 'https') {
+            url = trimmedLine;
+            platform = detectPlatformFromUrl(url);
+          } else {
+            platform = possiblePlatform.toLowerCase();
+            url = possibleUrl;
           }
+        } else {
+          url = trimmedLine;
+          platform = detectPlatformFromUrl(url);
+        }
+
+        if (platform && url) {
+          const formattedUrl = url.match(/^https?:\/\//i) ? url : `https://${url}`;
+          socialLinks[platform] = formattedUrl;
         }
       });
     }
@@ -83,7 +113,13 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
     if (formData.name !== profile?.name) payload.name = formData.name;
     if (formData.bio !== profile?.bio) payload.bio = formData.bio;
     if (formData.location !== profile?.location) payload.location = formData.location;
-    if (formData.github_username !== profile?.github_username) payload.github_username = formData.github_username;
+    const cleanUsername = formData.github_username
+      .trim()
+      .replace(/^(https?:\/\/)?(www\.)?github\.com\//, '')
+      .split('/')[0]
+      .split('?')[0]
+      .split('#')[0];
+    if (cleanUsername !== profile?.github_username) payload.github_username = cleanUsername;
     if (formData.portfolio_url !== profile?.portfolio_url) payload.portfolio_url = formData.portfolio_url;
     
     // ✅ Skills: Send as JSON string array matching backend expectations

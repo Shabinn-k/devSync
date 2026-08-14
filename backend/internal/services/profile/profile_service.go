@@ -88,7 +88,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *requ
 		userProfile.Bio = req.Bio
 	}
 	if req.GitHubUsername != "" {
-		userProfile.GitHubUsername = req.GitHubUsername
+		userProfile.GitHubUsername = cleanGitHubUsername(req.GitHubUsername)
 	}
 	if req.PortfolioURL != "" {
 		userProfile.PortfolioURL = req.PortfolioURL
@@ -253,8 +253,8 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 		return nil, 0, err
 	}
 
-	req.Header.Set("Accept", "text/html")
-	req.Header.Set("User-Agent", "DevSync/1.0")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
@@ -263,7 +263,10 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("status code: %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			return nil, 0, errors.New("GitHub user not found")
+		}
+		return nil, 0, fmt.Errorf("GitHub contribution page returned status %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -271,24 +274,70 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 		return nil, 0, err
 	}
 
-	html := string(body)
-	re := regexp.MustCompile(`<td[^>]*data-date="([^"]*)"[^>]*data-count="([^"]*)"[^>]*data-level="([^"]*)"[^>]*>`)
-	matches := re.FindAllStringSubmatch(html, -1)
+	htmlStr := string(body)
 
-	if len(matches) == 0 {
+	// 1. Match tooltips for exact count parsing
+	toolTipRegex := regexp.MustCompile(`<tool-tip[^>]*for="([^"]*)"[^>]*>(.*?)</tool-tip>`)
+	toolTipMatches := toolTipRegex.FindAllStringSubmatch(htmlStr, -1)
+	toolTipCountMap := make(map[string]int)
+	countRegex := regexp.MustCompile(`(\d+)\s+contribution`)
+
+	for _, tm := range toolTipMatches {
+		if len(tm) >= 3 {
+			targetID := tm[1]
+			text := tm[2]
+			if cm := countRegex.FindStringSubmatch(text); len(cm) >= 2 {
+				cnt, _ := strconv.Atoi(cm[1])
+				toolTipCountMap[targetID] = cnt
+			}
+		}
+	}
+
+	// 2. Match day elements (<td ...> or <rect ...>) with ContributionCalendar-day class
+	dayTagRegex := regexp.MustCompile(`<(td|rect)[^>]*class="[^"]*ContributionCalendar-day[^"]*"[^>]*>`)
+	dayTags := dayTagRegex.FindAllString(htmlStr, -1)
+
+	if len(dayTags) == 0 {
+		dayTagRegex = regexp.MustCompile(`<(td|rect)[^>]*data-date="([^"]*)"[^>]*>`)
+		dayTags = dayTagRegex.FindAllString(htmlStr, -1)
+	}
+
+	if len(dayTags) == 0 {
 		return nil, 0, fmt.Errorf("no contribution data found")
 	}
+
+	reDate := regexp.MustCompile(`data-date="([^"]+)"`)
+	reLevel := regexp.MustCompile(`data-level="([^"]+)"`)
+	reCount := regexp.MustCompile(`data-count="([^"]+)"`)
+	reID := regexp.MustCompile(`id="([^"]+)"`)
 
 	var contributions []response.GitHubContribution
 	total := 0
 
-	for _, match := range matches {
-		if len(match) < 4 {
+	for _, tag := range dayTags {
+		dateMatch := reDate.FindStringSubmatch(tag)
+		if len(dateMatch) < 2 {
 			continue
 		}
-		date := match[1]
-		count, _ := strconv.Atoi(match[2])
-		level, _ := strconv.Atoi(match[3])
+		date := dateMatch[1]
+
+		level := 0
+		if levelMatch := reLevel.FindStringSubmatch(tag); len(levelMatch) >= 2 {
+			level, _ = strconv.Atoi(levelMatch[1])
+		}
+
+		count := 0
+		if countMatch := reCount.FindStringSubmatch(tag); len(countMatch) >= 2 {
+			count, _ = strconv.Atoi(countMatch[1])
+		} else if idMatch := reID.FindStringSubmatch(tag); len(idMatch) >= 2 {
+			if c, ok := toolTipCountMap[idMatch[1]]; ok {
+				count = c
+			} else if level > 0 {
+				count = level
+			}
+		} else if level > 0 {
+			count = level
+		}
 
 		contributions = append(contributions, response.GitHubContribution{
 			Date:  date,
@@ -296,6 +345,10 @@ func (s *service) fetchFromContributionPage(ctx context.Context, username string
 			Level: level,
 		})
 		total += count
+	}
+
+	if len(contributions) == 0 {
+		return nil, 0, fmt.Errorf("no valid contribution records extracted")
 	}
 
 	if len(contributions) > 56 {
@@ -377,11 +430,16 @@ func (s *service) fetchFromAPI(ctx context.Context, username string) ([]response
 
 func cleanGitHubUsername(username string) string {
 	username = strings.TrimSpace(username)
-	username = strings.TrimPrefix(username, "https://github.com/")
-	username = strings.TrimPrefix(username, "http://github.com/")
-	username = strings.TrimPrefix(username, "github.com/")
-	username = strings.TrimSuffix(username, "/")
-	return username
+	re := regexp.MustCompile(`^(https?://)?(www\.)?github\.com/`)
+	username = re.ReplaceAllString(username, "")
+	if idx := strings.IndexAny(username, "?#"); idx != -1 {
+		username = username[:idx]
+	}
+	parts := strings.Split(username, "/")
+	if len(parts) > 0 {
+		username = parts[0]
+	}
+	return strings.TrimSpace(username)
 }
 
 func getContributionLevel(count int) int {

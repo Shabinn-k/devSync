@@ -1,5 +1,5 @@
 import { apiClient } from '../../../lib/axios';
-import type { Profile, ChangePasswordRequest, GitHubContributionsResponse } from '../types/profile';
+import type { Profile, ChangePasswordRequest, GitHubContributionsResponse, UpdateProfileRequest } from '../types/profile';
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -13,7 +13,7 @@ export const profileApi = {
     return res.data.data;
   },
 
-  updateMe: async (payload: Record<string, any>): Promise<Profile> => { 
+  updateMe: async (payload: UpdateProfileRequest | Record<string, any>): Promise<Profile> => { 
     const cleanPayload: Record<string, any> = {};
     
     if (payload.name !== undefined) cleanPayload.name = payload.name;
@@ -46,7 +46,7 @@ export const profileApi = {
   },
 
   getGitHubContributions: async (): Promise<GitHubContributionsResponse> => {
-    const res = await apiClient.get<ApiEnvelope<GitHubContributionsResponse>>('/profile/me/github');
+    const res = await apiClient.get<ApiEnvelope<GitHubContributionsResponse>>('/profile/github/contributions');
     return res.data.data;
   },
 };

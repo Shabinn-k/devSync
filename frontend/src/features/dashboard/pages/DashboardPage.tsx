@@ -97,7 +97,7 @@ const DashboardPage = () => {
           {/* Welcome Section */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
-              Welcome back, {displayName}! 👋
+              Welcome back, {displayName}
             </h2>
             <p className="mt-1 text-sm text-white/40">
               Here's what's happening with your workspace today.

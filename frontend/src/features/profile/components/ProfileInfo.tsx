@@ -35,7 +35,7 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
       icon: LinkIcon,
       label: 'Website',
       value: profile.portfolio_url,
-      href: profile.portfolio_url ?? undefined,
+      href: profile.portfolio_url ? (profile.portfolio_url.match(/^https?:\/\//i) ? profile.portfolio_url : `https://${profile.portfolio_url}`) : undefined,
     },
     { icon: Calendar, label: 'Joined', value: new Date(profile.created_at).toLocaleDateString() },
   ].filter((row) => row.value);
@@ -93,9 +93,16 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
         <section>
           <h3 className="text-sm font-medium text-white/60">Social Links</h3>
           <div className="mt-2 flex flex-wrap gap-4">
-            {Object.entries(profile.social_links).map(([platform, url]) => (
-              <SocialLink key={platform} platform={platform} url={url} />
-            ))}
+            {Object.entries(profile.social_links)
+              .filter(([platform]) => {
+                if (platform.toLowerCase() === 'github' && profile.github_username) {
+                  return false;
+                }
+                return true;
+              })
+              .map(([platform, url]) => (
+                <SocialLink key={platform} platform={platform} url={url} />
+              ))}
           </div>
         </section>
       )}

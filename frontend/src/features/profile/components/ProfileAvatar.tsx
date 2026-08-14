@@ -17,6 +17,7 @@ const sizeMap = {
 export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { profile, uploadAvatar } = useProfileStore();
 
@@ -42,6 +43,7 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
     setIsUploading(true);
     try {
       const avatarUrl = await uploadAvatar(file);
+      setImageError(false);
       console.log('Avatar uploaded:', avatarUrl);
     } catch (error) {
       console.error('Failed to upload avatar:', error);
@@ -77,15 +79,12 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
       <div
         className={`relative ${sizeMap[size]} rounded-full ring-4 ring-white/10 overflow-hidden bg-gradient-to-br from-white/10 to-white/5 transition-all duration-200 group-hover:ring-white/20`}
       >
-        {profile?.avatar_url ? (
+        {profile?.avatar_url && !imageError ? (
           <img
             src={getAvatarUrl(profile.avatar_url)}
             alt={profile.name || 'User Avatar'}
             className="h-full w-full object-cover transition-all duration-200"
-            onError={(e) => {
-              // Hide broken image link fallback
-              e.currentTarget.style.display = 'none';
-            }}
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-white/60">

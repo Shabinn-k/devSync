@@ -10,6 +10,8 @@ import VerifyEmailPage from "../features/auth/pages/VerifyEmailPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import VerifyOTPPage from "../features/auth/pages/VerifyOTPPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
+import OrganizationsPage from '../features/organizations/pages/OrganizationsPage';
+import OrganizationDetailPage from '../features/organizations/pages/OrganizationDetailPage';
 
 // ============ PROTECTED PAGES ============
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
@@ -100,6 +102,23 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/organizations"
+  element={
+    <ProtectedRoute>
+      <OrganizationsPage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/organizations/:id"
+  element={
+    <ProtectedRoute>
+      <OrganizationDetailPage />
+    </ProtectedRoute>
+  }
+/>
 
       {/* ============ 404 - FALLBACK ============ */}
       <Route path="*" element={<Navigate to="/" replace />} />

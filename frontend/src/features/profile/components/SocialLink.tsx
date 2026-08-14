@@ -29,9 +29,11 @@ export const SocialLink = ({ platform, url }: SocialLinkProps) => {
   const color = socialColors[normalizedPlatform] || 'hover:text-white';
   const label = platform.charAt(0).toUpperCase() + platform.slice(1);
 
+  const formattedUrl = url ? (url.match(/^https?:\/\//i) ? url : `https://${url}`) : '#';
+
   return (
     <a
-      href={url}
+      href={formattedUrl}
       target="_blank"
       rel="noopener noreferrer"
       className={`flex items-center gap-2 text-sm text-white/40 transition-colors ${color}`}

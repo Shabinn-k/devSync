@@ -12,8 +12,7 @@ interface Contribution {
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
 }
-
-// GitHub-style contribution colors
+ 
 const getContributionColor = (count: number, level: number) => {
   if (count === 0 || level === 0) return 'bg-[#161b22]';
   if (level === 1) return 'bg-[#0e4429]';
@@ -67,39 +66,11 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
         setTotalContributions(res.total || 0);
         setError(null);
       } catch (err: any) {
-        console.warn('Backend API contribution fetch error, attempting direct fetch:', err);
-        try {
-          const url = `https://github.com/users/${cleanUsername}/contributions`;
-          const response = await fetch(url, { headers: { Accept: 'text/html' } });
-          if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-          const html = await response.text();
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const dayElements = doc.querySelectorAll('td.ContributionCalendar-day');
-          
-          if (dayElements.length === 0) throw new Error('No contribution data found');
-
-          const parsed: Contribution[] = [];
-          let total = 0;
-          dayElements.forEach((el) => {
-            const date = el.getAttribute('data-date') || '';
-            const countAttr = el.getAttribute('data-count');
-            const count = countAttr ? parseInt(countAttr, 10) : 0;
-            const levelAttr = el.getAttribute('data-level');
-            const level = levelAttr ? (parseInt(levelAttr, 10) as 0 | 1 | 2 | 3 | 4) : 0;
-            total += count;
-            parsed.push({ date, count, level });
-          });
-
-          setContributions(parsed.slice(-56));
-          setTotalContributions(total);
-          setError(null);
-        } catch (directErr: any) {
-          console.error('GitHub contribution error:', directErr);
-          setError('Could not load GitHub contributions');
-          setContributions([]);
-          setTotalContributions(0);
-        }
+        console.error('GitHub contribution error:', err);
+        const msg = err.response?.data?.message || err.message || 'Could not load GitHub contributions';
+        setError(msg);
+        setContributions([]);
+        setTotalContributions(0);
       } finally {
         setIsLoading(false);
       }

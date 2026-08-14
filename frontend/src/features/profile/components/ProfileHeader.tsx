@@ -10,6 +10,11 @@ interface ProfileHeaderProps {
   isOnline?: boolean; // no presence store shown yet — defaults to hidden, not fabricated
 }
 
+const formatExternalUrl = (url?: string | null): string => {
+  if (!url) return '#';
+  return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+};
+
 export const ProfileHeader = ({ profile, isOwnProfile, onEditClick, isOnline }: ProfileHeaderProps) => {
   return (
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
@@ -57,7 +62,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick, isOnline }: 
           )}
           {profile.portfolio_url && (
             <a
-              href={profile.portfolio_url}
+              href={formatExternalUrl(profile.portfolio_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-white/40 transition-colors hover:text-white"

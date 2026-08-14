@@ -20,8 +20,26 @@ interface IntegrationRow {
 // (github_username, portfolio_url, social_links) — nothing fabricated.
 // LinkedIn only shows as connected if it's present in social_links, since
 // there's no dedicated linkedin_url field on the model today.
+const formatExternalUrl = (url?: string | null): string | null => {
+  if (!url) return null;
+  return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+};
+
 export const ProfileIntegrations = ({ profile, isOwnProfile, onEditClick }: ProfileIntegrationsProps) => {
-  const linkedinUrl = profile.social_links?.linkedin ?? profile.social_links?.LinkedIn ?? null;
+  const findSocialLink = (platformKey: string): string | null => {
+    if (!profile.social_links) return null;
+    const target = platformKey.toLowerCase();
+    for (const [key, val] of Object.entries(profile.social_links)) {
+      if (key.toLowerCase() === target && val) {
+        return val;
+      }
+    }
+    return null;
+  };
+
+  const rawLinkedinUrl = findSocialLink('linkedin');
+  const linkedinUrl = formatExternalUrl(rawLinkedinUrl);
+  const websiteUrl = formatExternalUrl(profile.portfolio_url || findSocialLink('website'));
 
   const rows: IntegrationRow[] = [
     {
@@ -42,7 +60,7 @@ export const ProfileIntegrations = ({ profile, isOwnProfile, onEditClick }: Prof
       key: 'website',
       label: 'Personal Website',
       icon: GlobeIcon,
-      connectedUrl: profile.portfolio_url ?? null,
+      connectedUrl: websiteUrl,
       connectedLabel: profile.portfolio_url ?? null,
     },
   ];

@@ -76,11 +76,9 @@ const ProfilePage = () => {
         </div>
 
         {/* ✅ GitHub Contributions - Full width */}
-        {profile.github_username && (
-          <div className="mt-6">
-            <GitHubContributions githubUsername={profile.github_username} />
-          </div>
-        )}
+        <div className="mt-6">
+          <GitHubContributions githubUsername={profile.github_username || undefined} />
+        </div>
 
         {/* Main two-column layout on desktop, stacked on mobile/tablet */}
         <div className="mt-6 grid gap-6 lg:grid-cols-3">

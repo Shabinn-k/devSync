@@ -19,7 +19,8 @@ const navigation = [
   { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { name: 'Projects', icon: FolderKanban, href: '/projects' },
   { name: 'Tasks', icon: CheckSquare, href: '/tasks' },
-  { name: 'Teams', icon: Users, href: '/teams' },
+  { name: 'Organization', icon: Users, href: '/organizations' },
+  
 ];
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {

@@ -25,5 +25,6 @@ func RegisterProfileRoutes(
 		
 		// ✅ Add GitHub contributions endpoint
 		profileGroup.GET("/me/github", controller.GetGitHubContributions)
+		profileGroup.GET("/github/contributions", controller.GetGitHubContributions)
 	}
 }
