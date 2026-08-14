@@ -31,7 +31,7 @@ export const Performance = () => {
             Every interface is designed with a focus on information density and visual clarity.
           </motion.p>
         </div>
- 
+
         <div className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {stats.map((stat, index) => (
             <motion.div

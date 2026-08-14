@@ -36,7 +36,6 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	authCtrl := auth.NewController(authSvc)
 	routes.RegisterAuthRoutes(router, authCtrl, authRepo, cfg)
 
-	
 	profileRepo := profileRepo.NewRepository(db)
 	profileSvc := profileService.NewService(profileRepo, cfg)
 	profileCtrl := profile.NewController(profileSvc)
@@ -48,7 +47,7 @@ func InitRouter(cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *
 	routes.RegisterDashboardRoutes(router, dashboardCtrl, cfg, authRepo)
 
 	orgRepo := orgRepo.NewRepository(db)
-	orgSvc := orgService.NewService(orgRepo, authRepo, cfg) 
+	orgSvc := orgService.NewService(orgRepo, authRepo, cfg)
 	orgCtrl := organization.NewController(orgSvc)
 	routes.RegisterOrganizationRoutes(router, orgCtrl, cfg, authRepo)
 

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Loader2, 
-  ArrowLeft, 
-  Users, 
-  Globe, 
-  MapPin, 
-  Calendar, 
+import {
+  Loader2,
+  ArrowLeft,
+  Users,
+  Globe,
+  MapPin,
+  Calendar,
   UserPlus,
   Trash2,
   Settings,
@@ -21,16 +21,16 @@ import type { OrganizationRole } from '../types/organization';
 const OrganizationDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { 
-    currentOrganization, 
-    isLoading, 
-    error, 
-    fetchOrganizationById, 
+  const {
+    currentOrganization,
+    isLoading,
+    error,
+    fetchOrganizationById,
     deleteOrganization,
     updateMemberRole,
     removeMember
   } = useOrganizationStore();
-  
+
   const { user } = useAuthStore();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -177,7 +177,7 @@ const OrganizationDetailPage = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-white/60">Members</h3>
             {isAdmin && (
-              <button 
+              <button
                 onClick={() => setShowAddMember(true)}
                 className="inline-flex items-center gap-1 text-sm text-white/40 hover:text-white transition-colors"
               >
@@ -199,7 +199,7 @@ const OrganizationDetailPage = () => {
                     <p className="text-sm text-white">{member.user_name || member.user_email || 'Member'}</p>
                     <p className="text-xs text-white/30">{member.user_email}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     {isAdmin && !isSelf ? (
                       <>

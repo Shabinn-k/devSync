@@ -1,10 +1,10 @@
 import { apiClient } from '../../../lib/axios';
-import type { 
-  ApiResponse, 
-  AuthResponse, 
+import type {
+  ApiResponse,
+  AuthResponse,
   MessageResponse,
-  LoginPayload, 
-  RegisterPayload, 
+  LoginPayload,
+  RegisterPayload,
   VerifyEmailPayload,
   ResendOTPPayload,
   ForgotPasswordPayload,
@@ -17,7 +17,7 @@ import type {
 } from '../../../types/api';
 
 export const authApi = {
-  
+
   login: (data: LoginPayload) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
 

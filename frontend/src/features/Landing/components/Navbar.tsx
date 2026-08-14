@@ -28,7 +28,7 @@ export const Navbar = () => {
             Resources
           </Link>
           <div className="flex items-center gap-4">
-           
+
             <Link
               to="/login"
               className="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-white hover:text-black"

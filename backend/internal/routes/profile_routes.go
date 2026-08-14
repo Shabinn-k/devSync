@@ -22,7 +22,7 @@ func RegisterProfileRoutes(
 		profileGroup.PUT("/me", controller.UpdateProfile)
 		profileGroup.PUT("/password", controller.ChangePassword)
 		profileGroup.POST("/avatar", controller.UploadAvatar)
-		
+
 		profileGroup.GET("/me/github", controller.GetGitHubContributions)
 		profileGroup.GET("/github/contributions", controller.GetGitHubContributions)
 	}

@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
-import { 
-  FolderKanban, 
-  CheckSquare, 
-  Users, 
+import {
+  FolderKanban,
+  CheckSquare,
+  Users,
   TrendingUp,
   Plus,
   User,
   Loader2
 } from 'lucide-react';
-import { 
-  DashboardSidebar, 
-  DashboardHeader, 
-  StatsCard, 
-  ActivityItem, 
+import {
+  DashboardSidebar,
+  DashboardHeader,
+  StatsCard,
+  ActivityItem,
   TaskItem,
-  QuickAction 
+  QuickAction
 } from '../components';
 import { useDashboardStore } from '../store/dashboardStore';
 import { useAuthStore } from '../../../stores/authStore';
@@ -22,7 +22,7 @@ import { useProfileStore } from '../../profile/store/profileStore';
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { stats, activities, tasks, isLoading, error, fetchDashboard } = useDashboardStore(); 
+  const { stats, activities, tasks, isLoading, error, fetchDashboard } = useDashboardStore();
   const { user, isAuthenticated } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
 
@@ -30,7 +30,7 @@ const DashboardPage = () => {
     if (isAuthenticated) {
       console.log('User is authenticated, fetching dashboard data');
       fetchProfile();
-      fetchDashboard(); 
+      fetchDashboard();
     }
   }, [isAuthenticated, fetchProfile, fetchDashboard]);
 
@@ -86,7 +86,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <DashboardSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       <div className="lg:pl-64">
         <DashboardHeader onMenuClick={() => setIsSidebarOpen(true)} />
 
@@ -101,25 +101,25 @@ const DashboardPage = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatsCard 
+            <StatsCard
               icon={<FolderKanban className="h-5 w-5 text-white/30" />}
               label="Projects"
               value={displayStats.projects}
               subtext="+2 this month"
             />
-            <StatsCard 
+            <StatsCard
               icon={<CheckSquare className="h-5 w-5 text-white/30" />}
               label="Tasks"
               value={displayStats.tasks}
               subtext={`${displayStats.active_tasks || 0} active`}
             />
-            <StatsCard 
+            <StatsCard
               icon={<Users className="h-5 w-5 text-white/30" />}
               label="Teams"
               value={displayStats.teams}
               subtext="3 active members"
             />
-            <StatsCard 
+            <StatsCard
               icon={<TrendingUp className="h-5 w-5 text-white/30" />}
               label="Completion Rate"
               value={`${displayStats.completion_rate || 0}%`}
@@ -168,17 +168,17 @@ const DashboardPage = () => {
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <QuickAction 
+              <QuickAction
                 icon={<Plus className="h-5 w-5 text-white/40" />}
                 label="Create Project"
                 path="/projects/create"
               />
-              <QuickAction 
+              <QuickAction
                 icon={<Plus className="h-5 w-5 text-white/40" />}
                 label="Create Task"
                 path="/tasks/create"
               />
-              <QuickAction 
+              <QuickAction
                 icon={<User className="h-5 w-5 text-white/40" />}
                 label="View Profile"
                 path="/profile"

@@ -10,9 +10,9 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
   const { profile } = useProfileStore();
   const { user } = useAuthStore();
- 
+
   const avatarUrl = profile?.avatar_url;
-   
+
   const getFullAvatarUrl = (url?: string | null) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -22,7 +22,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
   };
 
   const fullAvatarUrl = getFullAvatarUrl(avatarUrl);
-  
+
   const displayName = profile?.name || user?.name || 'User';
   const initials = displayName
     .split(' ')
@@ -57,9 +57,9 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white transition-colors hover:bg-white/20 overflow-hidden"
           >
             {fullAvatarUrl ? (
-              <img 
-                src={fullAvatarUrl} 
-                alt={displayName} 
+              <img
+                src={fullAvatarUrl}
+                alt={displayName}
                 className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';

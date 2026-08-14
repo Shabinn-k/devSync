@@ -2,7 +2,7 @@ import { apiClient } from '../../../lib/axios';
 import type { ApiResponse } from '../../../types/api';
 import type { DashboardStats, ActivityItem, TaskItem } from '../types/dashboard';
 
-export const dashboardApi = { 
+export const dashboardApi = {
   getDashboard: () =>
     apiClient.get<ApiResponse<{
       stats: DashboardStats;

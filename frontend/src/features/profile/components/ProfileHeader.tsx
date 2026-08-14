@@ -7,7 +7,7 @@ interface ProfileHeaderProps {
   profile: Profile;
   isOwnProfile: boolean;
   onEditClick?: () => void;
-  isOnline?: boolean; 
+  isOnline?: boolean;
 }
 
 const formatExternalUrl = (url?: string | null): string => {
@@ -30,7 +30,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onEditClick, isOnline }: 
       <div className="flex-1 text-center sm:text-left">
         <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
           <h1 className="text-2xl font-bold text-white">{profile.name}</h1>
-        
+
           {profile.is_verified && (
             <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400">
               Verified

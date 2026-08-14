@@ -146,9 +146,9 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
           members: [...state.members, member],
           currentOrganization: state.currentOrganization
             ? {
-                ...state.currentOrganization,
-                members: [...state.currentOrganization.members, member],
-              }
+              ...state.currentOrganization,
+              members: [...state.currentOrganization.members, member],
+            }
             : null,
           isSaving: false,
         }));
@@ -171,11 +171,11 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         ),
         currentOrganization: state.currentOrganization
           ? {
-              ...state.currentOrganization,
-              members: state.currentOrganization.members.map((m) =>
-                m.id === memberId ? { ...m, role } : m
-              ),
-            }
+            ...state.currentOrganization,
+            members: state.currentOrganization.members.map((m) =>
+              m.id === memberId ? { ...m, role } : m
+            ),
+          }
           : null,
         isSaving: false,
       }));
@@ -193,9 +193,9 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
         members: state.members.filter((m) => m.id !== memberId),
         currentOrganization: state.currentOrganization
           ? {
-              ...state.currentOrganization,
-              members: state.currentOrganization.members.filter((m) => m.id !== memberId),
-            }
+            ...state.currentOrganization,
+            members: state.currentOrganization.members.filter((m) => m.id !== memberId),
+          }
           : null,
         isSaving: false,
       }));

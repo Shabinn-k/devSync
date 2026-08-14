@@ -42,20 +42,20 @@ export const Mascot = () => {
   }) => (
     <>
       <circle cx={leftCx} cy={cy} r={r} fill="white" />
-      <motion.circle 
-        cx={leftCx} 
-        cy={cy} 
-        r={r * 0.42} 
-        fill="black" 
+      <motion.circle
+        cx={leftCx}
+        cy={cy}
+        r={r * 0.42}
+        fill="black"
         style={{ x: pupilX, y: pupilY }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       />
       <circle cx={rightCx} cy={cy} r={r} fill="white" />
-      <motion.circle 
-        cx={rightCx} 
-        cy={cy} 
-        r={r * 0.42} 
-        fill="black" 
+      <motion.circle
+        cx={rightCx}
+        cy={cy}
+        r={r * 0.42}
+        fill="black"
         style={{ x: pupilX, y: pupilY }}
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
       />
@@ -71,24 +71,24 @@ export const Mascot = () => {
       fill="none"
       role="img"
       aria-label="DevSync mascot illustration"
-    > 
+    >
       <g>
         <rect x="385" y="195" width="165" height="345" rx="40" stroke="white" strokeWidth="2" />
         <EyePair leftCx={440} rightCx={495} cy={265} r={12} />
       </g>
- 
+
       <g>
         <rect x="555" y="235" width="140" height="305" rx="70" stroke="white" strokeWidth="2" />
         <EyePair leftCx={600} rightCx={650} cy={305} r={11} />
         <line x1="600" y1="335" x2="650" y2="335" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
       </g>
- 
+
       <g transform="rotate(-6 320 190)">
         <rect x="225" y="15" width="195" height="345" rx="45" stroke="white" strokeWidth="2" />
         <EyePair leftCx={300} rightCx={365} cy={95} r={13} />
         <rect x="326" y="130" width="10" height="40" rx="5" fill="#9CA3AF" />
       </g>
- 
+
       <g>
         <path d="M40,630 L40,365 A180,180 0 0 1 400,365 L400,630 Z" stroke="white" strokeWidth="2" fill="black" />
         <EyePair leftCx={160} rightCx={215} cy={460} r={15} />

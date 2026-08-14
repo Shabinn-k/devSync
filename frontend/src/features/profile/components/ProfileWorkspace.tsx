@@ -45,11 +45,10 @@ export const ProfileWorkspace = ({ projects, isLoading }: ProfileWorkspaceProps)
                   {project.role}
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 ${
-                    project.status === 'active'
+                  className={`rounded-full px-2 py-0.5 ${project.status === 'active'
                       ? 'bg-green-500/10 text-green-400'
                       : 'bg-white/5 text-white/30'
-                  }`}
+                    }`}
                 >
                   {project.status}
                 </span>

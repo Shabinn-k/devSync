@@ -9,7 +9,6 @@ import (
 )
 
 type Repository interface {
-	
 	CountProjects(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountTasks(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountTeams(ctx context.Context, userID uuid.UUID) (int64, error)

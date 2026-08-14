@@ -1,8 +1,8 @@
 package model
 
 import (
-	"time"
 	"github.com/google/uuid"
+	"time"
 )
 
 type RefreshToken struct {
@@ -13,6 +13,6 @@ type RefreshToken struct {
 	IsRevoked bool      `gorm:"default:false;index"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	
+
 	User User `gorm:"foreignKey:UserID"`
 }

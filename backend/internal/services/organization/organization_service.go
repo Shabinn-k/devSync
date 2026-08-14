@@ -32,7 +32,7 @@ type Service interface {
 
 type service struct {
 	orgRepo  organization.Repository
-	authRepo auth.Repository 
+	authRepo auth.Repository
 	cfg      *config.AppConfig
 }
 
@@ -273,7 +273,6 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 	return result, nil
 }
 
-
 func (s *service) isAdmin(ctx context.Context, orgID, userID uuid.UUID) bool {
 	member, err := s.orgRepo.GetMember(ctx, orgID, userID)
 	if err != nil {
@@ -284,7 +283,7 @@ func (s *service) isAdmin(ctx context.Context, orgID, userID uuid.UUID) bool {
 
 func (s *service) mapToResponse(ctx context.Context, org *model.Organization) *response.OrganizationResponse {
 	memberCount, _ := s.orgRepo.GetMemberCount(ctx, org.ID)
-	
+
 	return &response.OrganizationResponse{
 		ID:          org.ID,
 		Name:        org.Name,
@@ -323,4 +322,3 @@ func (s *service) mapToMemberResponse(member *model.OrganizationMember) *respons
 		JoinedAt:  member.JoinedAt,
 	}
 }
-

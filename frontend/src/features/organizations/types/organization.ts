@@ -44,8 +44,8 @@ export interface UpdateOrganizationRequest {
 }
 
 export interface AddMemberRequest {
-  user_id?: string;  
-  email?: string;   
+  user_id?: string;
+  email?: string;
   role: OrganizationRole;
 }
 

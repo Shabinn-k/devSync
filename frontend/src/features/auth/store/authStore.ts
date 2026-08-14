@@ -75,7 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({ isLoading: true, error: null });
       try {
         const response = await authApi.login(payload);
-        
+
         if (response.success && response.data) {
           const { user, token } = response.data;
           const { access_token, refresh_token } = token;
@@ -92,7 +92,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
             isLoading: false,
             error: null,
           });
-          
+
           return { success: true };
         } else {
           return { success: false, error: response.message || 'Login failed' };
@@ -180,7 +180,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         }
 
         const response = await authApi.verifyOTP({ email, otp });
-        
+
         if (!response.success) {
           throw new Error(response.message || 'Invalid OTP');
         }
@@ -225,7 +225,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         try {
           await authApi.logout({ refresh_token: currentRefresh });
         } catch {
-          
+
         }
       }
       localStorage.removeItem('devsync_access_token');

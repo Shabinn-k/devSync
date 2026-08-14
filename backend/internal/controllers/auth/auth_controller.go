@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	authRequest "devSync/internal/dto/request"
-	authResponse "devSync/internal/dto/response"  
+	authResponse "devSync/internal/dto/response"
 	"devSync/internal/response"
 	"devSync/internal/services/auth"
 	"devSync/utils/validator"

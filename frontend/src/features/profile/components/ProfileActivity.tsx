@@ -2,8 +2,8 @@ import { Activity as ActivityIcon, CheckCircle2, FolderPlus, Users, UserPen, Ref
 
 export interface ActivityItem {
   id: string;
-  action: string;      
-  label: string;         
+  action: string;
+  label: string;
   createdAt: string;
 }
 

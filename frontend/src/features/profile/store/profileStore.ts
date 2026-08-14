@@ -10,12 +10,12 @@ interface ProfileState {
   isSaving: boolean;
   error: string | null;
 
-  
+
   fetchProfile: () => Promise<void>;
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   changePassword: (data: ChangePasswordRequest) => Promise<void>;
   uploadAvatar: (file: File) => Promise<string>;
-  clearError: () => void;  
+  clearError: () => void;
 }
 
 export const useProfileStore = create<ProfileState>((set) => ({
@@ -36,7 +36,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
     try {
       console.log('Fetching profile...');
       const profile = await profileApi.getMe();
-  
+
       set({ profile, isLoading: false });
     } catch (err: any) {
       console.error('Profile fetch error:', err);
@@ -85,7 +85,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
       console.log('Uploading avatar:', file.name);
       const avatarUrl = await profileApi.uploadAvatar(file);
       console.log('Avatar uploaded:', avatarUrl);
-      
+
       set((state) => ({
         profile: state.profile ? { ...state.profile, avatar_url: avatarUrl } : null,
         isSaving: false,

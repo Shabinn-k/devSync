@@ -107,7 +107,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
     }
 
     const payload: Record<string, any> = {};
-    
+
     if (formData.name !== profile?.name) payload.name = formData.name;
     if (formData.bio !== profile?.bio) payload.bio = formData.bio;
     if (formData.location !== profile?.location) payload.location = formData.location;
@@ -119,12 +119,12 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       .split('#')[0];
     if (cleanUsername !== profile?.github_username) payload.github_username = cleanUsername;
     if (formData.portfolio_url !== profile?.portfolio_url) payload.portfolio_url = formData.portfolio_url;
-    
+
     const currentSkills = profile?.skills?.join(', ') || '';
     if (formData.skills !== currentSkills) {
       payload.skills = JSON.stringify(skillsArray);
     }
-    
+
     const currentSocialLinks = profile?.social_links || {};
     const currentSocialStr = JSON.stringify(currentSocialLinks);
     const newSocialStr = JSON.stringify(socialLinks);

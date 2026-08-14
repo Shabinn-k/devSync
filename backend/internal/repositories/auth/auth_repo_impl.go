@@ -20,7 +20,6 @@ type repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
- 
 
 func (r *repository) CreateUser(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
@@ -44,13 +43,11 @@ func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User
 	return &user, err
 }
 
-
 func (r *repository) EmailExists(ctx context.Context, email string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).Model(&model.User{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
 }
-
 
 func (r *repository) UpdateUser(ctx context.Context, user *model.User) error {
 	user.UpdatedAt = time.Now()
@@ -88,7 +85,6 @@ func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) erro
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Update("last_login_at", now).Error
 }
 
-
 func (r *repository) CreateRefreshToken(ctx context.Context, token *model.RefreshToken) error {
 	return r.db.WithContext(ctx).Create(token).Error
 }
@@ -109,12 +105,11 @@ func (r *repository) RevokeRefreshToken(ctx context.Context, id uuid.UUID) error
 func (r *repository) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("user_id = ?", userID).Update("is_revoked", true).Error
 }
- 
 
 func (r *repository) SaveResetOTP(ctx context.Context, userID uuid.UUID, otp string, expiresAt time.Time) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"reset_otp":          otp,
+		"reset_otp":            otp,
 		"reset_otp_expires_at": expiresAt,
 		"last_otp_resend_at":   now,
 		"updated_at":           now,
@@ -123,8 +118,8 @@ func (r *repository) SaveResetOTP(ctx context.Context, userID uuid.UUID, otp str
 
 func (r *repository) ClearResetOTP(ctx context.Context, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"reset_otp":          nil,
+		"reset_otp":            nil,
 		"reset_otp_expires_at": nil,
-		"updated_at":         time.Now(),
+		"updated_at":           time.Now(),
 	}).Error
 }

@@ -3,8 +3,8 @@ package dashboard
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"devSync/internal/model"
+	"github.com/google/uuid"
 )
 
 func (r *repository) CountProjects(ctx context.Context, userID uuid.UUID) (int64, error) {

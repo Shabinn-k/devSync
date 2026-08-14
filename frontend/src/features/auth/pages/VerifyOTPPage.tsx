@@ -24,7 +24,7 @@ const VerifyOTPPage = () => {
     try {
       await verifyOTP(otp);
       navigate('/reset-password');
-    } catch { 
+    } catch {
     }
   };
 
@@ -35,7 +35,7 @@ const VerifyOTPPage = () => {
         await forgotPassword(resetEmail);
         setValidationError(null);
       }
-    } catch { 
+    } catch {
     }
   };
 

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  CheckSquare, 
-  Users, 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  CheckSquare,
+  Users,
   LogOut,
   X
 } from 'lucide-react';
@@ -19,11 +19,11 @@ const navigation = [
   { name: 'Projects', icon: FolderKanban, href: '/projects' },
   { name: 'Tasks', icon: CheckSquare, href: '/tasks' },
   { name: 'Organization', icon: Users, href: '/organizations' },
-  
+
 ];
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
-  const {  logout } = useAuthStore();
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     await logout();
@@ -31,9 +31,8 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
   };
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-white/5 bg-black/95 transition-transform duration-200 ease-in-out ${
-      isOpen ? 'translate-x-0' : '-translate-x-full'
-    } lg:translate-x-0`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-white/5 bg-black/95 transition-transform duration-200 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0`}>
       <div className="flex h-16 items-center border-b border-white/5 px-6">
         <Link to="/dashboard" className="flex items-center gap-2.5">
           <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
@@ -56,11 +55,10 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
               key={item.name}
               to={item.href}
               onClick={onClose}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                isActive
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${isActive
                   ? 'bg-white/10 text-white'
                   : 'text-white/60 hover:bg-white/5 hover:text-white'
-              }`}
+                }`}
             >
               <Icon size={18} />
               {item.name}

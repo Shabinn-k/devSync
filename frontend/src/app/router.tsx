@@ -19,7 +19,7 @@ import { ProtectedRoute, PublicRoute } from "../components/routes/Guards";
 export const AppRoutes = () => {
   return (
     <Routes>
-    
+
       <Route path="/" element={<LandingPage />} />
 
       <Route
@@ -75,7 +75,7 @@ export const AppRoutes = () => {
           </PublicRoute>
         }
       />
-      
+
       <Route
         path="/dashboard"
         element={
@@ -95,21 +95,21 @@ export const AppRoutes = () => {
       />
 
       <Route
-  path="/organizations"
-  element={
-    <ProtectedRoute>
-      <OrganizationsPage />
-    </ProtectedRoute>
-  }
-/>
-<Route
-  path="/organizations/:id"
-  element={
-    <ProtectedRoute>
-      <OrganizationDetailPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/organizations"
+        element={
+          <ProtectedRoute>
+            <OrganizationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/organizations/:id"
+        element={
+          <ProtectedRoute>
+            <OrganizationDetailPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

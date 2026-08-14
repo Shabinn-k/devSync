@@ -12,7 +12,7 @@ interface Contribution {
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
 }
- 
+
 const getContributionColor = (count: number, level: number) => {
   if (count === 0 || level === 0) return 'bg-[#161b22]';
   if (level === 1) return 'bg-[#0e4429]';
@@ -36,7 +36,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalContributions, setTotalContributions] = useState(0);
-  
+
   const cleanUsername = githubUsername ? extractUsername(githubUsername) : '';
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
       try {
         console.log('Fetching GitHub contributions via backend API...');
         const res = await profileApi.getGitHubContributions();
-        
+
         const parsed: Contribution[] = (res.contributions || []).map((c) => ({
           date: c.date,
           count: c.count,
@@ -161,7 +161,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
 
   const paddedContributions: (Contribution | null)[] = [...contributions];
   const firstDate = new Date(contributions[0].date);
-  const firstDayOfWeek = firstDate.getDay(); 
+  const firstDayOfWeek = firstDate.getDay();
   for (let i = 0; i < firstDayOfWeek; i++) {
     paddedContributions.unshift(null);
   }
@@ -171,8 +171,8 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
     weeks.push(paddedContributions.slice(i, i + 7));
   }
 
-  const averagePerDay = contributions.length > 0 
-    ? Math.round(totalContributions / contributions.length) 
+  const averagePerDay = contributions.length > 0
+    ? Math.round(totalContributions / contributions.length)
     : 0;
 
   return (
@@ -208,7 +208,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
               </div>
             ))}
           </div>
-          
+
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-1">
               {week.map((day, dayIndex) =>

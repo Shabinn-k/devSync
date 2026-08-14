@@ -72,16 +72,16 @@ apiClient.interceptors.response.use(
 
         if (response.data.success && response.data.data) {
           const { access_token, refresh_token } = response.data.data;
-          
+
           localStorage.setItem('devsync_access_token', access_token);
           localStorage.setItem('devsync_refresh_token', refresh_token);
-          
+
           if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
             originalRequest.headers.set('Authorization', `Bearer ${access_token}`);
           } else {
             originalRequest.headers.Authorization = `Bearer ${access_token}`;
           }
-          
+
           return apiClient(originalRequest);
         }
       } catch (refreshError) {

@@ -314,7 +314,7 @@ func (s *service) fetchContributions(ctx context.Context, username string) ([]re
 	if len(payload.Contributions) == 0 {
 		return nil, 0, errors.New("no contribution data found for this username")
 	}
-	
+
 	all := payload.Contributions
 
 	contributions := make([]response.GitHubContribution, 0, len(all))

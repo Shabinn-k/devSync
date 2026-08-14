@@ -65,11 +65,10 @@ export const Pricing = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
               viewport={{ once: true }}
-              className={`relative rounded-2xl border p-8 transition-all ${
-                plan.popular
+              className={`relative rounded-2xl border p-8 transition-all ${plan.popular
                   ? 'border-white/20 bg-white/10 shadow-2xl shadow-white/5'
                   : 'border-white/5 bg-white/5 hover:border-white/20'
-              }`}
+                }`}
             >
               {plan.popular && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-0.5 text-xs font-medium text-black">
@@ -92,11 +91,10 @@ export const Pricing = () => {
               </ul>
               <Link
                 to={plan.popular ? '/register' : plan.name === 'Enterprise' ? '/contact' : '/register'}
-                className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${
-                  plan.popular
+                className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${plan.popular
                     ? 'bg-white text-black hover:bg-white/90'
                     : 'border border-white/20 text-white hover:bg-white/10'
-                }`}
+                  }`}
               >
                 {plan.cta}
               </Link>

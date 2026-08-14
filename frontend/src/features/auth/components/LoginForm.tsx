@@ -54,7 +54,7 @@ export const LoginForm = () => {
       console.log('Login successful!');
       navigate('/dashboard');
     } catch (err: any) {
-      console.error('Login failed:', err); 
+      console.error('Login failed:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -111,8 +111,8 @@ export const LoginForm = () => {
         <AuthDivider label="Or continue with" />
 
         <div className="grid grid-cols-2 gap-3">
-          <SocialButton provider="Google" icon={<GoogleIcon />} onClick={() => {}} />
-          <SocialButton provider="GitHub" icon={<GitHubIcon />} onClick={() => {}} />
+          <SocialButton provider="Google" icon={<GoogleIcon />} onClick={() => { }} />
+          <SocialButton provider="GitHub" icon={<GitHubIcon />} onClick={() => { }} />
         </div>
 
         <div className="mt-2 text-center">

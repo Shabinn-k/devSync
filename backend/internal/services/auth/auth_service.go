@@ -121,7 +121,6 @@ func (s *service) Login(ctx context.Context, req *authRequest.LoginRequest) (*au
 	return &resp, nil
 }
 
-
 func (s *service) VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
@@ -146,11 +145,10 @@ func (s *service) VerifyEmail(ctx context.Context, req *authRequest.VerifyEmailR
 	return s.repo.VerifyEmail(ctx, user.ID)
 }
 
-
 func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil 
+		return nil
 	}
 	if user == nil {
 		return nil
@@ -176,11 +174,10 @@ func (s *service) ResendOTP(ctx context.Context, req *authRequest.ResendOTPReque
 	return nil
 }
 
-
 func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPasswordRequest) error {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil 
+		return nil
 	}
 	if user == nil {
 		return nil
@@ -198,7 +195,6 @@ func (s *service) ForgotPassword(ctx context.Context, req *authRequest.ForgotPas
 	return nil
 }
 
-
 func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 	storedOTP, err := s.cache.GetOTP(ctx, email)
 	if err != nil {
@@ -215,7 +211,6 @@ func (s *service) VerifyOTP(ctx context.Context, email, otp string) error {
 
 	return nil
 }
-
 
 func (s *service) ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error {
 	verified, err := s.cache.IsOTPVerified(ctx, req.Email)

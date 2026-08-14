@@ -13,9 +13,9 @@ export const profileApi = {
     return res.data.data;
   },
 
-  updateMe: async (payload: UpdateProfileRequest | Record<string, any>): Promise<Profile> => { 
+  updateMe: async (payload: UpdateProfileRequest | Record<string, any>): Promise<Profile> => {
     const cleanPayload: Record<string, any> = {};
-    
+
     if (payload.name !== undefined) cleanPayload.name = payload.name;
     if (payload.bio !== undefined) cleanPayload.bio = payload.bio;
     if (payload.location !== undefined) cleanPayload.location = payload.location;
@@ -25,7 +25,7 @@ export const profileApi = {
     if (payload.social_links !== undefined) cleanPayload.social_links = payload.social_links;
 
     console.log('Sending to backend:', cleanPayload);
-    
+
     const res = await apiClient.put<ApiEnvelope<Profile>>('/profile/me', cleanPayload);
     return res.data.data;
   },

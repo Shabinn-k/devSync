@@ -17,14 +17,13 @@ var (
 )
 
 type Repository interface {
-
 	Create(ctx context.Context, org *model.Organization) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error)
 	GetBySlug(ctx context.Context, slug string) (*model.Organization, error)
 	Update(ctx context.Context, org *model.Organization) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Organization, int64, error)
-	GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64, error) 
+	GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64, error)
 
 	AddMember(ctx context.Context, member *model.OrganizationMember) error
 	GetMember(ctx context.Context, orgID, userID uuid.UUID) (*model.OrganizationMember, error)

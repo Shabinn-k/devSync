@@ -24,7 +24,7 @@ type Repository interface {
 	CreateProfile(ctx context.Context, profile *model.UserProfile) error
 	UpdateProfile(ctx context.Context, profile *model.UserProfile) error
 	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
-	
+
 	GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error)
 }
 

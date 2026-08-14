@@ -48,7 +48,6 @@ func Created(c *gin.Context, data interface{}) {
 	})
 }
 
-
 func SuccessWithPagination(c *gin.Context, data interface{}, page, limit int, total int64) {
 	totalPages := int(total) / limit
 	if int(total)%limit != 0 {

@@ -51,9 +51,8 @@ export const FAQ = () => {
               >
                 <span className="text-sm font-medium text-white">{faq.question}</span>
                 <ChevronDown
-                  className={`h-5 w-5 text-white/40 transition-transform ${
-                    openIndex === index ? 'rotate-180' : ''
-                  }`}
+                  className={`h-5 w-5 text-white/40 transition-transform ${openIndex === index ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
               <AnimatePresence>

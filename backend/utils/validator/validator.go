@@ -44,7 +44,7 @@ func passwordComplexity(fl validator.FieldLevel) bool {
 func slugFormat(fl validator.FieldLevel) bool {
 	slug := fl.Field().String()
 	if slug == "" {
-		return true 
+		return true
 	}
 	return slugRegex.MatchString(slug)
 }

@@ -30,7 +30,7 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 	if err != nil {
 		log.Fatalf("config: failed to connect to database: %v", err)
 	}
- 
+
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.RefreshToken{},
@@ -50,7 +50,7 @@ func ConnectRedis(cfg *AppConfig) *redis.Client {
 		Addr:     cfg.RedisHost + ":" + cfg.RedisPort,
 		Password: cfg.RedisPassword,
 		DB:       cfg.RedisDB,
-	}) 
+	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
 		log.Fatalf("config: failed to connect to Redis: %v", err)

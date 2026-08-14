@@ -47,7 +47,7 @@ const ResetPasswordPage = () => {
       await resetPasswordWithOTP(resetOTP, newPassword);
       setIsSubmitted(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch (err: any) { 
+    } catch (err: any) {
     }
   };
 

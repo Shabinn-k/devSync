@@ -13,7 +13,7 @@ import { ProfileSecurity } from '../components/ProfileSecurity';
 import { ProfileModal } from '../components/ProfileModal';
 import { EditProfileForm } from '../components/EditProfileForm';
 import { ChangePasswordForm } from '../components/ChangePasswordForm';
-import { GitHubContributions } from '../components/GitHubContributions'; 
+import { GitHubContributions } from '../components/GitHubContributions';
 
 const IS_OWN_PROFILE = true;
 

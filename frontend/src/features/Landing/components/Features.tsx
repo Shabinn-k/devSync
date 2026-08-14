@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { 
+import {
   LayoutGrid, MessageSquare, GitBranch, FileText,
   GitPullRequest, Shield, Bell, BarChart3,
 } from 'lucide-react';

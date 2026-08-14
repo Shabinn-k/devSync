@@ -94,7 +94,6 @@ func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64
 	return count, err
 }
 
-
 func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMember) error {
 	if member.ID == uuid.Nil {
 		member.ID = uuid.New()
@@ -103,7 +102,7 @@ func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMe
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND user_id = ? AND is_active = ?", member.OrganizationID, member.UserID, true).
 		First(&existing).Error
-	
+
 	if err == nil {
 		return ErrUserAlreadyMember
 	}
