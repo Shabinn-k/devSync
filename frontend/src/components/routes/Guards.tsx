@@ -39,8 +39,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (isLoading && !user) return <LoadingScreen />;
 
-  // Strict admin separation: an admin can never be in a non-admin page.
-  // They get bounced back to /admin.
   const isAdmin = user?.role_id === 3;
   const isAdminPath = location.pathname.startsWith('/admin');
   if (isAdmin && !isAdminPath) {
