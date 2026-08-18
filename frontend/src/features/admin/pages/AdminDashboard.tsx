@@ -86,14 +86,12 @@ export const AdminDashboardPage = () => {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-8"> 
       <div>
         <h1 className="text-2xl font-semibold text-neutral-900">Infrastructure Overview</h1>
         <p className="mt-1 text-sm text-neutral-500">Real-time stats across DevSync.</p>
       </div>
-
-      {/* Stat cards */}
+ 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((c) => {
           const Icon = c.icon;
@@ -119,8 +117,7 @@ export const AdminDashboardPage = () => {
           );
         })}
       </div>
-
-      {/* Two-column: activity + chart placeholder */}
+ 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Activity */}
         <div className="lg:col-span-2 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
