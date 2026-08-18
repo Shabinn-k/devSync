@@ -118,8 +118,7 @@ export const AdminDashboardPage = () => {
         })}
       </div>
  
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Recent Activity */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3"> 
         <div className="lg:col-span-2 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -152,8 +151,7 @@ export const AdminDashboardPage = () => {
             })}
           </div>
         </div>
-
-        {/* Platform Health */}
+ 
         <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
           <h2 className="text-base font-medium text-neutral-900">Platform Health</h2>
           <p className="mt-0.5 text-xs text-neutral-500">Overview across all entities.</p>
