@@ -65,7 +65,6 @@ export const AdminOrganizationsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-neutral-900">Organizations</h1>
@@ -74,8 +73,7 @@ export const AdminOrganizationsPage = () => {
           </p>
         </div>
       </div>
-
-      {/* Toolbar */}
+ 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[240px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
@@ -101,8 +99,7 @@ export const AdminOrganizationsPage = () => {
           <option value="false">Inactive</option>
         </select>
       </div>
-
-      {/* Table */}
+ 
       <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
         {orgsLoading ? (
           <div className="flex h-64 items-center justify-center">

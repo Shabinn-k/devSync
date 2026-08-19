@@ -237,7 +237,6 @@ export const AdminUsersPage = () => {
                     </td>
 
                     <td className="px-4 py-3">
-                      {/* Fixed active badge logic so active users show Active in emerald */}
                       {u.is_active ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                           Active
