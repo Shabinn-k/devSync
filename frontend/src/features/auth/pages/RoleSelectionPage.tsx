@@ -62,7 +62,6 @@ export const RoleSelectionPage = () => {
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
             <div className="w-full max-w-4xl">
-                {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -79,7 +78,6 @@ export const RoleSelectionPage = () => {
                     </p>
                 </motion.div>
 
-                {/* Role Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {roles.map((role, index) => {
                         const Icon = role.icon;
@@ -98,7 +96,6 @@ export const RoleSelectionPage = () => {
                                         : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
                                 }`}
                             >
-                                {/* Selection indicator */}
                                 {isSelected && (
                                     <div className="absolute right-4 top-4">
                                         <div className="h-6 w-6 rounded-full bg-white flex items-center justify-center">
@@ -107,16 +104,13 @@ export const RoleSelectionPage = () => {
                                     </div>
                                 )}
 
-                                {/* Icon */}
                                 <div className={`inline-flex rounded-xl bg-gradient-to-r p-3 ${role.color}`}>
                                     <Icon className="h-6 w-6 text-white" />
                                 </div>
 
-                                {/* Title & Description */}
                                 <h3 className="mt-4 text-lg font-semibold text-white">{role.title}</h3>
                                 <p className="mt-1 text-sm text-white/40">{role.description}</p>
 
-                                {/* Benefits */}
                                 <div className="mt-4 space-y-1.5">
                                     {role.benefits.map((benefit, i) => (
                                         <div key={i} className="flex items-center gap-2 text-xs text-white/30">
@@ -126,7 +120,6 @@ export const RoleSelectionPage = () => {
                                     ))}
                                 </div>
 
-                                {/* Hover effect */}
                                 {!isSelected && (
                                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                                 )}
@@ -135,7 +128,6 @@ export const RoleSelectionPage = () => {
                     })}
                 </div>
 
-                {/* Continue Button */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -164,4 +156,4 @@ export const RoleSelectionPage = () => {
     );
 };
 
-export default RoleSelectionPage;
+export default RoleSelectionPage;
