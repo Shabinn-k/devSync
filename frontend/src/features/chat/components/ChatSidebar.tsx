@@ -86,7 +86,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </button>
       </div>
 
-      {/* Search */}
       <div className="p-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30" />
@@ -101,7 +100,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-4">
-        {/* General / Org Channels */}
         {orgChannels.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30">
@@ -126,7 +124,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           </div>
         )}
 
-        {/* Team Channels */}
         {teamChannels.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30">
@@ -151,7 +148,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           </div>
         )}
 
-        {/* Direct Messages */}
         {directChannels.length > 0 && (
           <div>
             <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30">
@@ -175,7 +171,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           </div>
         )}
 
-        {/* Members — click to DM */}
         {filteredMembers.length > 0 && (
           <div>
             <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/30">
