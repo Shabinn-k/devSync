@@ -43,7 +43,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     return (
         <div className="flex flex-1 flex-col bg-black/50 overflow-hidden">
-            {/* Header */}
+    
             <div className="flex h-14 items-center justify-between border-b border-white/5 px-6 bg-black/40 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70">

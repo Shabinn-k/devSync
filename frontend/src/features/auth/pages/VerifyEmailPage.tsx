@@ -78,16 +78,14 @@ const VerifyEmailPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-black">
-      {/* Logo at top left */}
+    <div className="flex min-h-screen flex-col bg-black"> 
       <div className="p-6 lg:p-10">
         <div className="flex items-center gap-2.5">
           <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
           <span className="text-sm font-bold tracking-[0.08em] text-white">DEVSYNC</span>
         </div>
       </div>
-
-      {/* Centered OTP Box */}
+ 
       <div className="flex flex-1 items-center justify-center px-4 -mt-20">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
