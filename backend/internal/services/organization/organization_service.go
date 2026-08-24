@@ -46,10 +46,6 @@ func NewService(orgRepo organization.Repository, authRepo auth.Repository, cfg *
 
 func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error) {
 
-	if _, err := s.orgRepo.GetBySlug(ctx, req.Slug); err == nil {
-		return nil, organization.ErrDuplicateSlug
-	}
-
 	org := &model.Organization{
 		Name:        req.Name,
 		Slug:        strings.ToLower(req.Slug),
