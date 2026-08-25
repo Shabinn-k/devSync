@@ -96,14 +96,12 @@ export const InvitationPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md rounded-2xl border border-white/10 bg-black shadow-2xl overflow-hidden"
       >
-        {/* LOADING */}
         {status === 'loading' && (
           <div className="flex items-center justify-center p-16">
             <Loader2 className="h-8 w-8 animate-spin text-white/40" />
           </div>
         )}
 
-        {/* ERROR */}
         {status === 'error' && (
           <div className="p-8 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
@@ -122,7 +120,6 @@ export const InvitationPage = () => {
           </div>
         )}
 
-        {/* ACCEPTED */}
         {status === 'accepted' && (
           <div className="p-8 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-green-500/30 bg-green-500/10">
@@ -133,7 +130,6 @@ export const InvitationPage = () => {
           </div>
         )}
 
-        {/* DECLINED */}
         {status === 'declined' && (
           <div className="p-8 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-red-500/30 bg-red-500/10">
@@ -144,7 +140,6 @@ export const InvitationPage = () => {
           </div>
         )}
 
-        {/* READY */}
         {status === 'ready' && currentInvitation && (
           <>
             <div className="border-b border-white/10 px-6 py-8 text-center">

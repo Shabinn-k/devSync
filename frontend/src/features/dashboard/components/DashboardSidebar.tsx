@@ -80,8 +80,7 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
               </NavLink>
             );
           })}
-
-          {/* Show Admin link ONLY when user has Admin role (role_id === 3) */}
+ 
           {isAdmin && (
             <NavLink
               to="/admin"
