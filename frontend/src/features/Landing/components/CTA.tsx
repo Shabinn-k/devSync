@@ -5,7 +5,7 @@ export const CTA = () => {
     <section className="border-t border-white/5 px-6 py-24">
       <div className="mx-auto max-w-3xl">
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-black p-12 text-center">
-          {/* subtle grid backdrop */}
+        
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.03]"
             style={{

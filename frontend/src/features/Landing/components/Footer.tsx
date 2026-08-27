@@ -5,7 +5,7 @@ export const Footer = () => {
     <footer className="border-t border-white/5 px-6 py-12">
       <div className="mx-auto max-w-6xl">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* brand */}
+       
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2.5">
               <div className="flex h-6 w-6 items-center justify-center rounded-md border border-white/20 bg-white/5 font-mono text-[10px] font-bold text-white">

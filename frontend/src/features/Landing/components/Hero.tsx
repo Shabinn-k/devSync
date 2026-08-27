@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 export const Hero = () => {
   return (
     <section className="relative overflow-hidden pt-32 pb-20 px-6">
-      {/* subtle grid backdrop */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -19,7 +18,6 @@ export const Hero = () => {
       <div className="relative mx-auto max-w-5xl">
        
 
-        {/* headline */}
         <h1 className="text-center text-4xl font-semibold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl">
           <span className="block">The workspace</span>
           <span className="block text-white/30">your team deserves.</span>
@@ -31,7 +29,6 @@ export const Hero = () => {
           responds in milliseconds.
         </p>
 
-        {/* CTA */}
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/register"
@@ -52,10 +49,8 @@ export const Hero = () => {
           NO CREDIT CARD · FREE FOREVER FOR SMALL TEAMS
         </p>
 
-        {/* Terminal-style product preview */}
         <div className="mx-auto mt-16 max-w-4xl">
           <div className="relative rounded-xl border border-white/10 bg-black shadow-2xl">
-            {/* window chrome */}
             <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
               <div className="flex gap-1.5">
                 <div className="h-2.5 w-2.5 rounded-full bg-white/10" />
@@ -72,9 +67,7 @@ export const Hero = () => {
               </div>
             </div>
 
-            {/* dashboard preview */}
             <div className="grid grid-cols-12 gap-3 p-5">
-              {/* sidebar */}
               <div className="col-span-3 space-y-1.5">
                 {['dashboard', 'projects', 'tasks', 'chat', 'teams'].map((item, i) => (
                   <div
@@ -89,7 +82,6 @@ export const Hero = () => {
                 ))}
               </div>
 
-              {/* main */}
               <div className="col-span-9 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-white/60">projects</span>
@@ -123,7 +115,6 @@ export const Hero = () => {
                   ))}
                 </div>
 
-                {/* chat preview */}
                 <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="h-1 w-1 rounded-full bg-green-400" />
@@ -144,7 +135,6 @@ export const Hero = () => {
             </div>
           </div>
 
-          {/* reflection glow */}
           <div className="pointer-events-none mx-auto h-24 max-w-3xl bg-gradient-to-b from-white/[0.03] to-transparent blur-2xl" />
         </div>
       </div>
