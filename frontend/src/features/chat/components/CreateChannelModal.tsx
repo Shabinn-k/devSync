@@ -112,7 +112,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black p-6">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
           <h3 className="text-base font-semibold text-white">New Channel</h3>
           <button
@@ -130,7 +129,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Type selector */}
           <div>
             <label className="block text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
               Type
@@ -157,7 +155,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             </div>
           </div>
 
-          {/* Organization picker (General only) */}
           {type === 'org' && (
             <div>
               <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
@@ -181,7 +178,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             </div>
           )}
 
-          {/* Team picker (Team only) */}
           {type === 'team' && (
             <div>
               <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
@@ -211,7 +207,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             </div>
           )}
 
-          {/* Channel name (General + Team) */}
           {type !== 'direct' && (
             <div>
               <label className="block text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
@@ -228,7 +223,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             </div>
           )}
 
-          {/* Recipient picker (Individual) */}
           {type === 'direct' && (
             <div>
               <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
@@ -261,7 +255,6 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
