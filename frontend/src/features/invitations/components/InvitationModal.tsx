@@ -79,8 +79,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop with blur */}
-          <motion.div
+           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -88,8 +87,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
             onClick={status === 'ready' ? onClose : undefined}
           />
 
-          {/* Modal */}
-          <motion.div
+           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
@@ -100,15 +98,13 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
               className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-black shadow-2xl pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Loading State */}
-              {status === 'loading' && (
+               {status === 'loading' && (
                 <div className="flex items-center justify-center p-16">
                   <Loader2 className="h-8 w-8 animate-spin text-white/40" />
                 </div>
               )}
 
-              {/* Error State */}
-              {status === 'error' && (
+               {status === 'error' && (
                 <div className="p-8 text-center">
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10">
                     <AlertCircle className="h-8 w-8 text-red-400" />
@@ -126,8 +122,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                 </div>
               )}
 
-              {/* Accepted State */}
-              {status === 'accepted' && (
+               {status === 'accepted' && (
                 <div className="p-8 text-center">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -144,8 +139,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                 </div>
               )}
 
-              {/* Declined State */}
-              {status === 'declined' && (
+               {status === 'declined' && (
                 <div className="p-8 text-center">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -162,11 +156,9 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                 </div>
               )}
 
-              {/* Ready State - Main Modal */}
-              {status === 'ready' && currentInvitation && (
+               {status === 'ready' && currentInvitation && (
                 <>
-                  {/* Header */}
-                  <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 px-6 pt-8 pb-6 text-center">
+                   <div className="relative bg-gradient-to-br from-blue-600/20 to-purple-600/20 px-6 pt-8 pb-6 text-center">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
                       <Building2 className="h-8 w-8 text-white" />
                     </div>
@@ -178,10 +170,8 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                     </p>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-6 space-y-4">
-                    {/* Organization Info */}
-                    <div className="space-y-3 rounded-xl border border-white/5 bg-white/5 p-4">
+                   <div className="p-6 space-y-4">
+                     <div className="space-y-3 rounded-xl border border-white/5 bg-white/5 p-4">
                       <div className="flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
                           <Building2 className="h-4 w-4 text-blue-400" />
@@ -231,8 +221,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                       </div>
                     </div>
 
-                    {/* Email Mismatch Warning */}
-                    {isAuthenticated && user && user.email !== currentInvitation.email && (
+                     {isAuthenticated && user && user.email !== currentInvitation.email && (
                       <div className="flex items-start gap-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-xs text-yellow-400">
                         <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                         <div>
@@ -245,8 +234,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                       </div>
                     )}
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 pt-2">
+                     <div className="flex gap-3 pt-2">
                       <button
                         onClick={handleDecline}
                         disabled={processing}
@@ -274,8 +262,7 @@ export const InvitationModal = ({ token, isOpen, onClose, onAccepted }: Invitati
                       </button>
                     </div>
 
-                    {/* Login prompt for unauthenticated */}
-                    {!isAuthenticated && (
+                     {!isAuthenticated && (
                       <p className="text-center text-xs text-white/30">
                         You'll need to login first to accept the invitation
                       </p>
