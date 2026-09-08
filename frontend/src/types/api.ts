@@ -1,12 +1,28 @@
+export interface Pagination {
+  page: number;
+  limit: number;
+  total_items: number;
+  total_pages: number;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
   errors?: Record<string, string[]>;
+  pagination?: Pagination;
+  total?: number;
+}
+
+export interface PaginatedResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+  pagination: Pagination;
 }
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   is_verified: boolean;

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"devSync/internal/response"
 	"devSync/internal/services/dashboard"
@@ -25,25 +24,17 @@ func (h *Controller) GetDashboard(c *gin.Context) {
 		return
 	}
 
-	userUUID, ok := val.(uuid.UUID)
+	userID, ok := val.(int)
 	if !ok {
-		var err error
-		if idStr, ok := val.(string); ok {
-			userUUID, err = uuid.Parse(idStr)
-			if err != nil {
-				response.Error(c, http.StatusUnauthorized, "Unauthorized")
-				return
-			}
-		} else {
-			response.Error(c, http.StatusUnauthorized, "Unauthorized")
-			return
-		}
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
 	}
 
-	result, err := h.service.GetDashboard(c.Request.Context(), userUUID)
+	result, err := h.service.GetDashboard(c.Request.Context(), userID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	response.Success(c, result)
 }
+

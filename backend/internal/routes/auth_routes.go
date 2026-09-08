@@ -12,24 +12,23 @@ import (
 func RegisterAuthRoutes(
 	router *gin.Engine,
 	controller *auth.Controller,
-	repo authRepo.Repository,
 	cfg *config.AppConfig,
+	repo authRepo.Repository,
 ) {
 	authGroup := router.Group("/auth")
 	{
+		// Public routes (no auth required)
 		authGroup.POST("/register", controller.Register)
 		authGroup.POST("/login", controller.Login)
-		authGroup.POST("/logout", controller.Logout)
-
 		authGroup.POST("/verify-email", controller.VerifyEmail)
 		authGroup.POST("/resend-otp", controller.ResendOTP)
-
 		authGroup.POST("/forgot-password", controller.ForgotPassword)
 		authGroup.POST("/verify-otp", controller.VerifyOTP)
 		authGroup.POST("/reset-password", controller.ResetPassword)
-
 		authGroup.POST("/refresh-token", controller.RefreshToken)
 
+		// Protected routes (auth required)
+		authGroup.POST("/logout", middleware.AuthRequired(cfg, repo), controller.Logout)
 		authGroup.GET("/me", middleware.AuthRequired(cfg, repo), controller.Me)
 	}
 }

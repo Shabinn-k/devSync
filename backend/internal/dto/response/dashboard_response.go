@@ -1,9 +1,9 @@
 package response
 
 type DashboardResponse struct {
-	Stats      DashboardStats     `json:"stats"`
-	Activities []ActivityResponse `json:"activities"`
-	Tasks      []TaskResponse     `json:"tasks"`
+	Stats      DashboardStats          `json:"stats"`
+	Activities []ActivityResponse      `json:"activities"`
+	Tasks      []DashboardTaskResponse `json:"tasks"`
 }
 
 type DashboardStats struct {
@@ -16,7 +16,7 @@ type DashboardStats struct {
 }
 
 type ActivityResponse struct {
-	ID     string `json:"id"`
+	ID     int    `json:"id"`
 	Type   string `json:"type"`
 	Action string `json:"action"`
 	Title  string `json:"title"`
@@ -24,8 +24,8 @@ type ActivityResponse struct {
 	User   string `json:"user"`
 }
 
-type TaskResponse struct {
-	ID       string `json:"id"`
+type DashboardTaskResponse struct {
+	ID       int    `json:"id"`
 	Title    string `json:"title"`
 	DueDate  string `json:"due_date"`
 	Priority string `json:"priority"`

@@ -4,28 +4,27 @@ import (
 	"context"
 
 	"devSync/internal/model"
-	"github.com/google/uuid"
 )
 
-func (r *repository) CountProjects(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (r *repository) CountProjects(ctx context.Context, userID int) (int64, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("projects") {
 		return 0, nil
 	}
 	var count int64
-	err := r.db.WithContext(ctx).Table("projects").Where("user_id = ? OR created_by = ?", userID, userID).Count(&count).Error
+	err := r.db.WithContext(ctx).Table("projects").Where("created_by = ?", userID).Count(&count).Error
 	return count, err
 }
 
-func (r *repository) CountTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (r *repository) CountTasks(ctx context.Context, userID int) (int64, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("tasks") {
 		return 0, nil
 	}
 	var count int64
-	err := r.db.WithContext(ctx).Table("tasks").Where("user_id = ? OR assigned_to = ?", userID, userID).Count(&count).Error
+	err := r.db.WithContext(ctx).Table("tasks").Where("created_by = ? OR assignee_id = ?", userID, userID).Count(&count).Error
 	return count, err
 }
 
-func (r *repository) CountTeams(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (r *repository) CountTeams(ctx context.Context, userID int) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
@@ -34,25 +33,25 @@ func (r *repository) CountTeams(ctx context.Context, userID uuid.UUID) (int64, e
 	return count, err
 }
 
-func (r *repository) CountCompletedTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (r *repository) CountCompletedTasks(ctx context.Context, userID int) (int64, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("tasks") {
 		return 0, nil
 	}
 	var count int64
-	err := r.db.WithContext(ctx).Table("tasks").Where("(user_id = ? OR assigned_to = ?) AND status = ?", userID, userID, "completed").Count(&count).Error
+	err := r.db.WithContext(ctx).Table("tasks").Where("(created_by = ? OR assignee_id = ?) AND status = ?", userID, userID, "done").Count(&count).Error
 	return count, err
 }
 
-func (r *repository) CountActiveTasks(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (r *repository) CountActiveTasks(ctx context.Context, userID int) (int64, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("tasks") {
 		return 0, nil
 	}
 	var count int64
-	err := r.db.WithContext(ctx).Table("tasks").Where("(user_id = ? OR assigned_to = ?) AND status != ?", userID, userID, "completed").Count(&count).Error
+	err := r.db.WithContext(ctx).Table("tasks").Where("(created_by = ? OR assignee_id = ?) AND status != ?", userID, userID, "done").Count(&count).Error
 	return count, err
 }
 
-func (r *repository) GetRecentActivities(ctx context.Context, userID uuid.UUID, limit int) ([]Activity, error) {
+func (r *repository) GetRecentActivities(ctx context.Context, userID int, limit int) ([]Activity, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("activities") {
 		return []Activity{}, nil
 	}
@@ -64,14 +63,15 @@ func (r *repository) GetRecentActivities(ctx context.Context, userID uuid.UUID, 
 	return activities, nil
 }
 
-func (r *repository) GetUpcomingTasks(ctx context.Context, userID uuid.UUID, limit int) ([]Task, error) {
+func (r *repository) GetUpcomingTasks(ctx context.Context, userID int, limit int) ([]Task, error) {
 	if !r.db.WithContext(ctx).Migrator().HasTable("tasks") {
 		return []Task{}, nil
 	}
 	var tasks []Task
-	err := r.db.WithContext(ctx).Table("tasks").Where("(user_id = ? OR assigned_to = ?) AND status != ?", userID, userID, "completed").Order("due_date ASC").Limit(limit).Find(&tasks).Error
+	err := r.db.WithContext(ctx).Table("tasks").Where("(created_by = ? OR assignee_id = ?) AND status != ?", userID, userID, "done").Order("due_date ASC").Limit(limit).Find(&tasks).Error
 	if err != nil {
 		return []Task{}, nil
 	}
 	return tasks, nil
 }
+

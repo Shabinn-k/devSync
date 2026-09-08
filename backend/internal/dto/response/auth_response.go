@@ -2,13 +2,13 @@ package response
 
 import (
 	"time"
-	"github.com/google/uuid"
 )
 
 type UserResponse struct {
-	ID         uuid.UUID `json:"id"`
+	ID         int       `json:"id"`
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
+	Role       string    `json:"role"`
 	IsVerified bool      `json:"is_verified"`
 	IsActive   bool      `json:"is_active"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -22,8 +22,10 @@ type TokenResponse struct {
 }
 
 type AuthResponse struct {
-	User  UserResponse  `json:"user"`
-	Token TokenResponse `json:"token"`
+	User         UserResponse  `json:"user"`
+	Token        TokenResponse `json:"token"`
+	AccessToken  string        `json:"access_token"`
+	RefreshToken string        `json:"refresh_token"`
 }
 
 type MessageResponse struct {

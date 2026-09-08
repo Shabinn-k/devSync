@@ -15,7 +15,7 @@ export const organizationApi = {
     apiClient.post<ApiResponse<Organization>>('/organizations', data)
       .then((res) => res.data.data),
 
-  getById: (id: string) =>
+  getById: (id: number) =>
     apiClient.get<ApiResponse<OrganizationDetail>>(`/organizations/${id}`)
       .then((res) => res.data.data),
 
@@ -23,11 +23,11 @@ export const organizationApi = {
     apiClient.get<ApiResponse<Organization>>(`/organizations/slug/${slug}`)
       .then((res) => res.data.data),
 
-  update: (id: string, data: UpdateOrganizationRequest) =>
+  update: (id: number, data: UpdateOrganizationRequest) =>
     apiClient.put<ApiResponse<Organization>>(`/organizations/${id}`, data)
       .then((res) => res.data.data),
 
-  delete: (id: string) =>
+  delete: (id: number) =>
     apiClient.delete<ApiResponse<{ message: string }>>(`/organizations/${id}`)
       .then((res) => res.data.data),
 
@@ -40,22 +40,22 @@ export const organizationApi = {
     apiClient.get<ApiResponse<Organization[]>>('/organizations/me')
       .then((res) => res.data.data),
 
-  addMember: (organizationId: string, data: AddMemberRequest) =>
+  addMember: (organizationId: number, data: AddMemberRequest) =>
     apiClient
       .post<ApiResponse<OrganizationMember>>(`/organizations/${organizationId}/members`, data)
       .then((res) => res.data.data),
 
-  getMembers: (organizationId: string) =>
+  getMembers: (organizationId: number) =>
     apiClient
       .get<ApiResponse<OrganizationMember[]>>(`/organizations/${organizationId}/members`)
       .then((res) => res.data.data),
 
-  updateMemberRole: (organizationId: string, memberId: string, data: UpdateMemberRoleRequest) =>
+  updateMemberRole: (organizationId: number, memberId: number, data: UpdateMemberRoleRequest) =>
     apiClient
       .put<ApiResponse<{ message: string }>>(`/organizations/${organizationId}/members/${memberId}`, data)
       .then((res) => res.data.data),
 
-  removeMember: (organizationId: string, memberId: string) =>
+  removeMember: (organizationId: number, memberId: number) =>
     apiClient
       .delete<ApiResponse<{ message: string }>>(`/organizations/${organizationId}/members/${memberId}`)
       .then((res) => res.data.data),

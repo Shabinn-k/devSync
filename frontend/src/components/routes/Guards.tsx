@@ -1,46 +1,61 @@
-import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useEffect } from 'react';
+import { tokenStorage } from '../../lib/tokenStorage';
 
-interface RouteGuardProps {
-  children: ReactNode;
+interface ProtectedRouteProps {
+    children: React.ReactNode;
 }
 
-export const ProtectedRoute = ({ children }: RouteGuardProps) => {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  const location = useLocation();
+export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+    const { isAuthenticated, isLoading, user, getMe } = useAuthStore();
+    const hasToken = tokenStorage.hasValidSession();
+    const location = useLocation();
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+    useEffect(() => {
+        if (hasToken && !user && !isLoading) {
+            getMe();
+        }
+    }, [hasToken, user, isLoading, getMe]);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+    if (!hasToken) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
 
-  return <>{children}</>;
+    if (isLoading && !user) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-black">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    return <>{children}</>;
 };
 
-export const PublicRoute = ({ children }: RouteGuardProps) => {
-  const { isAuthenticated, isLoading } = useAuthStore();
-  const location = useLocation();
+interface PublicRouteProps {
+    children: React.ReactNode;
+}
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
-  }
+export const PublicRoute = ({ children }: PublicRouteProps) => {
+    const { isAuthenticated, isLoading } = useAuthStore();
+    const hasToken = tokenStorage.hasValidSession();
 
-  if (isAuthenticated) {
-    const from = location.state?.from?.pathname || '/dashboard';
-    return <Navigate to={from} replace />;
-  }
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-black">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            </div>
+        );
+    }
 
-  return <>{children}</>;
+    if (isAuthenticated && hasToken) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return <>{children}</>;
 };

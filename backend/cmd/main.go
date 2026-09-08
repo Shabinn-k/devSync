@@ -14,8 +14,9 @@ func main() {
 
 	router := bootstrap.InitRouter(cfg, db, redisClient)
 
-	log.Printf("Server running on port %s", cfg.AppPort)
-	if err := router.Run(":" + cfg.AppPort); err != nil {
+	log.Printf("Server running on port %s", cfg.Port)
+	if err := router.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
+	

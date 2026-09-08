@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	"devSync/config"
 	"devSync/internal/dto/request"
 	"devSync/internal/dto/response"
@@ -22,11 +20,11 @@ import (
 )
 
 type Service interface {
-	GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error)
-	UpdateProfile(ctx context.Context, userID uuid.UUID, req *request.UpdateProfileRequest) (*response.ProfileResponse, error)
-	ChangePassword(ctx context.Context, userID uuid.UUID, req *request.ChangePasswordRequest) error
-	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
-	GetGitHubContributions(ctx context.Context, userID uuid.UUID) (*response.GitHubContributionsResponse, error)
+	GetProfile(ctx context.Context, userID int) (*response.ProfileResponse, error)
+	UpdateProfile(ctx context.Context, userID int, req *request.UpdateProfileRequest) (*response.ProfileResponse, error)
+	ChangePassword(ctx context.Context, userID int, req *request.ChangePasswordRequest) error
+	UpdateAvatar(ctx context.Context, userID int, avatarURL string) error
+	GetGitHubContributions(ctx context.Context, userID int) (*response.GitHubContributionsResponse, error)
 }
 
 type service struct {
@@ -45,7 +43,7 @@ func NewService(repo profileRepo.Repository, cfg *config.AppConfig) Service {
 	}
 }
 
-func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*response.ProfileResponse, error) {
+func (s *service) GetProfile(ctx context.Context, userID int) (*response.ProfileResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -56,7 +54,7 @@ func (s *service) GetProfile(ctx context.Context, userID uuid.UUID) (*response.P
 	return s.mapToProfileResponse(user, userProfile), nil
 }
 
-func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *request.UpdateProfileRequest) (*response.ProfileResponse, error) {
+func (s *service) UpdateProfile(ctx context.Context, userID int, req *request.UpdateProfileRequest) (*response.ProfileResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -144,7 +142,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *requ
 		userProfile.SocialLinks = string(bytes)
 	}
 
-	if userProfile.ID == uuid.Nil {
+	if userProfile.ID == 0 {
 		if err := s.repo.CreateProfile(ctx, userProfile); err != nil {
 			return nil, err
 		}
@@ -157,7 +155,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, req *requ
 	return s.mapToProfileResponse(user, userProfile), nil
 }
 
-func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req *request.ChangePasswordRequest) error {
+func (s *service) ChangePassword(ctx context.Context, userID int, req *request.ChangePasswordRequest) error {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return err
@@ -175,7 +173,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, req *req
 	return s.repo.UpdatePassword(ctx, userID, hashedPassword)
 }
 
-func (s *service) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error {
+func (s *service) UpdateAvatar(ctx context.Context, userID int, avatarURL string) error {
 	return s.repo.UpdateAvatar(ctx, userID, avatarURL)
 }
 
@@ -240,7 +238,7 @@ func (s *service) mapToProfileResponse(user *model.User, profile *model.UserProf
 	}
 }
 
-func (s *service) GetGitHubContributions(ctx context.Context, userID uuid.UUID) (*response.GitHubContributionsResponse, error) {
+func (s *service) GetGitHubContributions(ctx context.Context, userID int) (*response.GitHubContributionsResponse, error) {
 	username, err := s.repo.GetGitHubUsername(ctx, userID)
 	if err != nil || username == "" {
 		profile, pErr := s.repo.GetProfileByUserID(ctx, userID)
@@ -355,3 +353,4 @@ func calculateAverage(contributions []response.GitHubContribution) int {
 	}
 	return total / len(contributions)
 }
+

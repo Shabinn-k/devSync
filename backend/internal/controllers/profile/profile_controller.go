@@ -1,12 +1,13 @@
 package profile
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"devSync/internal/dto/request"
 	"devSync/internal/response"
@@ -23,13 +24,13 @@ func NewController(s profile.Service) *Controller {
 }
 
 func (h *Controller) GetProfile(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	result, err := h.service.GetProfile(c.Request.Context(), userUUID)
+	result, err := h.service.GetProfile(c.Request.Context(), userID)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, "User not found")
 		return
@@ -49,13 +50,13 @@ func (h *Controller) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	result, err := h.service.UpdateProfile(c.Request.Context(), userUUID, &req)
+	result, err := h.service.UpdateProfile(c.Request.Context(), userID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -75,13 +76,13 @@ func (h *Controller) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	if err := h.service.ChangePassword(c.Request.Context(), userUUID, &req); err != nil {
+	if err := h.service.ChangePassword(c.Request.Context(), userID, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -89,7 +90,7 @@ func (h *Controller) ChangePassword(c *gin.Context) {
 }
 
 func (h *Controller) UploadAvatar(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -127,7 +128,7 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 	}
 
 	ext := filepath.Ext(file.Filename)
-	filename := userUUID.String() + ext
+	filename := fmt.Sprintf("%d%s", userID, ext)
 	filePath := filepath.Join(uploadDir, filename)
 
 	if err := c.SaveUploadedFile(file, filePath); err != nil {
@@ -137,7 +138,7 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 
 	avatarURL := "/uploads/avatars/" + filename
 
-	if err := h.service.UpdateAvatar(c.Request.Context(), userUUID, avatarURL); err != nil {
+	if err := h.service.UpdateAvatar(c.Request.Context(), userID, avatarURL); err != nil {
 		response.Error(c, http.StatusInternalServerError, "Failed to update avatar")
 		return
 	}
@@ -149,13 +150,13 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 }
 
 func (h *Controller) GetGitHubContributions(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	result, err := h.service.GetGitHubContributions(c.Request.Context(), userUUID)
+	result, err := h.service.GetGitHubContributions(c.Request.Context(), userID)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -163,16 +164,14 @@ func (h *Controller) GetGitHubContributions(c *gin.Context) {
 	response.Success(c, result)
 }
 
-func getUserUUID(c *gin.Context) (uuid.UUID, error) {
+func getUserID(c *gin.Context) (int, error) {
 	val, exists := c.Get("userID")
 	if !exists {
-		return uuid.Nil, http.ErrNoCookie
+		return 0, errors.New("unauthorized")
 	}
-	if id, ok := val.(uuid.UUID); ok {
+	if id, ok := val.(int); ok {
 		return id, nil
 	}
-	if idStr, ok := val.(string); ok {
-		return uuid.Parse(idStr)
-	}
-	return uuid.Nil, http.ErrNoCookie
+	return 0, errors.New("unauthorized")
 }
+

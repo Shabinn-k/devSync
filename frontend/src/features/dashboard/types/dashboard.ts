@@ -10,7 +10,7 @@ export interface DashboardStats {
 }
 
 export interface ActivityItem {
-  id: string;
+  id: number;
   type: 'task' | 'project' | 'comment' | 'team';
   action: string;
   title: string;
@@ -20,7 +20,7 @@ export interface ActivityItem {
 }
 
 export interface TaskItem {
-  id: string;
+  id: number;
   title: string;
   due_date: string;
   priority: 'High' | 'Medium' | 'Low';

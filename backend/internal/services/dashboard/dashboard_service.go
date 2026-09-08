@@ -2,32 +2,46 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"time"
 
 	"devSync/config"
 	"devSync/internal/dto/response"
 	"devSync/internal/repositories/dashboard"
+	"github.com/redis/go-redis/v9"
 )
 
 type Service interface {
-	GetDashboard(ctx context.Context, userID uuid.UUID) (*response.DashboardResponse, error)
+	GetDashboard(ctx context.Context, userID int) (*response.DashboardResponse, error)
 }
 
 type service struct {
-	repo dashboard.Repository
-	cfg  *config.AppConfig
+	repo  dashboard.Repository
+	cfg   *config.AppConfig
+	cache *redis.Client
 }
 
-func NewService(repo dashboard.Repository, cfg *config.AppConfig) Service {
+// ✅ Fix: Accept redisClient as third parameter
+func NewService(repo dashboard.Repository, cfg *config.AppConfig, cache *redis.Client) Service {
 	return &service{
-		repo: repo,
-		cfg:  cfg,
+		repo:  repo,
+		cfg:   cfg,
+		cache: cache,
 	}
 }
 
-func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response.DashboardResponse, error) {
+func (s *service) GetDashboard(ctx context.Context, userID int) (*response.DashboardResponse, error) {
+	// Check cache first
+	cacheKey := fmt.Sprintf("dashboard:user:%d", userID)
+	cached, err := s.cache.Get(ctx, cacheKey).Result()
+	if err == nil {
+		var dashboard response.DashboardResponse
+		if err := json.Unmarshal([]byte(cached), &dashboard); err == nil {
+			return &dashboard, nil
+		}
+	}
+
 	projects, _ := s.repo.CountProjects(ctx, userID)
 	tasks, _ := s.repo.CountTasks(ctx, userID)
 	teams, _ := s.repo.CountTeams(ctx, userID)
@@ -41,7 +55,7 @@ func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response
 		completionRate = int((float64(completedTasks) / float64(tasks)) * 100)
 	}
 
-	return &response.DashboardResponse{
+	dashboard := &response.DashboardResponse{
 		Stats: response.DashboardStats{
 			Projects:       int(projects),
 			Tasks:          int(tasks),
@@ -52,7 +66,13 @@ func (s *service) GetDashboard(ctx context.Context, userID uuid.UUID) (*response
 		},
 		Activities: s.mapActivities(activities),
 		Tasks:      s.mapTasks(upcomingTasks),
-	}, nil
+	}
+
+	// Cache for 5 minutes
+	data, _ := json.Marshal(dashboard)
+	s.cache.Set(ctx, cacheKey, data, 5*time.Minute)
+
+	return dashboard, nil
 }
 
 func (s *service) mapActivities(activities []dashboard.Activity) []response.ActivityResponse {
@@ -70,13 +90,17 @@ func (s *service) mapActivities(activities []dashboard.Activity) []response.Acti
 	return result
 }
 
-func (s *service) mapTasks(tasks []dashboard.Task) []response.TaskResponse {
-	var result []response.TaskResponse
+func (s *service) mapTasks(tasks []dashboard.Task) []response.DashboardTaskResponse {
+	var result []response.DashboardTaskResponse
 	for _, task := range tasks {
-		result = append(result, response.TaskResponse{
+		dueDateStr := ""
+		if !task.DueDate.IsZero() {
+			dueDateStr = task.DueDate.Format("Jan 2")
+		}
+		result = append(result, response.DashboardTaskResponse{
 			ID:       task.ID,
 			Title:    task.Title,
-			DueDate:  task.DueDate.Format("Jan 2"),
+			DueDate:  dueDateStr,
 			Priority: task.Priority,
 			Status:   task.Status,
 		})

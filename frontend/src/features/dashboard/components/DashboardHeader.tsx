@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 import { useProfileStore } from '../../profile/store/profileStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { NotificationBell } from '../../notifications/components';
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
@@ -48,10 +49,7 @@ export const DashboardHeader = ({ onMenuClick }: DashboardHeaderProps) => {
           <button className="rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white">
             <Search size={18} />
           </button>
-          <button className="relative rounded-full p-2 text-white/40 transition-colors hover:bg-white/5 hover:text-white">
-            <Bell size={18} />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-          </button>
+          <NotificationBell />
           <Link
             to="/profile"
             className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-medium text-white transition-colors hover:bg-white/20 overflow-hidden"

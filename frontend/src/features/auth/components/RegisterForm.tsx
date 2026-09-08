@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,6 +7,7 @@ import { AuthInput } from './AuthInput';
 import { SocialButton } from './SocialButton';
 import { AuthDivider } from './AuthDivider';
 import { useAuthStore } from '../../../stores/authStore';
+import toast from 'react-hot-toast';
 
 export const RegisterForm = () => {
   const [fullName, setFullName] = useState('');
@@ -17,7 +18,21 @@ export const RegisterForm = () => {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const navigate = useNavigate();
-  const { register: registerUser, isLoading, error, clearError } = useAuthStore();
+  const { 
+    register: registerUser, 
+    isLoading, 
+    error, 
+    clearError, 
+    selectedRole,
+    setSelectedRole 
+  } = useAuthStore();
+
+  // ✅ Redirect if no role selected
+  useEffect(() => {
+    if (!selectedRole) {
+      navigate('/role');
+    }
+  }, [selectedRole, navigate]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,18 +55,24 @@ export const RegisterForm = () => {
       return;
     }
 
+    // ✅ Pass the selected role during registration
     registerUser({
       name: fullName,
       email,
       password,
-      confirm_password: confirmPassword,
+      role: selectedRole!, // ✅ Role from store
     })
       .then(() => {
+        toast.success('Account created! Please verify your email.');
         navigate('/verify-email');
       })
       .catch((err) => {
-        console.error('Register error:', err);
+        toast.error(err.message || 'Registration failed');
       });
+  };
+
+  const getRoleDisplay = (role: string) => {
+    return role.replace('_', ' ').toUpperCase();
   };
 
   return (
@@ -61,10 +82,30 @@ export const RegisterForm = () => {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="w-full"
     >
-      <h2 className="text-xl font-bold text-white sm:text-2xl">Create your account</h2>
-      <p className="mt-1 text-sm text-white/40">
-        Start building with the industry standard for sync.
-      </p>
+      {/* ✅ Header with Role Badge */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white sm:text-2xl">Create your account</h2>
+          <p className="mt-1 text-sm text-white/40">
+            Start building with the industry standard for sync.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+          <span className="text-xs text-white/40">Role:</span>
+          <span className="text-xs font-medium text-white capitalize">
+            {getRoleDisplay(selectedRole || 'developer')}
+          </span>
+          <button
+            onClick={() => {
+              setSelectedRole(null);
+              navigate('/role');
+            }}
+            className="text-xs text-white/30 hover:text-white/60 transition-colors"
+          >
+            Change
+          </button>
+        </div>
+      </div>
 
       {(error || validationError) && (
         <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
@@ -79,6 +120,7 @@ export const RegisterForm = () => {
           placeholder="Manu Ram"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          required
         />
 
         <AuthInput
@@ -87,6 +129,7 @@ export const RegisterForm = () => {
           placeholder="name@gmail.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
         <AuthInput
@@ -95,6 +138,8 @@ export const RegisterForm = () => {
           placeholder="••••••••"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
+          minLength={8}
         />
 
         <AuthInput
@@ -103,6 +148,7 @@ export const RegisterForm = () => {
           placeholder="••••••••"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          required
         />
 
         <div className="flex items-center gap-3">
@@ -112,6 +158,7 @@ export const RegisterForm = () => {
             checked={agreeTerms}
             onChange={(e) => setAgreeTerms(e.target.checked)}
             className="h-4 w-4 cursor-pointer rounded border border-white/30 bg-transparent accent-white"
+            required
           />
           <label htmlFor="terms" className="text-xs text-white/60">
             I agree to the{' '}

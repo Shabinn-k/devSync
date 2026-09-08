@@ -37,6 +37,13 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 		&model.UserProfile{},
 		&model.Organization{},
 		&model.OrganizationMember{},
+		&model.Project{},
+		&model.ProjectMember{},
+		&model.Task{},
+		&model.Comment{},
+		&model.Team{},
+		&model.TeamMember{},
+		&model.Notification{},
 	); err != nil {
 		log.Fatalf("config: failed to migrate database: %v", err)
 	}

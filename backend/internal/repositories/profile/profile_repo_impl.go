@@ -5,13 +5,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"devSync/internal/model"
 )
 
-func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+func (r *repository) GetUserByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
 	err := r.db.WithContext(ctx).
 		Where("id = ? AND is_active = ?", id, true).
@@ -27,7 +26,7 @@ func (r *repository) UpdateUser(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+func (r *repository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
 	return r.db.WithContext(ctx).
 		Model(&model.User{}).
 		Where("id = ?", userID).
@@ -37,7 +36,7 @@ func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, passw
 		}).Error
 }
 
-func (r *repository) GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*model.UserProfile, error) {
+func (r *repository) GetProfileByUserID(ctx context.Context, userID int) (*model.UserProfile, error) {
 	var profile model.UserProfile
 	err := r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
@@ -57,7 +56,7 @@ func (r *repository) UpdateProfile(ctx context.Context, profile *model.UserProfi
 	return r.db.WithContext(ctx).Save(profile).Error
 }
 
-func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error {
+func (r *repository) UpdateAvatar(ctx context.Context, userID int, avatarURL string) error {
 	result := r.db.WithContext(ctx).
 		Model(&model.UserProfile{}).
 		Where("user_id = ?", userID).
@@ -81,7 +80,7 @@ func (r *repository) UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarU
 	return nil
 }
 
-func (r *repository) GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error) {
+func (r *repository) GetGitHubUsername(ctx context.Context, userID int) (string, error) {
 	var profile model.UserProfile
 	err := r.db.WithContext(ctx).
 		Model(&model.UserProfile{}).
@@ -96,3 +95,4 @@ func (r *repository) GetGitHubUsername(ctx context.Context, userID uuid.UUID) (s
 	}
 	return profile.GitHubUsername, nil
 }
+

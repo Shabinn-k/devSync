@@ -8,8 +8,9 @@ import (
 func ToUserResponse(user *model.User) authResponse.UserResponse {
 	return authResponse.UserResponse{
 		ID:         user.ID,
-		Name:  		user.Name,
+		Name:       user.Name,
 		Email:      user.Email,
+		Role:       user.Role,
 		IsVerified: user.IsVerified,
 		IsActive:   user.IsActive,
 		CreatedAt:  user.CreatedAt,
@@ -27,7 +28,9 @@ func ToTokenResponse(accessToken, refreshToken string, expiresIn int64) authResp
 
 func ToAuthResponse(user *model.User, accessToken, refreshToken string, expiresIn int64) authResponse.AuthResponse {
 	return authResponse.AuthResponse{
-		User:  ToUserResponse(user),
-		Token: ToTokenResponse(accessToken, refreshToken, expiresIn),
+		User:         ToUserResponse(user),
+		Token:        ToTokenResponse(accessToken, refreshToken, expiresIn),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 }

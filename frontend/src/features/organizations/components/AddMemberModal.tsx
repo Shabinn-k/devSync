@@ -5,7 +5,7 @@ import { useOrganizationStore } from '../store/organizationStore';
 import type { OrganizationRole } from '../types/organization';
 
 interface AddMemberModalProps {
-  organizationId: string;
+  organizationId: number;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -30,7 +30,7 @@ export const AddMemberModal = ({ organizationId, onClose, onSuccess }: AddMember
 
     try {
       await addMember(organizationId, {
-        ...(userId.trim() && { user_id: userId.trim() }),
+        ...(userId.trim() && { user_id: Number(userId.trim()) }),
         ...(email.trim() && { email: email.trim() }),
         role,
       });
@@ -88,8 +88,8 @@ export const AddMemberModal = ({ organizationId, onClose, onSuccess }: AddMember
             User ID (Optional fallback)
           </label>
           <input
-            type="text"
-            placeholder="UUID (e.g. 123e4567-e89b-12d3-a456-426614174000)"
+            type="number"
+            placeholder="User ID (e.g. 1)"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             className="w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"

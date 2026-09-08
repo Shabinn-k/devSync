@@ -1,11 +1,32 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse, TokenResponse } from '../types/api';
+import { tokenStorage } from './tokenStorage';
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+const PUBLIC_AUTH_PATHS = [
+  '/login',
+  '/register',
+  '/role',
+  '/verify-email',
+  '/verify-otp',
+  '/forgot-password',
+  '/reset-password',
+];
+
+const handleAuthFailure = () => {
+  tokenStorage.clearAllAuth();
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname;
+    if (!PUBLIC_AUTH_PATHS.includes(path)) {
+      window.location.href = '/login';
+    }
+  }
+};
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -17,11 +38,18 @@ export const apiClient: AxiosInstance = axios.create({
 
 apiClient.interceptors.request.use(
   (config: CustomAxiosRequestConfig) => {
-    if (config.url?.includes('/auth/login') || config.url?.includes('/auth/register')) {
+    if (
+      config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/register') ||
+      config.url?.includes('/auth/verify-email') ||
+      config.url?.includes('/auth/verify-otp') ||
+      config.url?.includes('/auth/forgot-password') ||
+      config.url?.includes('/auth/reset-password')
+    ) {
       return config;
     }
 
-    const token = localStorage.getItem('devsync_access_token');
+    const token = tokenStorage.getAccessToken();
     if (token) {
       if (config.headers && typeof config.headers.set === 'function') {
         config.headers.set('Authorization', `Bearer ${token}`);
@@ -38,30 +66,40 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig;
-
-    if (originalRequest.url?.includes('/auth/refresh-token')) {
-      localStorage.removeItem('devsync_access_token');
-      localStorage.removeItem('devsync_refresh_token');
-      localStorage.removeItem('devsync_user');
-      window.location.href = '/login';
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    if (originalRequest._retry) {
-      localStorage.removeItem('devsync_access_token');
-      localStorage.removeItem('devsync_refresh_token');
-      localStorage.removeItem('devsync_user');
-      window.location.href = '/login';
+    // Do NOT intercept on public auth endpoints
+    if (
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register') ||
+      originalRequest.url?.includes('/auth/verify-email') ||
+      originalRequest.url?.includes('/auth/verify-otp') ||
+      originalRequest.url?.includes('/auth/forgot-password') ||
+      originalRequest.url?.includes('/auth/reset-password')
+    ) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest.url?.includes('/auth/refresh-token')) {
+      handleAuthFailure();
       return Promise.reject(error);
     }
 
     if (error.response?.status === 401) {
+      if (originalRequest._retry) {
+        handleAuthFailure();
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('devsync_refresh_token');
+        const refreshToken = tokenStorage.getRefreshToken();
         if (!refreshToken) {
-          throw new Error('No refresh token');
+          handleAuthFailure();
+          return Promise.reject(error);
         }
 
         const response = await axios.post<ApiResponse<TokenResponse>>(
@@ -72,9 +110,7 @@ apiClient.interceptors.response.use(
 
         if (response.data.success && response.data.data) {
           const { access_token, refresh_token } = response.data.data;
-
-          localStorage.setItem('devsync_access_token', access_token);
-          localStorage.setItem('devsync_refresh_token', refresh_token);
+          tokenStorage.setTokens(access_token, refresh_token);
 
           if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
             originalRequest.headers.set('Authorization', `Bearer ${access_token}`);
@@ -83,12 +119,12 @@ apiClient.interceptors.response.use(
           }
 
           return apiClient(originalRequest);
+        } else {
+          handleAuthFailure();
+          return Promise.reject(error);
         }
       } catch (refreshError) {
-        localStorage.removeItem('devsync_access_token');
-        localStorage.removeItem('devsync_refresh_token');
-        localStorage.removeItem('devsync_user');
-        window.location.href = '/login';
+        handleAuthFailure();
         return Promise.reject(refreshError);
       }
     }
@@ -97,4 +133,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient;
+export default apiClient;

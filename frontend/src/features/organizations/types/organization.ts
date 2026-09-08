@@ -1,14 +1,14 @@
 export type OrganizationRole = 'admin' | 'member' | 'viewer';
 
 export interface Organization {
-  id: string;
+  id: number;
   name: string;
   slug: string;
   description: string;
   logo_url: string;
   website: string;
   location: string;
-  created_by: string;
+  created_by: number;
   member_count: number;
   is_active: boolean;
   created_at: string;
@@ -16,8 +16,8 @@ export interface Organization {
 }
 
 export interface OrganizationMember {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   user_name: string;
   user_email: string;
   role: OrganizationRole;
@@ -44,7 +44,7 @@ export interface UpdateOrganizationRequest {
 }
 
 export interface AddMemberRequest {
-  user_id?: string;
+  user_id?: number;
   email?: string;
   role: OrganizationRole;
 }

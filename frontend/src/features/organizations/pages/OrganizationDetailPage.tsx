@@ -37,34 +37,36 @@ const OrganizationDetailPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  const orgId = id ? Number(id) : 0;
+
   useEffect(() => {
-    if (id) {
-      fetchOrganizationById(id);
+    if (orgId) {
+      fetchOrganizationById(orgId);
     }
-  }, [id]);
+  }, [orgId]);
 
   const handleDelete = async () => {
-    if (id) {
-      await deleteOrganization(id);
+    if (orgId) {
+      await deleteOrganization(orgId);
       navigate('/organizations');
     }
   };
 
-  const handleRoleChange = async (memberId: string, newRole: OrganizationRole) => {
-    if (!id) return;
+  const handleRoleChange = async (memberId: number, newRole: OrganizationRole) => {
+    if (!orgId) return;
     setActionError(null);
     try {
-      await updateMemberRole(id, memberId, newRole);
+      await updateMemberRole(orgId, memberId, newRole);
     } catch (err: any) {
       setActionError(err.message || 'Failed to update member role');
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!id) return;
+  const handleRemoveMember = async (memberId: number) => {
+    if (!orgId) return;
     setActionError(null);
     try {
-      await removeMember(id, memberId);
+      await removeMember(orgId, memberId);
     } catch (err: any) {
       setActionError(err.message || 'Failed to remove member');
     }
@@ -83,7 +85,7 @@ const OrganizationDetailPage = () => {
       <div className="flex h-64 flex-col items-center justify-center text-center">
         <p className="text-red-400">{error || 'Organization not found'}</p>
         <button
-          onClick={() => id && fetchOrganizationById(id)}
+          onClick={() => orgId && fetchOrganizationById(orgId)}
           className="mt-4 rounded-full border border-white/10 px-6 py-2 text-sm text-white hover:bg-white/10"
         >
           Try Again
@@ -233,13 +235,13 @@ const OrganizationDetailPage = () => {
         </div>
       </div>
 
-      {showAddMember && id && (
+      {showAddMember && orgId > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/95 p-6">
             <AddMemberModal
-              organizationId={id}
+              organizationId={orgId}
               onClose={() => setShowAddMember(false)}
-              onSuccess={() => fetchOrganizationById(id)}
+              onSuccess={() => fetchOrganizationById(orgId)}
             />
           </div>
         </div>
@@ -251,7 +253,7 @@ const OrganizationDetailPage = () => {
             <EditOrganizationModal
               organization={currentOrganization}
               onClose={() => setShowEditModal(false)}
-              onSuccess={() => id && fetchOrganizationById(id)}
+              onSuccess={() => orgId && fetchOrganizationById(orgId)}
             />
           </div>
         </div>

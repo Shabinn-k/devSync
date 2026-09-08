@@ -5,8 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
-
 	"devSync/config"
 	"devSync/internal/cache"
 	"devSync/internal/dto/mapper"
@@ -35,7 +33,7 @@ type Service interface {
 	ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error
 	RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error)
 	Logout(ctx context.Context, req *authRequest.LogoutRequest) error
-	GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authResponse.UserResponse, error)
+	GetCurrentUser(ctx context.Context, userID int) (*authResponse.UserResponse, error)
 }
 
 type service struct {
@@ -73,6 +71,7 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 		Name:            req.Name,
 		Email:           req.Email,
 		PasswordHash:    hashed,
+		Role:            req.Role,
 		IsVerified:      false,
 		VerificationOTP: code,
 		OTPExpiresAt:    &expiry,
@@ -267,13 +266,12 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 		return nil, err
 	}
 
-	newRefreshToken, jti, err := jwt.GenerateRefreshToken(user.ID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
+	newRefreshToken, _, err := jwt.GenerateRefreshToken(user.ID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
 	if err != nil {
 		return nil, err
 	}
 
 	newToken := &model.RefreshToken{
-		ID:        jti,
 		UserID:    user.ID,
 		TokenHash: jwt.HashToken(newRefreshToken),
 		ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
@@ -302,7 +300,7 @@ func (s *service) Logout(ctx context.Context, req *authRequest.LogoutRequest) er
 	return s.repo.RevokeRefreshToken(ctx, storedToken.ID)
 }
 
-func (s *service) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authResponse.UserResponse, error) {
+func (s *service) GetCurrentUser(ctx context.Context, userID int) (*authResponse.UserResponse, error) {
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -315,19 +313,18 @@ func (s *service) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*authRe
 	return &resp, nil
 }
 
-func (s *service) issueTokens(ctx context.Context, userID uuid.UUID) (string, string, error) {
+func (s *service) issueTokens(ctx context.Context, userID int) (string, string, error) {
 	accessToken, err := jwt.GenerateAccessToken(userID, s.cfg.JWTAccessSecret, s.cfg.JWTAccessExpiry)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, jti, err := jwt.GenerateRefreshToken(userID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
+	refreshToken, _, err := jwt.GenerateRefreshToken(userID, s.cfg.JWTRefreshSecret, s.cfg.JWTRefreshExpiry)
 	if err != nil {
 		return "", "", err
 	}
 
 	token := &model.RefreshToken{
-		ID:        jti,
 		UserID:    userID,
 		TokenHash: jwt.HashToken(refreshToken),
 		ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
@@ -339,3 +336,4 @@ func (s *service) issueTokens(ctx context.Context, userID uuid.UUID) (string, st
 
 	return accessToken, refreshToken, nil
 }
+

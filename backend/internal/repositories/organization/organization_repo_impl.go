@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"devSync/internal/model"
@@ -20,13 +19,10 @@ func NewRepository(db *gorm.DB) Repository {
 }
 
 func (r *repository) Create(ctx context.Context, org *model.Organization) error {
-	if org.ID == uuid.Nil {
-		org.ID = uuid.New()
-	}
 	return r.db.WithContext(ctx).Create(org).Error
 }
 
-func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*model.Organization, error) {
+func (r *repository) GetByID(ctx context.Context, id int) (*model.Organization, error) {
 	var org model.Organization
 	err := r.db.WithContext(ctx).
 		Where("id = ? AND is_active = ?", id, true).
@@ -53,14 +49,14 @@ func (r *repository) Update(ctx context.Context, org *model.Organization) error 
 	return r.db.WithContext(ctx).Save(org).Error
 }
 
-func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *repository) Delete(ctx context.Context, id int) error {
 	return r.db.WithContext(ctx).
 		Model(&model.Organization{}).
 		Where("id = ?", id).
 		Update("is_active", false).Error
 }
 
-func (r *repository) List(ctx context.Context, userID uuid.UUID, limit, offset int) ([]model.Organization, int64, error) {
+func (r *repository) List(ctx context.Context, userID int, limit, offset int) ([]model.Organization, int64, error) {
 	var orgs []model.Organization
 	var total int64
 
@@ -85,7 +81,7 @@ func (r *repository) List(ctx context.Context, userID uuid.UUID, limit, offset i
 	return orgs, total, err
 }
 
-func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64, error) {
+func (r *repository) GetMemberCount(ctx context.Context, orgID int) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
@@ -95,9 +91,6 @@ func (r *repository) GetMemberCount(ctx context.Context, orgID uuid.UUID) (int64
 }
 
 func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMember) error {
-	if member.ID == uuid.Nil {
-		member.ID = uuid.New()
-	}
 	var existing model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND user_id = ? AND is_active = ?", member.OrganizationID, member.UserID, true).
@@ -113,7 +106,7 @@ func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMe
 	return r.db.WithContext(ctx).Create(member).Error
 }
 
-func (r *repository) GetMember(ctx context.Context, orgID, userID uuid.UUID) (*model.OrganizationMember, error) {
+func (r *repository) GetMember(ctx context.Context, orgID, userID int) (*model.OrganizationMember, error) {
 	var member model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND user_id = ? AND is_active = ?", orgID, userID, true).
@@ -124,7 +117,7 @@ func (r *repository) GetMember(ctx context.Context, orgID, userID uuid.UUID) (*m
 	return &member, err
 }
 
-func (r *repository) GetMemberByID(ctx context.Context, orgID, memberID uuid.UUID) (*model.OrganizationMember, error) {
+func (r *repository) GetMemberByID(ctx context.Context, orgID, memberID int) (*model.OrganizationMember, error) {
 	var member model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND id = ? AND is_active = ?", orgID, memberID, true).
@@ -135,7 +128,7 @@ func (r *repository) GetMemberByID(ctx context.Context, orgID, memberID uuid.UUI
 	return &member, err
 }
 
-func (r *repository) GetMembers(ctx context.Context, orgID uuid.UUID) ([]model.OrganizationMember, error) {
+func (r *repository) GetMembers(ctx context.Context, orgID int) ([]model.OrganizationMember, error) {
 	var members []model.OrganizationMember
 	err := r.db.WithContext(ctx).
 		Where("organization_id = ? AND is_active = ?", orgID, true).
@@ -145,7 +138,7 @@ func (r *repository) GetMembers(ctx context.Context, orgID uuid.UUID) ([]model.O
 	return members, err
 }
 
-func (r *repository) UpdateMemberRole(ctx context.Context, orgID, memberID uuid.UUID, role string) error {
+func (r *repository) UpdateMemberRole(ctx context.Context, orgID, memberID int, role string) error {
 	return r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
 		Where("organization_id = ? AND id = ?", orgID, memberID).
@@ -155,14 +148,14 @@ func (r *repository) UpdateMemberRole(ctx context.Context, orgID, memberID uuid.
 		}).Error
 }
 
-func (r *repository) RemoveMember(ctx context.Context, orgID, memberID uuid.UUID) error {
+func (r *repository) RemoveMember(ctx context.Context, orgID, memberID int) error {
 	return r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
 		Where("organization_id = ? AND id = ?", orgID, memberID).
 		Update("is_active", false).Error
 }
 
-func (r *repository) IsMember(ctx context.Context, orgID, userID uuid.UUID) (bool, error) {
+func (r *repository) IsMember(ctx context.Context, orgID, userID int) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
@@ -171,7 +164,7 @@ func (r *repository) IsMember(ctx context.Context, orgID, userID uuid.UUID) (boo
 	return count > 0, err
 }
 
-func (r *repository) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([]model.Organization, error) {
+func (r *repository) GetUserOrganizations(ctx context.Context, userID int) ([]model.Organization, error) {
 	var orgs []model.Organization
 	err := r.db.WithContext(ctx).
 		Model(&model.Organization{}).
@@ -182,3 +175,4 @@ func (r *repository) GetUserOrganizations(ctx context.Context, userID uuid.UUID)
 		Find(&orgs).Error
 	return orgs, err
 }
+

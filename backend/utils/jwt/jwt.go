@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 var (
@@ -17,17 +16,17 @@ var (
 )
 
 type Claims struct {
-	UserID    uuid.UUID `json:"user_id"`
-	TokenType string    `json:"token_type"`
+	UserID    int    `json:"user_id"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
-func GenerateAccessToken(userID uuid.UUID, secret string, expiry time.Duration) (string, error) {
+func GenerateAccessToken(userID int, secret string, expiry time.Duration) (string, error) {
 	claims := Claims{
 		UserID:    userID,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.New().String(),
+			ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -36,13 +35,13 @@ func GenerateAccessToken(userID uuid.UUID, secret string, expiry time.Duration) 
 	return token.SignedString([]byte(secret))
 }
 
-func GenerateRefreshToken(userID uuid.UUID, secret string, expiry time.Duration) (string, uuid.UUID, error) {
-	jti := uuid.New()
+func GenerateRefreshToken(userID int, secret string, expiry time.Duration) (string, string, error) {
+	jti := fmt.Sprintf("%d", time.Now().UnixNano())
 	claims := Claims{
 		UserID:    userID,
 		TokenType: "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        jti.String(),
+			ID:        jti,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
@@ -76,3 +75,4 @@ func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
+

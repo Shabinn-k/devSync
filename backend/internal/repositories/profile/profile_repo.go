@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"devSync/internal/model"
@@ -16,16 +15,16 @@ var (
 )
 
 type Repository interface {
-	GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	GetUserByID(ctx context.Context, id int) (*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
-	UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error
+	UpdatePassword(ctx context.Context, userID int, passwordHash string) error
 
-	GetProfileByUserID(ctx context.Context, userID uuid.UUID) (*model.UserProfile, error)
+	GetProfileByUserID(ctx context.Context, userID int) (*model.UserProfile, error)
 	CreateProfile(ctx context.Context, profile *model.UserProfile) error
 	UpdateProfile(ctx context.Context, profile *model.UserProfile) error
-	UpdateAvatar(ctx context.Context, userID uuid.UUID, avatarURL string) error
+	UpdateAvatar(ctx context.Context, userID int, avatarURL string) error
 
-	GetGitHubUsername(ctx context.Context, userID uuid.UUID) (string, error)
+	GetGitHubUsername(ctx context.Context, userID int) (string, error)
 }
 
 type repository struct {
@@ -35,3 +34,4 @@ type repository struct {
 func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
+

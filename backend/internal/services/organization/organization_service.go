@@ -3,9 +3,9 @@ package organization
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
-
-	"github.com/google/uuid"
+	"log"
 
 	"devSync/config"
 	"devSync/internal/dto/request"
@@ -16,18 +16,18 @@ import (
 )
 
 type Service interface {
-	Create(ctx context.Context, userID uuid.UUID, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error)
-	GetByID(ctx context.Context, userID, id uuid.UUID) (*response.OrganizationDetailResponse, error)
+	Create(ctx context.Context, userID int, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error)
+	GetByID(ctx context.Context, userID, id int) (*response.OrganizationDetailResponse, error)
 	GetBySlug(ctx context.Context, slug string) (*response.OrganizationResponse, error)
-	Update(ctx context.Context, userID, orgID uuid.UUID, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error)
-	Delete(ctx context.Context, userID, orgID uuid.UUID) error
-	List(ctx context.Context, userID uuid.UUID, page, limit int) ([]response.OrganizationResponse, int64, error)
+	Update(ctx context.Context, userID, orgID int, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error)
+	Delete(ctx context.Context, userID, orgID int) error
+	List(ctx context.Context, userID int, page, limit int) ([]response.OrganizationResponse, int64, error)
 
-	AddMember(ctx context.Context, userID, orgID uuid.UUID, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error)
-	GetMembers(ctx context.Context, userID, orgID uuid.UUID) ([]response.OrganizationMemberResponse, error)
-	UpdateMemberRole(ctx context.Context, userID, orgID uuid.UUID, memberID uuid.UUID, role string) error
-	RemoveMember(ctx context.Context, userID, orgID uuid.UUID, memberID uuid.UUID) error
-	GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([]response.OrganizationResponse, error)
+	AddMember(ctx context.Context, userID, orgID int, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error)
+	GetMembers(ctx context.Context, userID, orgID int) ([]response.OrganizationMemberResponse, error)
+	UpdateMemberRole(ctx context.Context, userID, orgID int, memberID int, role string) error
+	RemoveMember(ctx context.Context, userID, orgID int, memberID int) error
+	GetUserOrganizations(ctx context.Context, userID int) ([]response.OrganizationResponse, error)
 }
 
 type service struct {
@@ -44,11 +44,41 @@ func NewService(orgRepo organization.Repository, authRepo auth.Repository, cfg *
 	}
 }
 
-func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error) {
+func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrganizationRequest) (*response.OrganizationResponse, error) {
+	user, err := s.authRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	if user.Role != model.RoleTeamLead && user.Role != model.RoleAdmin {
+		return nil, errors.New("only team leads and admins can create organizations")
+	}
+
+	slug := strings.TrimSpace(req.Slug)
+	if slug == "" {
+		slug = strings.ToLower(strings.ReplaceAll(strings.TrimSpace(req.Name), " ", "-"))
+		var cleanSlug strings.Builder
+		for _, r := range slug {
+			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+				cleanSlug.WriteRune(r)
+			}
+		}
+		slug = cleanSlug.String()
+		if slug == "" {
+			slug = fmt.Sprintf("org-%d", userID)
+		}
+	} else {
+		slug = strings.ToLower(slug)
+	}
+
+	existing, _ := s.orgRepo.GetBySlug(ctx, slug)
+	if existing != nil {
+		return nil, errors.New("slug already taken")
+	}
 
 	org := &model.Organization{
 		Name:        req.Name,
-		Slug:        strings.ToLower(req.Slug),
+		Slug:        slug,
 		Description: req.Description,
 		Website:     req.Website,
 		Location:    req.Location,
@@ -67,13 +97,14 @@ func (s *service) Create(ctx context.Context, userID uuid.UUID, req *request.Cre
 		IsActive:       true,
 	}
 	if err := s.orgRepo.AddMember(ctx, member); err != nil {
-		return nil, err
+		s.orgRepo.Delete(ctx, org.ID)
+		return nil, errors.New("failed to add creator as admin")
 	}
 
 	return s.mapToResponse(ctx, org), nil
 }
 
-func (s *service) GetByID(ctx context.Context, userID, id uuid.UUID) (*response.OrganizationDetailResponse, error) {
+func (s *service) GetByID(ctx context.Context, userID, id int) (*response.OrganizationDetailResponse, error) {
 	isMember, err := s.orgRepo.IsMember(ctx, id, userID)
 	if err != nil || !isMember {
 		return nil, errors.New("unauthorized: organization member required")
@@ -100,7 +131,7 @@ func (s *service) GetBySlug(ctx context.Context, slug string) (*response.Organiz
 	return s.mapToResponse(ctx, org), nil
 }
 
-func (s *service) Update(ctx context.Context, userID, orgID uuid.UUID, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error) {
+func (s *service) Update(ctx context.Context, userID, orgID int, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error) {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return nil, errors.New("unauthorized: admin role required")
 	}
@@ -130,14 +161,14 @@ func (s *service) Update(ctx context.Context, userID, orgID uuid.UUID, req *requ
 	return s.mapToResponse(ctx, org), nil
 }
 
-func (s *service) Delete(ctx context.Context, userID, orgID uuid.UUID) error {
+func (s *service) Delete(ctx context.Context, userID, orgID int) error {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return errors.New("unauthorized: admin role required")
 	}
 	return s.orgRepo.Delete(ctx, orgID)
 }
 
-func (s *service) List(ctx context.Context, userID uuid.UUID, page, limit int) ([]response.OrganizationResponse, int64, error) {
+func (s *service) List(ctx context.Context, userID int, page, limit int) ([]response.OrganizationResponse, int64, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -159,33 +190,43 @@ func (s *service) List(ctx context.Context, userID uuid.UUID, page, limit int) (
 	return result, total, nil
 }
 
-func (s *service) AddMember(ctx context.Context, userID, orgID uuid.UUID, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error) {
+func (s *service) AddMember(ctx context.Context, userID, orgID int, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error) {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return nil, errors.New("unauthorized: admin role required")
 	}
 
-	var targetUserID uuid.UUID
-	if req.UserID != "" {
-		if parsed, err := uuid.Parse(req.UserID); err == nil {
-			targetUserID = parsed
-		}
-	}
+	var targetUserID int
 
-	if targetUserID == uuid.Nil && req.Email != "" {
+	if req.UserID > 0 {
+		targetUserID = req.UserID
+	} else if req.Email != "" {
 		user, err := s.authRepo.GetUserByEmail(ctx, req.Email)
 		if err != nil {
-			return nil, errors.New("user not found with specified email")
+			// ✅ Send invitation email if user not found
+			if err := s.sendInvitationEmail(ctx, req.Email, orgID); err != nil {
+				log.Printf("Failed to send invitation: %v", err)
+				return nil, errors.New("user not found and invitation failed")
+			}
+			return nil, errors.New("invitation sent to email")
 		}
 		targetUserID = user.ID
 	}
 
-	if targetUserID == uuid.Nil {
+	if targetUserID <= 0 {
 		return nil, errors.New("valid user ID or email is required")
 	}
 
 	user, err := s.authRepo.GetUserByID(ctx, targetUserID)
 	if err != nil {
 		return nil, errors.New("user not found")
+	}
+
+	isMember, err := s.orgRepo.IsMember(ctx, orgID, targetUserID)
+	if err != nil {
+		return nil, err
+	}
+	if isMember {
+		return nil, errors.New("user is already a member")
 	}
 
 	member := &model.OrganizationMember{
@@ -204,7 +245,35 @@ func (s *service) AddMember(ctx context.Context, userID, orgID uuid.UUID, req *r
 	return s.mapToMemberResponse(member), nil
 }
 
-func (s *service) GetMembers(ctx context.Context, userID, orgID uuid.UUID) ([]response.OrganizationMemberResponse, error) {
+func (s *service) sendInvitationEmail(ctx context.Context, email string, orgID int) error {
+	org, err := s.orgRepo.GetByID(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	invitationLink := fmt.Sprintf("%s/register?email=%s&org=%d", s.cfg.FrontendURL, email, orgID)
+	
+	// ✅ Use these variables
+	subject := fmt.Sprintf("Invitation to join %s on DevSync", org.Name)
+	body := fmt.Sprintf(`
+		<h2>You've been invited to join %s on DevSync!</h2>
+		<p>Click the link below to create your account and join:</p>
+		<a href="%s">%s</a>
+		<p>This invitation will expire in 7 days.</p>
+		<br>
+		<p>Best regards,<br>The DevSync Team</p>
+	`, org.Name, invitationLink, invitationLink)
+
+	log.Printf("Sending invitation email to %s for org %d", email, orgID)
+	log.Printf("Subject: %s", subject)
+	log.Printf("Body: %s", body)
+
+	// TODO: Implement actual email sending
+	// return s.emailService.SendEmail(email, subject, body)
+	
+	return nil
+}
+func (s *service) GetMembers(ctx context.Context, userID, orgID int) ([]response.OrganizationMemberResponse, error) {
 	isMember, err := s.orgRepo.IsMember(ctx, orgID, userID)
 	if err != nil || !isMember {
 		return nil, errors.New("unauthorized: organization member required")
@@ -223,39 +292,41 @@ func (s *service) GetMembers(ctx context.Context, userID, orgID uuid.UUID) ([]re
 	return result, nil
 }
 
-func (s *service) UpdateMemberRole(ctx context.Context, userID, orgID uuid.UUID, memberID uuid.UUID, role string) error {
+func (s *service) UpdateMemberRole(ctx context.Context, userID, orgID int, memberID int, role string) error {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return errors.New("unauthorized: admin role required")
 	}
 
-	member, err := s.orgRepo.GetMember(ctx, orgID, userID)
+	targetMember, err := s.orgRepo.GetMemberByID(ctx, orgID, memberID)
 	if err != nil {
 		return err
 	}
-	if member.ID == memberID {
+
+	if targetMember.UserID == userID {
 		return errors.New("cannot change your own role")
 	}
 
 	return s.orgRepo.UpdateMemberRole(ctx, orgID, memberID, role)
 }
 
-func (s *service) RemoveMember(ctx context.Context, userID, orgID uuid.UUID, memberID uuid.UUID) error {
+func (s *service) RemoveMember(ctx context.Context, userID, orgID int, memberID int) error {
 	if !s.isAdmin(ctx, orgID, userID) {
 		return errors.New("unauthorized: admin role required")
 	}
 
-	member, err := s.orgRepo.GetMember(ctx, orgID, userID)
+	targetMember, err := s.orgRepo.GetMemberByID(ctx, orgID, memberID)
 	if err != nil {
 		return err
 	}
-	if member.ID == memberID {
+
+	if targetMember.UserID == userID {
 		return errors.New("cannot remove yourself")
 	}
 
 	return s.orgRepo.RemoveMember(ctx, orgID, memberID)
 }
 
-func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([]response.OrganizationResponse, error) {
+func (s *service) GetUserOrganizations(ctx context.Context, userID int) ([]response.OrganizationResponse, error) {
 	orgs, err := s.orgRepo.GetUserOrganizations(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -269,7 +340,7 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 	return result, nil
 }
 
-func (s *service) isAdmin(ctx context.Context, orgID, userID uuid.UUID) bool {
+func (s *service) isAdmin(ctx context.Context, orgID, userID int) bool {
 	member, err := s.orgRepo.GetMember(ctx, orgID, userID)
 	if err != nil {
 		return false

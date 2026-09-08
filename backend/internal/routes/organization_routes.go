@@ -22,8 +22,8 @@ func RegisterOrganizationRoutes(
 		orgGroup.POST("", controller.Create)
 		orgGroup.GET("", controller.List)
 		orgGroup.GET("/me", controller.GetUserOrganizations)
-		orgGroup.GET("/:id", controller.GetByID)
 		orgGroup.GET("/slug/:slug", controller.GetBySlug)
+		orgGroup.GET("/:id", controller.GetByID)
 		orgGroup.PUT("/:id", controller.Update)
 		orgGroup.DELETE("/:id", controller.Delete)
 

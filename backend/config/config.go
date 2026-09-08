@@ -10,18 +10,17 @@ import (
 )
 
 type AppConfig struct {
-	AppName string
-	AppEnv  string
-	AppPort string
-	AppURL  string
+	// Server
+	Port string
 
+	// Database
 	DBHost     string
 	DBPort     string
 	DBUser     string
 	DBPassword string
 	DBName     string
-	DBSSLMode  string
-	DBTimezone string
+	DBSSLMode  string // ✅ ADD THIS
+	DBTimezone string // ✅ ADD THIS
 
 	// Redis
 	RedisHost     string
@@ -29,87 +28,76 @@ type AppConfig struct {
 	RedisPassword string
 	RedisDB       int
 
+	// JWT
 	JWTAccessSecret  string
 	JWTRefreshSecret string
 	JWTAccessExpiry  time.Duration
 	JWTRefreshExpiry time.Duration
 
+	// Email
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
 	SMTPPassword string
 	SMTPFrom     string
+
+	// Frontend URL
+	FrontendURL string
+
+	// Environment
+	Env string
 }
 
 func LoadConfig() *AppConfig {
 	if err := godotenv.Load(); err != nil {
-		log.Println("config: no .env file found, relying on system environment variables")
+		log.Println("Warning: .env file not found, using environment variables")
 	}
 
 	return &AppConfig{
-		AppName: getEnv("APP_NAME", "DevSync"),
-		AppEnv:  getEnv("APP_ENV", "development"),
-		AppPort: getEnv("APP_PORT", "8080"),
-		AppURL:  getEnv("APP_URL", "http://localhost:8080"),
+		Port: getEnv("PORT", "8080"),
 
-		DBHost:     mustGetEnv("DB_HOST"),
-		DBPort:     mustGetEnv("DB_PORT"),
-		DBUser:     mustGetEnv("DB_USER"),
-		DBPassword: mustGetEnv("DB_PASSWORD"),
-		DBName:     mustGetEnv("DB_NAME"),
+		DBHost:     getEnv("DB_HOST", "localhost"),
+		DBPort:     getEnv("DB_PORT", "5432"),
+		DBUser:     getEnv("DB_USER", "postgres"),
+		DBPassword: getEnv("DB_PASSWORD", "postgres"),
+		DBName:     getEnv("DB_NAME", "devsync"),
 		DBSSLMode:  getEnv("DB_SSLMODE", "disable"),
 		DBTimezone: getEnv("DB_TIMEZONE", "UTC"),
 
-		// Redis
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
 		RedisPort:     getEnv("REDIS_PORT", "6379"),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 		RedisDB:       getEnvAsInt("REDIS_DB", 0),
 
-		JWTAccessSecret:  mustGetEnv("JWT_ACCESS_SECRET"),
-		JWTRefreshSecret: mustGetEnv("JWT_REFRESH_SECRET"),
-		JWTAccessExpiry:  mustParseDuration("JWT_ACCESS_EXPIRY", 15*time.Minute),
-		JWTRefreshExpiry: mustParseDuration("JWT_REFRESH_EXPIRY", 168*time.Hour),
+		JWTAccessSecret:  getEnv("JWT_ACCESS_SECRET", "devsync-access-secret-key"),
+		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", "devsync-refresh-secret-key"),
+		JWTAccessExpiry:  time.Duration(getEnvAsInt("JWT_ACCESS_EXPIRY", 900)) * time.Second,
+		JWTRefreshExpiry: time.Duration(getEnvAsInt("JWT_REFRESH_EXPIRY", 604800)) * time.Second,
 
-		SMTPHost:     mustGetEnv("SMTP_HOST"),
-		SMTPPort:     mustGetEnv("SMTP_PORT"),
-		SMTPUsername: mustGetEnv("SMTP_USERNAME"),
-		SMTPPassword: mustGetEnv("SMTP_PASSWORD"),
-		SMTPFrom:     mustGetEnv("SMTP_FROM"),
+		SMTPHost:     getEnv("SMTP_HOST", "smtp.gmail.com"),
+		SMTPPort:     getEnv("SMTP_PORT", "587"),
+		SMTPUsername: getEnv("SMTP_USERNAME", ""),
+		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
+		SMTPFrom:     getEnv("SMTP_FROM", "noreply@devsync.com"),
+
+		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
+
+		Env: getEnv("ENV", "development"),
 	}
 }
 
-func getEnv(key, fallback string) string {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
-		return v
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-	return fallback
+	return defaultValue
 }
 
-func mustGetEnv(key string) string {
-	v, ok := os.LookupEnv(key)
-	if !ok || v == "" {
-		log.Fatalf("config: required environment variable %s is not set", key)
-	}
-	return v
-}
-
-func mustParseDuration(key string, fallback time.Duration) time.Duration {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
-		d, err := time.ParseDuration(v)
-		if err != nil {
-			log.Fatalf("config: invalid duration for %s: %v", key, err)
-		}
-		return d
-	}
-	return fallback
-}
-
-func getEnvAsInt(key string, fallback int) int {
-	if v, ok := os.LookupEnv(key); ok && v != "" {
-		if val, err := strconv.Atoi(v); err == nil {
-			return val
+func getEnvAsInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intVal, err := strconv.Atoi(value); err == nil {
+			return intVal
 		}
 	}
-	return fallback
+	return defaultValue
 }

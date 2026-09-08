@@ -1,11 +1,11 @@
 package organization
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"devSync/internal/dto/request"
 	"devSync/internal/response"
@@ -22,7 +22,7 @@ func NewController(s organization.Service) *Controller {
 }
 
 func (h *Controller) Create(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -39,7 +39,7 @@ func (h *Controller) Create(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Create(c.Request.Context(), userUUID, &req)
+	result, err := h.service.Create(c.Request.Context(), userID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -48,20 +48,19 @@ func (h *Controller) Create(c *gin.Context) {
 }
 
 func (h *Controller) GetByID(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	result, err := h.service.GetByID(c.Request.Context(), userUUID, orgID)
+	result, err := h.service.GetByID(c.Request.Context(), userID, orgID)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, err.Error())
 		return
@@ -85,14 +84,13 @@ func (h *Controller) GetBySlug(c *gin.Context) {
 }
 
 func (h *Controller) Update(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -109,7 +107,7 @@ func (h *Controller) Update(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Update(c.Request.Context(), userUUID, orgID, &req)
+	result, err := h.service.Update(c.Request.Context(), userID, orgID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -118,20 +116,19 @@ func (h *Controller) Update(c *gin.Context) {
 }
 
 func (h *Controller) Delete(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	if err := h.service.Delete(c.Request.Context(), userUUID, orgID); err != nil {
+	if err := h.service.Delete(c.Request.Context(), userID, orgID); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -139,7 +136,7 @@ func (h *Controller) Delete(c *gin.Context) {
 }
 
 func (h *Controller) List(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -148,7 +145,7 @@ func (h *Controller) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 
-	result, total, err := h.service.List(c.Request.Context(), userUUID, page, limit)
+	result, total, err := h.service.List(c.Request.Context(), userID, page, limit)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -158,14 +155,13 @@ func (h *Controller) List(c *gin.Context) {
 }
 
 func (h *Controller) AddMember(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -182,7 +178,7 @@ func (h *Controller) AddMember(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.AddMember(c.Request.Context(), userUUID, orgID, &req)
+	result, err := h.service.AddMember(c.Request.Context(), userID, orgID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -191,20 +187,19 @@ func (h *Controller) AddMember(c *gin.Context) {
 }
 
 func (h *Controller) GetMembers(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	result, err := h.service.GetMembers(c.Request.Context(), userUUID, orgID)
+	result, err := h.service.GetMembers(c.Request.Context(), userID, orgID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -213,20 +208,19 @@ func (h *Controller) GetMembers(c *gin.Context) {
 }
 
 func (h *Controller) UpdateMemberRole(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	memberID, err := uuid.Parse(c.Param("memberId"))
+	memberID, err := strconv.Atoi(c.Param("memberId"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid member ID")
 		return
@@ -243,7 +237,7 @@ func (h *Controller) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateMemberRole(c.Request.Context(), userUUID, orgID, memberID, req.Role); err != nil {
+	if err := h.service.UpdateMemberRole(c.Request.Context(), userID, orgID, memberID, req.Role); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -251,26 +245,25 @@ func (h *Controller) UpdateMemberRole(c *gin.Context) {
 }
 
 func (h *Controller) RemoveMember(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id := c.Param("id")
-	orgID, err := uuid.Parse(id)
+	orgID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	memberID, err := uuid.Parse(c.Param("memberId"))
+	memberID, err := strconv.Atoi(c.Param("memberId"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid member ID")
 		return
 	}
 
-	if err := h.service.RemoveMember(c.Request.Context(), userUUID, orgID, memberID); err != nil {
+	if err := h.service.RemoveMember(c.Request.Context(), userID, orgID, memberID); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -278,13 +271,13 @@ func (h *Controller) RemoveMember(c *gin.Context) {
 }
 
 func (h *Controller) GetUserOrganizations(c *gin.Context) {
-	userUUID, err := getUserUUID(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	result, err := h.service.GetUserOrganizations(c.Request.Context(), userUUID)
+	result, err := h.service.GetUserOrganizations(c.Request.Context(), userID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -292,16 +285,14 @@ func (h *Controller) GetUserOrganizations(c *gin.Context) {
 	response.Success(c, result)
 }
 
-func getUserUUID(c *gin.Context) (uuid.UUID, error) {
+func getUserID(c *gin.Context) (int, error) {
 	val, exists := c.Get("userID")
 	if !exists {
-		return uuid.Nil, http.ErrNoCookie
+		return 0, errors.New("unauthorized")
 	}
-	if id, ok := val.(uuid.UUID); ok {
+	if id, ok := val.(int); ok {
 		return id, nil
 	}
-	if idStr, ok := val.(string); ok {
-		return uuid.Parse(idStr)
-	}
-	return uuid.Nil, http.ErrNoCookie
+	return 0, errors.New("unauthorized")
 }
+

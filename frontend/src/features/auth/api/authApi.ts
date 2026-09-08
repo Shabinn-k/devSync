@@ -1,51 +1,114 @@
 import { apiClient } from '../../../lib/axios';
+import type { ApiResponse } from '../../../types/api';
 import type {
-  ApiResponse,
-  AuthResponse,
-  MessageResponse,
-  LoginPayload,
-  RegisterPayload,
-  VerifyEmailPayload,
-  ResendOTPPayload,
-  ForgotPasswordPayload,
-  ResetPasswordPayload,
-  RefreshTokenPayload,
-  LogoutPayload,
-  TokenResponse,
-  User,
-  VerifyOTPPayload
-} from '../../../types/api';
+    User,
+    LoginRequest,
+    RegisterRequest,
+    AuthResponse,
+    VerifyEmailRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+} from '../types';
 
 export const authApi = {
+    register: (data: RegisterRequest): Promise<AuthResponse> =>
+        apiClient.post<ApiResponse<any>>('/auth/register', {
+            ...data,
+            confirm_password: data.confirm_password || data.password,
+        })
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    const d = res.data.data;
+                    const access_token = d.access_token || d.token?.access_token;
+                    const refresh_token = d.refresh_token || d.token?.refresh_token;
+                    return {
+                        ...d,
+                        access_token,
+                        refresh_token,
+                    };
+                }
+                throw new Error(res.data.message || 'Registration failed');
+            }),
 
-  login: (data: LoginPayload) =>
-    apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data).then(res => res.data),
+    login: (data: LoginRequest): Promise<AuthResponse> =>
+        apiClient.post<ApiResponse<any>>('/auth/login', data)
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    const d = res.data.data;
+                    const access_token = d.access_token || d.token?.access_token;
+                    const refresh_token = d.refresh_token || d.token?.refresh_token;
+                    return {
+                        ...d,
+                        access_token,
+                        refresh_token,
+                    };
+                }
+                throw new Error(res.data.message || 'Login failed');
+            }),
 
-  register: (data: RegisterPayload) =>
-    apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data).then(res => res.data),
+    verifyEmail: (data: VerifyEmailRequest): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/verify-email', data)
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Verification failed');
+            }),
 
-  verifyEmail: (data: VerifyEmailPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-email', data).then(res => res.data),
+    resendOTP: (email: string): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/resend-otp', { email })
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Failed to resend OTP');
+            }),
 
-  resendOTP: (data: ResendOTPPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/resend-otp', data).then(res => res.data),
+    verifyOTP: (email: string, otp: string): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/verify-otp', { email, otp })
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'OTP verification failed');
+            }),
 
+    forgotPassword: (data: ForgotPasswordRequest): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/forgot-password', data)
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Failed to send reset link');
+            }),
 
-  forgotPassword: (data: ForgotPasswordPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/forgot-password', data).then(res => res.data),
+    resetPassword: (data: ResetPasswordRequest): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/reset-password', {
+            ...data,
+            confirm_password: data.confirm_password || data.new_password,
+        })
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Password reset failed');
+            }),
 
-  verifyOTP: (data: VerifyOTPPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/verify-otp', data).then(res => res.data),
+    logout: (refreshToken: string): Promise<{ message: string }> =>
+        apiClient.post<ApiResponse<{ message: string }>>('/auth/logout', { refresh_token: refreshToken })
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Logout failed');
+            }),
 
-  resetPassword: (data: ResetPasswordPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/reset-password', data).then(res => res.data),
-
-  refreshToken: (data: RefreshTokenPayload) =>
-    apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', data).then(res => res.data),
-
-  logout: (data: LogoutPayload) =>
-    apiClient.post<ApiResponse<MessageResponse>>('/auth/logout', data).then(res => res.data),
-
-  getMe: () =>
-    apiClient.get<ApiResponse<User>>('/auth/me').then(res => res.data),
+    getMe: (): Promise<User> =>
+        apiClient.get<ApiResponse<User>>('/auth/me')
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;
+                }
+                throw new Error(res.data.message || 'Failed to fetch user');
+            }),
 };

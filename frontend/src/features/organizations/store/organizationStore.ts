@@ -20,15 +20,15 @@ interface OrganizationState {
 
   fetchOrganizations: () => Promise<void>;
   fetchMyOrganizations: () => Promise<void>;
-  fetchOrganizationById: (id: string) => Promise<void>;
+  fetchOrganizationById: (id: number) => Promise<void>;
   createOrganization: (data: CreateOrganizationRequest) => Promise<Organization>;
-  updateOrganization: (id: string, data: UpdateOrganizationRequest) => Promise<void>;
-  deleteOrganization: (id: string) => Promise<void>;
+  updateOrganization: (id: number, data: UpdateOrganizationRequest) => Promise<void>;
+  deleteOrganization: (id: number) => Promise<void>;
 
-  fetchMembers: (organizationId: string) => Promise<void>;
-  addMember: (organizationId: string, data: AddMemberRequest) => Promise<void>;
-  updateMemberRole: (organizationId: string, memberId: string, role: OrganizationRole) => Promise<void>;
-  removeMember: (organizationId: string, memberId: string) => Promise<void>;
+  fetchMembers: (organizationId: number) => Promise<void>;
+  addMember: (organizationId: number, data: AddMemberRequest) => Promise<void>;
+  updateMemberRole: (organizationId: number, memberId: number, role: OrganizationRole) => Promise<void>;
+  removeMember: (organizationId: number, memberId: number) => Promise<void>;
 
   clearError: () => void;
   clearCurrentOrganization: () => void;
@@ -62,7 +62,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  fetchOrganizationById: async (id: string) => {
+  fetchOrganizationById: async (id: number) => {
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.getById(id);
@@ -91,7 +91,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  updateOrganization: async (id: string, data: UpdateOrganizationRequest) => {
+  updateOrganization: async (id: number, data: UpdateOrganizationRequest) => {
     set({ isSaving: true, error: null });
     try {
       const updated = await organizationApi.update(id, data);
@@ -112,7 +112,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  deleteOrganization: async (id: string) => {
+  deleteOrganization: async (id: number) => {
     set({ isSaving: true, error: null });
     try {
       await organizationApi.delete(id);
@@ -127,7 +127,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  fetchMembers: async (organizationId: string) => {
+  fetchMembers: async (organizationId: number) => {
     set({ isLoading: true, error: null });
     try {
       const data = await organizationApi.getMembers(organizationId);
@@ -137,7 +137,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  addMember: async (organizationId: string, data: AddMemberRequest) => {
+  addMember: async (organizationId: number, data: AddMemberRequest) => {
     set({ isSaving: true, error: null });
     try {
       const member = await organizationApi.addMember(organizationId, data);
@@ -161,7 +161,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  updateMemberRole: async (organizationId: string, memberId: string, role: OrganizationRole) => {
+  updateMemberRole: async (organizationId: number, memberId: number, role: OrganizationRole) => {
     set({ isSaving: true, error: null });
     try {
       await organizationApi.updateMemberRole(organizationId, memberId, { role });
@@ -185,7 +185,7 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
     }
   },
 
-  removeMember: async (organizationId: string, memberId: string) => {
+  removeMember: async (organizationId: number, memberId: number) => {
     set({ isSaving: true, error: null });
     try {
       await organizationApi.removeMember(organizationId, memberId);

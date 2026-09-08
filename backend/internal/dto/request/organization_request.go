@@ -16,7 +16,7 @@ type UpdateOrganizationRequest struct {
 }
 
 type AddMemberRequest struct {
-	UserID string `json:"user_id" validate:"omitempty"`
+	UserID int    `json:"user_id" validate:"omitempty"`
 	Email  string `json:"email" validate:"omitempty"`
 	Role   string `json:"role" validate:"required,oneof=admin member viewer"`
 }

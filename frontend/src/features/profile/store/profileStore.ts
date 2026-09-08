@@ -39,11 +39,8 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
       set({ profile, isLoading: false });
     } catch (err: any) {
-      console.error('Profile fetch error:', err);
       if (err.response?.status === 401) {
-        console.log('401 on profile fetch, logging out');
         useAuthStore.getState().logout();
-        window.location.href = '/login';
         return;
       }
       set({ error: err.message || 'Failed to fetch profile', isLoading: false });

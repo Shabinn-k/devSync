@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"devSync/internal/model"
@@ -34,7 +33,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*model.U
 	return &user, err
 }
 
-func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+func (r *repository) GetUserByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -54,14 +53,14 @@ func (r *repository) UpdateUser(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
-func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, passwordHash string) error {
+func (r *repository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
 		"password_hash": passwordHash,
 		"updated_at":    time.Now(),
 	}).Error
 }
 
-func (r *repository) VerifyEmail(ctx context.Context, userID uuid.UUID) error {
+func (r *repository) VerifyEmail(ctx context.Context, userID int) error {
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
 		"is_verified":      true,
 		"verification_otp": "",
@@ -70,7 +69,7 @@ func (r *repository) VerifyEmail(ctx context.Context, userID uuid.UUID) error {
 	}).Error
 }
 
-func (r *repository) UpdateOTP(ctx context.Context, userID uuid.UUID, otp string, expiresAt time.Time) error {
+func (r *repository) UpdateOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
 		"verification_otp":   otp,
@@ -80,7 +79,7 @@ func (r *repository) UpdateOTP(ctx context.Context, userID uuid.UUID, otp string
 	}).Error
 }
 
-func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
+func (r *repository) UpdateLastLogin(ctx context.Context, userID int) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Update("last_login_at", now).Error
 }
@@ -98,15 +97,15 @@ func (r *repository) GetRefreshTokenByHash(ctx context.Context, hash string) (*m
 	return &token, err
 }
 
-func (r *repository) RevokeRefreshToken(ctx context.Context, id uuid.UUID) error {
+func (r *repository) RevokeRefreshToken(ctx context.Context, id int) error {
 	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("id = ?", id).Update("is_revoked", true).Error
 }
 
-func (r *repository) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+func (r *repository) RevokeAllUserTokens(ctx context.Context, userID int) error {
 	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("user_id = ?", userID).Update("is_revoked", true).Error
 }
 
-func (r *repository) SaveResetOTP(ctx context.Context, userID uuid.UUID, otp string, expiresAt time.Time) error {
+func (r *repository) SaveResetOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error {
 	now := time.Now()
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
 		"reset_otp":            otp,
@@ -116,10 +115,11 @@ func (r *repository) SaveResetOTP(ctx context.Context, userID uuid.UUID, otp str
 	}).Error
 }
 
-func (r *repository) ClearResetOTP(ctx context.Context, userID uuid.UUID) error {
+func (r *repository) ClearResetOTP(ctx context.Context, userID int) error {
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
 		"reset_otp":            nil,
 		"reset_otp_expires_at": nil,
 		"updated_at":           time.Now(),
 	}).Error
 }
+

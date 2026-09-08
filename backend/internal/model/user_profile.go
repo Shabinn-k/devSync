@@ -1,13 +1,12 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type UserProfile struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID         uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
+	ID             int       `gorm:"primaryKey;autoIncrement"`
+	UserID         int       `gorm:"not null;uniqueIndex"`
 	AvatarURL      string    `gorm:"type:text"`
 	Bio            string    `gorm:"type:text"`
 	Skills         string    `gorm:"type:text"`
@@ -15,9 +14,8 @@ type UserProfile struct {
 	PortfolioURL   string    `gorm:"size:200"`
 	Location       string    `gorm:"size:100"`
 	SocialLinks    string    `gorm:"type:text"`
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt      time.Time `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime"`
 
 	User User `gorm:"foreignKey:UserID"`
 }

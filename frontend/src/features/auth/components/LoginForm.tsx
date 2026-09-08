@@ -49,10 +49,8 @@ export const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('Calling login API...');
       await login({ email, password });
-      console.log('Login successful!');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login failed:', err);
     } finally {

@@ -1,13 +1,12 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"time"
 )
 
 type RefreshToken struct {
-	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserID    uuid.UUID `gorm:"type:uuid;not null;index"`
+	ID        int       `gorm:"primaryKey;autoIncrement"`
+	UserID    int       `gorm:"not null;index"`
 	TokenHash string    `gorm:"type:text;not null;index"`
 	ExpiresAt time.Time `gorm:"not null"`
 	IsRevoked bool      `gorm:"default:false;index"`
@@ -16,3 +15,4 @@ type RefreshToken struct {
 
 	User User `gorm:"foreignKey:UserID"`
 }
+

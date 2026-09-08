@@ -1,0 +1,9 @@
+export { TaskCard } from './TaskCard';
+export { TaskBoard } from './TaskBoard';
+export { TaskFilters } from './TaskFilters';
+export { CreateTaskModal } from './CreateTaskModal';
+export { EditTaskModal } from './EditTaskModal';
+export { TaskDetailHeader } from './TaskDetailHeader';
+export { TaskComments } from './TaskComments';
+export { TaskStatusBadge } from './TaskStatusBadge';
+export { TaskPriorityBadge } from './TaskPriorityBadge';
