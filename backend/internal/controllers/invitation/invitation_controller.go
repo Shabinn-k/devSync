@@ -1,7 +1,9 @@
 package invitation
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -17,7 +19,17 @@ func NewController(s invitation.Service) *Controller {
 	return &Controller{service: s}
 }
 
-// POST /organizations/:id/invite
+func getUserID(c *gin.Context) (int, error) {
+	val, exists := c.Get("userID")
+	if !exists {
+		return 0, http.ErrNoCookie
+	}
+	if id, ok := val.(int); ok {
+		return id, nil
+	}
+	return 0, http.ErrNoCookie
+}
+
 func (c *Controller) Invite(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -25,78 +37,82 @@ func (c *Controller) Invite(ctx *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(ctx.Param("id"))
+	organizeID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		response.Error(ctx, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	var req struct {
-		Email string `json:"email" validate:"required,email"`
-		Role  string `json:"role" validate:"required,oneof=admin member viewer"`
+		Email string `json:"email" binding:"required,email"`
+		Role  string `json:"role" binding:"required,oneof=admin member viewer"`
 	}
+
+	log.Printf("📥 Invite request: user=%d, org=%d", userID, organizeID)
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.Error(ctx, http.StatusBadRequest, "Invalid request body")
+		log.Printf("Binding error: %v", err)
+		response.Error(ctx, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
-	result, err := c.service.CreateInvitation(ctx.Request.Context(), userID, orgID, req.Email, req.Role)
+	log.Printf("📤 Email: %s, Role: %s", req.Email, req.Role)
+
+	result, err := c.service.CreateInvitation(ctx.Request.Context(), userID, organizeID, req.Email, req.Role)
 	if err != nil {
+		log.Printf("Service error: %v", err)
 		response.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	response.Created(ctx, gin.H{
-		"message":    "Invitation sent successfully",
+		"message":    "Invitation sent successfully to " + req.Email,
 		"invitation": result,
 	})
 }
 
-// GET /invite/accept?token=xxx
 func (c *Controller) Accept(ctx *gin.Context) {
 	token := ctx.Query("token")
 	if token == "" {
-		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Token is required"})
+		response.Error(ctx, http.StatusBadRequest, "Token is required")
 		return
 	}
 
 	userID, err := getUserID(ctx)
 	if err != nil {
-		ctx.Redirect(http.StatusFound, "/login")
+		ctx.Redirect(http.StatusFound, "/login?redirect=/invite/accept?token="+token)
 		return
 	}
 
 	if err := c.service.AcceptInvitation(ctx.Request.Context(), token, userID); err != nil {
-		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		response.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.HTML(http.StatusOK, "success.html", gin.H{
-		"message": "You have successfully joined the organization!",
+	response.Success(ctx, gin.H{
+		"message":  "You have successfully joined the organization!",
 		"redirect": "/dashboard",
 	})
 }
 
-// GET /invite/decline?token=xxx
 func (c *Controller) Decline(ctx *gin.Context) {
 	token := ctx.Query("token")
 	if token == "" {
-		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": "Token is required"})
+		response.Error(ctx, http.StatusBadRequest, "Token is required")
 		return
 	}
 
 	if err := c.service.DeclineInvitation(ctx.Request.Context(), token); err != nil {
-		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+		response.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	ctx.HTML(http.StatusOK, "success.html", gin.H{
-		"message": "You have declined the invitation.",
+	response.Success(ctx, gin.H{
+		"message":  "You have declined the invitation.",
 		"redirect": "/",
 	})
 }
 
-// GET /invite/info?token=xxx
 func (c *Controller) GetInfo(ctx *gin.Context) {
 	token := ctx.Query("token")
 	if token == "" {
@@ -112,20 +128,15 @@ func (c *Controller) GetInfo(ctx *gin.Context) {
 
 	response.Success(ctx, gin.H{
 		"organization_id": invitation.OrganizationID,
-		"email":          invitation.Email,
-		"role":           invitation.Role,
-		"status":         invitation.Status,
-		"expires_at":     invitation.ExpiresAt,
+		"organization_name": func() string {
+			if invitation.Organization.ID != 0 {
+				return invitation.Organization.Name
+			}
+			return ""
+		}(),
+		"email":      invitation.Email,
+		"role":       invitation.Role,
+		"status":     invitation.Status,
+		"expires_at": invitation.ExpiresAt,
 	})
-}
-
-func getUserID(c *gin.Context) (int, error) {
-	val, exists := c.Get("userID")
-	if !exists {
-		return 0, http.ErrNoCookie
-	}
-	if id, ok := val.(int); ok {
-		return id, nil
-	}
-	return 0, http.ErrNoCookie
 }

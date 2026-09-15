@@ -13,8 +13,7 @@ type Team struct {
 	IsActive       bool       `gorm:"default:true"`
 	CreatedAt      time.Time  `gorm:"autoCreateTime"`
 	UpdatedAt      time.Time  `gorm:"autoUpdateTime"`
-
-	// Relationships
+ 
 	Organization Organization    `gorm:"foreignKey:OrganizationID"`
 	Lead         User            `gorm:"foreignKey:LeadID"`
 	Members      []TeamMember    `gorm:"foreignKey:TeamID"`
@@ -33,8 +32,7 @@ type TeamMember struct {
 	IsActive  bool      `gorm:"default:true"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
-
-	// Relationships
+ 
 	Team Team `gorm:"foreignKey:TeamID"`
 	User User `gorm:"foreignKey:UserID"`
 }

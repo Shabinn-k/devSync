@@ -260,7 +260,7 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
             Social Links
           </label>
           <textarea
-            placeholder="github: https://github.com/manu"
+            placeholder="Linked in: https://Linkedin.com/manu"
             value={formData.social_links}
             onChange={(e) => setFormData({ ...formData, social_links: e.target.value })}
             rows={2}

@@ -19,8 +19,8 @@ type AppConfig struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
-	DBSSLMode  string // ✅ ADD THIS
-	DBTimezone string // ✅ ADD THIS
+	DBSSLMode  string
+	DBTimezone string
 
 	// Redis
 	RedisHost     string

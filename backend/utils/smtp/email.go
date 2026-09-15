@@ -10,69 +10,61 @@ import (
 )
 
 var appConfig *config.AppConfig
-
-// Init initializes the SMTP package with config
+ 
 func Init(cfg *config.AppConfig) {
 	appConfig = cfg
 }
-
-// SendOTPEmail sends an OTP email
+ 
 func SendOTPEmail(cfg *config.AppConfig, toEmail, otp, purpose string) error {
-	cleanTo := strings.ReplaceAll(toEmail, "\r", "")
-	cleanTo = strings.ReplaceAll(cleanTo, "\n", "")
-	cleanTo = strings.TrimSpace(cleanTo)
+	subject := "DevSync Verification Code"
+	body := fmt.Sprintf("Your DevSync OTP for %s is: %s\nThis code expires in 10 minutes.", purpose, otp)
+	return SendEmailWithConfig(cfg, toEmail, subject, body)
+}
+ 
+func SendEmail(to, subject, body string) error {
+	if appConfig == nil {
+		return fmt.Errorf("SMTP not initialized. Call smtp.Init(cfg) first")
+	}
+	return SendEmailWithConfig(appConfig, to, subject, body)
+} 
 
+func SendEmailWithConfig(cfg *config.AppConfig, to, subject, body string) error {
+	 
+	cleanTo := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(to, "\r", ""), "\n", ""))
 	host := strings.TrimSpace(cfg.SMTPHost)
 	port := strings.TrimSpace(cfg.SMTPPort)
 	username := strings.TrimSpace(cfg.SMTPUsername)
 	password := strings.TrimSpace(cfg.SMTPPassword)
 	from := strings.TrimSpace(cfg.SMTPFrom)
+ 
+	if host == "" || username == "" || password == "" {
+		return fmt.Errorf("SMTP configuration incomplete: host=%s, username=%s", host, username)
+	}
+ 
+	log.Printf("📧 Sending email to %s via %s:%s", cleanTo, host, port)
+ 
+	headers := make(map[string]string)
+	headers["From"] = from
+	headers["To"] = cleanTo
+	headers["Subject"] = subject
+	headers["MIME-Version"] = "1.0"
+	headers["Content-Type"] = "text/html; charset=UTF-8"
 
-	subject := "DevSync Verification Code"
-	body := fmt.Sprintf("Your DevSync OTP for %s is: %s\nThis code expires in 10 minutes.", purpose, otp)
-
-	msg := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s",
-		from, cleanTo, subject, body))
-
+	var msg strings.Builder
+	for k, v := range headers {
+		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	}
+	msg.WriteString("\r\n")
+	msg.WriteString(body)
+ 
 	auth := smtp.PlainAuth("", username, password, host)
 	addr := fmt.Sprintf("%s:%s", host, port)
 
-	err := smtp.SendMail(addr, auth, username, []string{cleanTo}, msg)
-	if err != nil {
-		log.Printf("failed to send email to %s: %v", cleanTo, err)
+	if err := smtp.SendMail(addr, auth, username, []string{cleanTo}, []byte(msg.String())); err != nil {
+		log.Printf("Failed to send email to %s: %v", cleanTo, err)
 		return err
 	}
-	log.Printf("successfully sent OTP email to %s for %s", cleanTo, purpose)
-	return nil
-}
 
-// ✅ SendEmail sends a general email
-func SendEmail(to, subject, body string) error {
-	if appConfig == nil {
-		return fmt.Errorf("SMTP not initialized")
-	}
-
-	cleanTo := strings.ReplaceAll(to, "\r", "")
-	cleanTo = strings.ReplaceAll(cleanTo, "\n", "")
-	cleanTo = strings.TrimSpace(cleanTo)
-
-	host := strings.TrimSpace(appConfig.SMTPHost)
-	port := strings.TrimSpace(appConfig.SMTPPort)
-	username := strings.TrimSpace(appConfig.SMTPUsername)
-	password := strings.TrimSpace(appConfig.SMTPPassword)
-	from := strings.TrimSpace(appConfig.SMTPFrom)
-
-	msg := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s",
-		from, cleanTo, subject, body))
-
-	auth := smtp.PlainAuth("", username, password, host)
-	addr := fmt.Sprintf("%s:%s", host, port)
-
-	err := smtp.SendMail(addr, auth, username, []string{cleanTo}, msg)
-	if err != nil {
-		log.Printf("failed to send email to %s: %v", cleanTo, err)
-		return err
-	}
-	log.Printf("successfully sent email to %s", cleanTo)
+	log.Printf("Email sent successfully to %s", cleanTo)
 	return nil
 }

@@ -19,7 +19,7 @@ interface ProjectState {
     error: string | null;
     total: number;
 
-    fetchProjectsByOrganization: (orgId: number, page?: number, limit?: number) => Promise<void>;
+    fetchProjectsByOrganization: (organizeId: number, page?: number, limit?: number) => Promise<void>;
     fetchMyProjects: (page?: number, limit?: number) => Promise<void>;
     fetchProjectById: (id: number) => Promise<void>;
     createProject: (data: CreateProjectRequest) => Promise<Project>;
@@ -47,10 +47,10 @@ const initialState = {
 export const useProjectStore = create<ProjectState>((set) => ({
     ...initialState,
 
-    fetchProjectsByOrganization: async (orgId: number, page = 1, limit = 20) => {
+    fetchProjectsByOrganization: async (organizeId: number, page = 1, limit = 20) => {
         set({ isLoading: true, error: null });
         try {
-            const { data, total } = await projectApi.getByOrganization(orgId, page, limit);
+            const { data, total } = await projectApi.getByOrganization(organizeId, page, limit);
             set({ projects: data || [], total: total || data?.length || 0, isLoading: false });
         } catch (err: any) {
             set({ error: err.message || 'Failed to fetch projects', isLoading: false });

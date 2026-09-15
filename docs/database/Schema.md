@@ -350,7 +350,7 @@ Columns
 # 16. Database Standards
 
 - PostgreSQL is the primary database.
-- UUIDs are used for all primary keys.
+- IDs are used for all primary keys.
 - Foreign key constraints ensure referential integrity.
 - Frequently queried columns should be indexed.
 - Passwords are stored as bcrypt hashes.

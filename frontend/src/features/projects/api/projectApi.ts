@@ -10,8 +10,7 @@ import type {
     AddProjectMemberRequest,
 } from '../types/project';
 
-export const projectApi = {
-    // Project CRUD
+export const projectApi = { 
     create: (data: CreateProjectRequest): Promise<Project> =>
         apiClient.post<ApiResponse<Project>>('/projects', data)
             .then((res) => {
@@ -30,8 +29,8 @@ export const projectApi = {
                 throw new Error(res.data.message || 'Failed to fetch project');
             }),
 
-    getByOrganization: (orgId: number, page?: number, limit?: number): Promise<{ data: Project[]; total: number }> =>
-        apiClient.get<ApiResponse<Project[]>>(`/projects/organization/${orgId}?page=${page || 1}&limit=${limit || 20}`)
+    getByOrganization: (organizeId: number, page?: number, limit?: number): Promise<{ data: Project[]; total: number }> =>
+        apiClient.get<ApiResponse<Project[]>>(`/projects/organization/${organizeId}?page=${page || 1}&limit=${limit || 20}`)
             .then((res) => {
                 if (res.data.success && res.data.data) {
                     return {
@@ -72,7 +71,7 @@ export const projectApi = {
                 throw new Error(res.data.message || 'Failed to delete project');
             }),
 
-    // Members
+    
     addMember: (projectId: number, data: AddProjectMemberRequest): Promise<ProjectMember> =>
         apiClient.post<ApiResponse<ProjectMember>>(`/projects/${projectId}/members`, data)
             .then((res) => {

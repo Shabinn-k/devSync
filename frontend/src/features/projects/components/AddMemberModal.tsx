@@ -26,10 +26,9 @@ export const AddMemberModal = ({ projectId, onClose, onSuccess }: AddMemberModal
             return;
         }
 
-        try {
-            // For now, pass 0 as user_id - backend should handle by email
+        try { 
             await addMember(projectId, {
-                user_id: 0, // Will be resolved by email
+                user_id: 0, 
                 role,
             });
             onSuccess?.();
@@ -118,6 +117,5 @@ export const AddMemberModal = ({ projectId, onClose, onSuccess }: AddMemberModal
         </motion.div>
     );
 };
-
-// ✅ Also export as default for convenience
+ 
 export default AddMemberModal;

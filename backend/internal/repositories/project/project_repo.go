@@ -18,7 +18,7 @@ var (
 type Repository interface {
 	Create(ctx context.Context, project *model.Project) error
 	GetByID(ctx context.Context, id int) (*model.Project, error)
-	GetByOrganization(ctx context.Context, orgID int, limit, offset int) ([]model.Project, int64, error)
+	GetByOrganization(ctx context.Context, organizeID int, limit, offset int) ([]model.Project, int64, error)
 	GetByUser(ctx context.Context, userID int, limit, offset int) ([]model.Project, int64, error)
 	Update(ctx context.Context, project *model.Project) error
 	Delete(ctx context.Context, id int) error

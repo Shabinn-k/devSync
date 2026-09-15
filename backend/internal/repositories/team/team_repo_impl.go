@@ -26,12 +26,12 @@ func (r *repository) GetByID(ctx context.Context, id int) (*model.Team, error) {
 	return &team, err
 }
 
-func (r *repository) GetByOrganization(ctx context.Context, orgID int, limit, offset int) ([]model.Team, int64, error) {
+func (r *repository) GetByOrganization(ctx context.Context, organizeID int, limit, offset int) ([]model.Team, int64, error) {
 	var teams []model.Team
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&model.Team{}).
-		Where("organization_id = ? AND is_active = ?", orgID, true)
+		Where("organization_id = ? AND is_active = ?", organizeID, true)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err

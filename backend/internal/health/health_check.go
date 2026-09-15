@@ -11,14 +11,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Checker represents a health check
 type Checker struct {
 	Name    string
 	Check   func(ctx context.Context) error
 	Timeout time.Duration
 }
 
-// HealthService manages health checks
 type HealthService struct {
 	checks   []Checker
 	mu       sync.RWMutex
@@ -26,7 +24,6 @@ type HealthService struct {
 	lastCheck time.Time
 }
 
-// NewHealthService creates a new health service
 func NewHealthService() *HealthService {
 	return &HealthService{
 		checks: make([]Checker, 0),
@@ -34,7 +31,6 @@ func NewHealthService() *HealthService {
 	}
 }
 
-// AddCheck adds a health check
 func (hs *HealthService) AddCheck(name string, check func(ctx context.Context) error, timeout time.Duration) {
 	hs.checks = append(hs.checks, Checker{
 		Name:    name,
@@ -43,7 +39,6 @@ func (hs *HealthService) AddCheck(name string, check func(ctx context.Context) e
 	})
 }
 
-// Run runs all health checks
 func (hs *HealthService) Run(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -58,7 +53,6 @@ func (hs *HealthService) Run(ctx context.Context) {
 	}
 }
 
-// runChecks runs all registered checks
 func (hs *HealthService) runChecks(ctx context.Context) {
 	hs.mu.Lock()
 	defer hs.mu.Unlock()
@@ -80,7 +74,6 @@ func (hs *HealthService) runChecks(ctx context.Context) {
 	hs.status["overall"] = allHealthy
 }
 
-// HealthHandler handles health check requests
 func (hs *HealthService) HealthHandler(c *gin.Context) {
 	hs.mu.RLock()
 	defer hs.mu.RUnlock()
@@ -98,14 +91,12 @@ func (hs *HealthService) HealthHandler(c *gin.Context) {
 	})
 }
 
-// DatabaseCheck creates a database health check
 func DatabaseCheck(db *sql.DB) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		return db.PingContext(ctx)
 	}
 }
 
-// RedisCheck creates a Redis health check
 func RedisCheck(client *redis.Client) func(ctx context.Context) error {
 	return func(ctx context.Context) error {
 		return client.Ping(ctx).Err()

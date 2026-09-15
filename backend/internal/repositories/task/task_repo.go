@@ -14,7 +14,6 @@ var (
 )
 
 type Repository interface {
-	// Task operations
 	Create(ctx context.Context, task *model.Task) error
 	GetByID(ctx context.Context, id int) (*model.Task, error)
 	GetByProject(ctx context.Context, projectID int, limit, offset int) ([]model.Task, int64, error)
@@ -24,7 +23,6 @@ type Repository interface {
 	UpdateStatus(ctx context.Context, id int, status string) error
 	GetCommentCount(ctx context.Context, taskID int) (int64, error)
 
-	// Comment operations
 	AddComment(ctx context.Context, comment *model.Comment) error
 	GetCommentByID(ctx context.Context, id int) (*model.Comment, error)
 	GetComments(ctx context.Context, taskID int, limit, offset int) ([]model.Comment, int64, error)

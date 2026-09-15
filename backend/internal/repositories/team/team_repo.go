@@ -15,16 +15,14 @@ var (
 )
 
 type Repository interface {
-	// Team operations
 	Create(ctx context.Context, team *model.Team) error
 	GetByID(ctx context.Context, id int) (*model.Team, error)
-	GetByOrganization(ctx context.Context, orgID int, limit, offset int) ([]model.Team, int64, error)
+	GetByOrganization(ctx context.Context, organizeID int, limit, offset int) ([]model.Team, int64, error)
 	GetUserTeams(ctx context.Context, userID int) ([]model.Team, error)
 	Update(ctx context.Context, team *model.Team) error
 	Delete(ctx context.Context, id int) error
 	GetMemberCount(ctx context.Context, teamID int) (int64, error)
 
-	// Member operations
 	AddMember(ctx context.Context, member *model.TeamMember) error
 	GetMember(ctx context.Context, teamID, userID int) (*model.TeamMember, error)
 	GetMemberByID(ctx context.Context, teamID, memberID int) (*model.TeamMember, error)

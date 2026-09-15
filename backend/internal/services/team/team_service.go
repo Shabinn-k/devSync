@@ -15,10 +15,9 @@ import (
 	notifService "devSync/internal/services/notification"
 )
 
-// Service errors
 var (
 	ErrForbidden          = errors.New("forbidden")
-	ErrNotOrgMember       = errors.New("user is not a member of this organization")
+	ErrNotOrganizeMember       = errors.New("user is not a member of this organization")
 	ErrCannotChangeOwnRole = errors.New("cannot change your own role")
 	ErrCannotRemoveSelf    = errors.New("cannot remove yourself")
 	ErrNotFound           = team.ErrNotFound
@@ -27,7 +26,7 @@ var (
 type Service interface {
 	Create(ctx context.Context, userID int, req request.CreateTeamRequest) (*response.TeamResponse, error)
 	GetByID(ctx context.Context, userID, teamID int) (*response.TeamDetailResponse, error)
-	GetByOrganization(ctx context.Context, userID, orgID, limit, offset int) ([]response.TeamResponse, int64, error)
+	GetByOrganization(ctx context.Context, userID, organizeID, limit, offset int) ([]response.TeamResponse, int64, error)
 	GetMyTeams(ctx context.Context, userID int) ([]response.TeamResponse, error)
 	Update(ctx context.Context, userID, teamID int, req request.UpdateTeamRequest) (*response.TeamResponse, error)
 	Delete(ctx context.Context, userID, teamID int) error
@@ -62,30 +61,26 @@ func NewService(
 	}
 }
 
-// ============ TEAM CRUD ============
 
 func (s *service) Create(ctx context.Context, userID int, req request.CreateTeamRequest) (*response.TeamResponse, error) {
-	// Check if user is organization member
 	isMember, err := s.orgRepo.IsMember(ctx, req.OrganizationID, userID)
 	if err != nil {
 		return nil, err
 	}
 	if !isMember {
-		return nil, ErrNotOrgMember
+		return nil, ErrNotOrganizeMember
 	}
 
-	// Check if lead exists
 	lead, err := s.authRepo.GetUserByID(ctx, req.LeadID)
 	if err != nil {
 		return nil, fmt.Errorf("lead user not found: %w", err)
 	}
 
-	// Check if lead is organization member
-	isLeadOrgMember, err := s.orgRepo.IsMember(ctx, req.OrganizationID, req.LeadID)
+	isLeadOrganizeMember, err := s.orgRepo.IsMember(ctx, req.OrganizationID, req.LeadID)
 	if err != nil {
 		return nil, err
 	}
-	if !isLeadOrgMember {
+	if !isLeadOrganizeMember {
 		return nil, errors.New("team lead must be a member of the organization")
 	}
 
@@ -101,7 +96,6 @@ func (s *service) Create(ctx context.Context, userID int, req request.CreateTeam
 		return nil, err
 	}
 
-	// Always add lead as team admin
 	leadMember := &model.TeamMember{
 		TeamID: team.ID,
 		UserID: req.LeadID,
@@ -112,7 +106,6 @@ func (s *service) Create(ctx context.Context, userID int, req request.CreateTeam
 		return nil, errors.New("failed to add lead as team member")
 	}
 
-	// Also add creator as team admin if different from lead
 	if userID != req.LeadID {
 		creatorMember := &model.TeamMember{
 			TeamID: team.ID,
@@ -131,7 +124,6 @@ func (s *service) GetByID(ctx context.Context, userID, teamID int) (*response.Te
 		return nil, err
 	}
 
-	// Check if user is team member
 	isMember, err := s.teamRepo.IsMember(ctx, teamID, userID)
 	if err != nil {
 		return nil, err
@@ -153,17 +145,16 @@ func (s *service) GetByID(ctx context.Context, userID, teamID int) (*response.Te
 	return s.mapToDetailResponse(team, members, int(memberCount)), nil
 }
 
-func (s *service) GetByOrganization(ctx context.Context, userID, orgID, limit, offset int) ([]response.TeamResponse, int64, error) {
-	// Check if user is organization member
-	isMember, err := s.orgRepo.IsMember(ctx, orgID, userID)
+func (s *service) GetByOrganization(ctx context.Context, userID, organizeID, limit, offset int) ([]response.TeamResponse, int64, error) {
+	isMember, err := s.orgRepo.IsMember(ctx, organizeID, userID)
 	if err != nil {
 		return nil, 0, err
 	}
 	if !isMember {
-		return nil, 0, ErrNotOrgMember
+		return nil, 0, ErrNotOrganizeMember
 	}
 
-	teams, total, err := s.teamRepo.GetByOrganization(ctx, orgID, limit, offset)
+	teams, total, err := s.teamRepo.GetByOrganization(ctx, organizeID, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -193,7 +184,6 @@ func (s *service) GetMyTeams(ctx context.Context, userID int) ([]response.TeamRe
 }
 
 func (s *service) Update(ctx context.Context, userID, teamID int, req request.UpdateTeamRequest) (*response.TeamResponse, error) {
-	// Check if user is admin
 	isAdmin, err := s.teamRepo.IsAdmin(ctx, teamID, userID)
 	if err != nil {
 		return nil, err
@@ -214,7 +204,6 @@ func (s *service) Update(ctx context.Context, userID, teamID int, req request.Up
 		team.Description = req.Description
 	}
 	if req.LeadID != 0 {
-		// Check if lead exists
 		_, err := s.authRepo.GetUserByID(ctx, req.LeadID)
 		if err != nil {
 			return nil, fmt.Errorf("lead user not found: %w", err)
@@ -249,7 +238,6 @@ func (s *service) Delete(ctx context.Context, userID, teamID int) error {
 	return s.teamRepo.Delete(ctx, teamID)
 }
 
-// ============ MEMBERS ============
 
 func (s *service) AddMember(ctx context.Context, userID, teamID int, req request.AddTeamMemberRequest) (*response.TeamMemberResponse, error) {
 	isAdmin, err := s.teamRepo.IsAdmin(ctx, teamID, userID)
@@ -260,23 +248,21 @@ func (s *service) AddMember(ctx context.Context, userID, teamID int, req request
 		return nil, ErrForbidden
 	}
 
-	// Check if target user exists
 	targetUser, err := s.authRepo.GetUserByID(ctx, req.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Check if target user is in the same organization
 	team, err := s.teamRepo.GetByID(ctx, teamID)
 	if err != nil {
 		return nil, err
 	}
 
-	isOrgMember, err := s.orgRepo.IsMember(ctx, team.OrganizationID, req.UserID)
+	isOrganizeMember, err := s.orgRepo.IsMember(ctx, team.OrganizationID, req.UserID)
 	if err != nil {
 		return nil, err
 	}
-	if !isOrgMember {
+	if !isOrganizeMember {
 		return nil, errors.New("user must be a member of the organization first")
 	}
 
@@ -306,7 +292,6 @@ func (s *service) AddMember(ctx context.Context, userID, teamID int, req request
 }
 
 func (s *service) GetMembers(ctx context.Context, userID, teamID int) ([]response.TeamMemberResponse, error) {
-	// Check if user is team member
 	isMember, err := s.teamRepo.IsMember(ctx, teamID, userID)
 	if err != nil {
 		return nil, err
@@ -342,7 +327,6 @@ func (s *service) UpdateMemberRole(ctx context.Context, userID, teamID, memberID
 		return err
 	}
 
-	// Prevent changing own role
 	if member.UserID == userID {
 		return ErrCannotChangeOwnRole
 	}
@@ -364,7 +348,6 @@ func (s *service) RemoveMember(ctx context.Context, userID, teamID, memberID int
 		return err
 	}
 
-	// Prevent removing yourself
 	if member.UserID == userID {
 		return ErrCannotRemoveSelf
 	}
@@ -372,7 +355,6 @@ func (s *service) RemoveMember(ctx context.Context, userID, teamID, memberID int
 	return s.teamRepo.RemoveMember(ctx, teamID, memberID)
 }
 
-// ============ MAPPERS ============
 
 func (s *service) mapToResponse(team *model.Team, lead *model.User) *response.TeamResponse {
 	return &response.TeamResponse{

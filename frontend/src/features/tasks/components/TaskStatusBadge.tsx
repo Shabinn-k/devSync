@@ -12,32 +12,32 @@ export const TaskStatusBadge = ({ status, size = 'md', className = '' }: TaskSta
             case 'todo':
                 return {
                     label: 'To Do',
-                    color: 'text-gray-300 bg-gray-500/15 border-gray-500/30',
-                    dot: 'bg-gray-400',
+                    color: 'text-white/60 bg-white/5 border-white/10',
+                    dot: 'bg-white/40',
                 };
             case 'in_progress':
                 return {
                     label: 'In Progress',
-                    color: 'text-amber-300 bg-amber-500/15 border-amber-500/30',
-                    dot: 'bg-amber-400',
+                    color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30',
+                    dot: 'bg-yellow-400',
                 };
             case 'review':
                 return {
-                    label: 'In Review',
-                    color: 'text-purple-300 bg-purple-500/15 border-purple-500/30',
-                    dot: 'bg-purple-400',
+                    label: 'Review',
+                    color: 'text-white/70 bg-white/5 border-white/15',
+                    dot: 'bg-white/50',
                 };
             case 'done':
                 return {
                     label: 'Done',
-                    color: 'text-emerald-300 bg-emerald-500/15 border-emerald-500/30',
-                    dot: 'bg-emerald-400',
+                    color: 'text-green-400 bg-green-500/10 border-green-500/30',
+                    dot: 'bg-green-400',
                 };
             default:
                 return {
                     label: String(s),
-                    color: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
-                    dot: 'bg-gray-400',
+                    color: 'text-white/40 bg-white/5 border-white/10',
+                    dot: 'bg-white/30',
                 };
         }
     };
@@ -52,10 +52,12 @@ export const TaskStatusBadge = ({ status, size = 'md', className = '' }: TaskSta
 
     return (
         <span
-            className={`inline-flex items-center gap-1.5 rounded-full border font-medium transition-colors ${sizeStyles[size]} ${details.color} ${className}`}
+            className={`inline-flex items-center gap-1.5 rounded-full border font-mono transition-all duration-200 ${sizeStyles[size]} ${details.color} ${className}`}
         >
             <span className={`h-1.5 w-1.5 rounded-full ${details.dot}`} />
             {details.label}
         </span>
     );
 };
+
+export default TaskStatusBadge;

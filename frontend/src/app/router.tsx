@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
-// Public Pages 
+import LandingPage from "../features/Landing/pages/LandingPage";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import VerifyEmailPage from "../features/auth/pages/VerifyEmailPage";
@@ -9,66 +8,71 @@ import VerifyOTPPage from "../features/auth/pages/VerifyOTPPage";
 import ResetPasswordPage from "../features/auth/pages/ResetPasswordPage";
 import RoleSelectionPage from "../features/auth/pages/RoleSelectionPage";
 
-// Protected Pages
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import ProfilePage from "../features/profile/pages/ProfilePage";
 import OrganizationsPage from "../features/organizations/pages/OrganizationsPage";
 import OrganizationDetailPage from "../features/organizations/pages/OrganizationDetailPage";
 
-// ✅ FIX: Use named imports (not default)
 import { ProjectsPage } from "../features/projects/pages/ProjectPage";
+import { CreateProjectPage } from "../features/projects/pages/CreateProjectPage";
 import { ProjectDetailPage } from "../features/projects/pages/ProjectDetailPage";
 
-// ✅ FIX: Use named imports (not default)
 import { TasksPage } from "../features/tasks/pages/TaskPage";
 import { TaskDetailPage } from "../features/tasks/pages/TaskDetailPage";
 
-// Guards
+import TeamDetailPage from "../features/teams/pages/TeamDetailPage";
+
 import { ProtectedRoute, PublicRoute } from "../components/routes/Guards";
 import { useAuthStore } from "../stores/authStore";
 import { tokenStorage } from "../lib/tokenStorage";
+import { InvitationPage } from "../features/invitations/pages/InvitationPage";
+import ChatPage from "../features/chat/pages/ChatPage";
 
-const HomeRoute = () => {
-    const { isAuthenticated } = useAuthStore();
-    const hasToken = tokenStorage.hasValidSession();
-    if (isAuthenticated && hasToken) {
-        return <Navigate to="/dashboard" replace />;
-    }
-    return <Navigate to="/login" replace />;
+const RootRoute = () => {
+  const { isAuthenticated } = useAuthStore();
+  const hasToken = tokenStorage.hasValidSession();
+  if (isAuthenticated && hasToken) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <LandingPage />;
 };
 
 export const AppRoutes = () => {
-    return (
-        <Routes>
-            {/* Home / Public Routes */}
-            <Route path="/" element={<HomeRoute />} />
-            <Route path="/role" element={<PublicRoute><RoleSelectionPage /></PublicRoute>} />
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-            <Route path="/verify-email" element={<PublicRoute><VerifyEmailPage /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
-            <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<RootRoute />} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+      <Route path="/verify-email" element={<PublicRoute><VerifyEmailPage /></PublicRoute>} />
+      <Route path="/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+      <Route path="/role" element={<PublicRoute><RoleSelectionPage /></PublicRoute>} />
+      <Route path="/invite" element={<InvitationPage />} />
 
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-            {/* Organization Routes */}
-            <Route path="/organizations" element={<ProtectedRoute><OrganizationsPage /></ProtectedRoute>} />
-            <Route path="/organizations/:id" element={<ProtectedRoute><OrganizationDetailPage /></ProtectedRoute>} />
+      <Route path="/organizations" element={<ProtectedRoute><OrganizationsPage /></ProtectedRoute>} />
+      <Route path="/organizations/:id" element={<ProtectedRoute><OrganizationDetailPage /></ProtectedRoute>} />
+      <Route path="/organizations/:organizeId/teams/:teamId" element={<ProtectedRoute><TeamDetailPage /></ProtectedRoute>} />
 
-            {/* Project Routes (specific subroutes before wildcard) */}
-            <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-            <Route path="/projects/:projectId/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-            <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+      <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+      <Route path="/projects/create" element={<ProtectedRoute><CreateProjectPage /></ProtectedRoute>} />
+      <Route path="/projects/:projectId/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+      <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
 
-            {/* Task Routes */}
-            <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
-            <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
+      <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+      <Route path="/tasks/:id" element={<ProtectedRoute><TaskDetailPage /></ProtectedRoute>} />
 
-            {/* 404 */}
-            <Route path="*" element={<HomeRoute />} />
-        </Routes>
-    );
+      <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+
+      {/* Catch-all */}
+      <Route path="*" element={<RootRoute />} />
+    </Routes>
+  );
 };
+
+export default AppRoutes;

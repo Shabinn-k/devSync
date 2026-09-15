@@ -21,15 +21,16 @@ type Repository interface {
 	Update(ctx context.Context, org *model.Organization) error
 	Delete(ctx context.Context, id int) error
 	List(ctx context.Context, userID int, limit, offset int) ([]model.Organization, int64, error)
-	GetMemberCount(ctx context.Context, orgID int) (int64, error)
+	GetMemberCount(ctx context.Context, organizeID int) (int64, error)
 
 	AddMember(ctx context.Context, member *model.OrganizationMember) error
-	GetMember(ctx context.Context, orgID, userID int) (*model.OrganizationMember, error)
-	GetMemberByID(ctx context.Context, orgID, memberID int) (*model.OrganizationMember, error)
-	GetMembers(ctx context.Context, orgID int) ([]model.OrganizationMember, error)
-	UpdateMemberRole(ctx context.Context, orgID, memberID int, role string) error
-	RemoveMember(ctx context.Context, orgID, memberID int) error
-	IsMember(ctx context.Context, orgID, userID int) (bool, error)
+	GetMember(ctx context.Context, organizeID, userID int) (*model.OrganizationMember, error)
+	GetMemberByID(ctx context.Context, organizeID, memberID int) (*model.OrganizationMember, error)
+	GetMembers(ctx context.Context, organizeID int) ([]model.OrganizationMember, error)
+	UpdateMemberRole(ctx context.Context, organizeID, memberID int, role string) error
+	RemoveMember(ctx context.Context, organizeID, memberID int) error
+	IsMember(ctx context.Context, organizeID, userID int) (bool, error)
+	 IsAdmin(ctx context.Context, organizeID, userID int) (bool, error)
 	GetUserOrganizations(ctx context.Context, userID int) ([]model.Organization, error)
 }
 

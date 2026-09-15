@@ -25,12 +25,12 @@ func (r *repository) GetByID(ctx context.Context, id int) (*model.Project, error
 	return &project, err
 }
 
-func (r *repository) GetByOrganization(ctx context.Context, orgID int, limit, offset int) ([]model.Project, int64, error) {
+func (r *repository) GetByOrganization(ctx context.Context, organizeID int, limit, offset int) ([]model.Project, int64, error) {
 	var projects []model.Project
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&model.Project{}).
-		Where("organization_id = ? AND is_active = ?", orgID, true)
+		Where("organization_id = ? AND is_active = ?", organizeID, true)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -171,6 +171,23 @@ func (r *repository) IsAdmin(ctx context.Context, projectID int, userID int) (bo
 		Model(&model.ProjectMember{}).
 		Where("project_id = ? AND user_id = ? AND role = ? AND is_active = ?", projectID, userID, model.ProjectRoleAdmin, true).
 		Count(&count).Error
-	return count > 0, err
+	if err == nil && count > 0 {
+		return true, nil
+	}
+	var projCount int64
+	err = r.db.WithContext(ctx).
+		Model(&model.Project{}).
+		Where("id = ? AND created_by = ? AND is_active = ?", projectID, userID, true).
+		Count(&projCount).Error
+	if err == nil && projCount > 0 {
+		return true, nil
+	}
+	var user model.User
+	if err := r.db.WithContext(ctx).Select("role").Where("id = ?", userID).First(&user).Error; err == nil {
+		if user.Role == model.RoleAdmin || user.Role == model.RoleTeamLead {
+			return true, nil
+		}
+	}
+	return false, err
 }
 

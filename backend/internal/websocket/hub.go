@@ -6,6 +6,11 @@ import (
 	"sync"
 )
 
+var (
+	globalHub   *Hub
+	globalHubMu sync.RWMutex
+)
+
 type EventMessage struct {
 	Event string      `json:"event"`
 	Data  interface{} `json:"data"`
@@ -20,11 +25,23 @@ type Hub struct {
 }
 
 func NewHub() *Hub {
-	return &Hub{
+	h := &Hub{
 		clients:    make(map[int]map[*Client]bool),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
+
+	globalHubMu.Lock()
+	globalHub = h
+	globalHubMu.Unlock()
+
+	return h
+}
+
+func GetGlobalHub() *Hub {
+	globalHubMu.RLock()
+	defer globalHubMu.RUnlock()
+	return globalHub
 }
 
 func (h *Hub) Run() {
@@ -88,7 +105,6 @@ func (h *Hub) BroadcastToUser(userID int, event string, data interface{}) {
 		select {
 		case client.send <- payload:
 		default:
-			// Unregister client safely via hub channel
 			select {
 			case h.unregister <- client:
 			default:
@@ -104,4 +120,3 @@ func (h *Hub) IsUserConnected(userID int) bool {
 	userClients, ok := h.clients[userID]
 	return ok && len(userClients) > 0
 }
-

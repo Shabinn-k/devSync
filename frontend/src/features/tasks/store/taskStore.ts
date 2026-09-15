@@ -26,7 +26,6 @@ interface TaskState {
     updateTaskStatus: (id: number, status: TaskStatus) => Promise<void>;
     deleteTask: (id: number) => Promise<void>;
 
-    // Comments
     fetchComments: (taskId: number) => Promise<void>;
     addComment: (taskId: number, content: string) => Promise<void>;
 

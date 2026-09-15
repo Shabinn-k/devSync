@@ -8,17 +8,29 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-    const { isAuthenticated, isLoading, user, getMe } = useAuthStore();
-    const hasToken = tokenStorage.hasValidSession();
+    const hydrated = useAuthStore((s) => s.hydrated);
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const isLoading = useAuthStore((s) => s.isLoading);
+    const user = useAuthStore((s) => s.user);
+    const getMe = useAuthStore((s) => s.getMe);
+    const token = useAuthStore((s) => s.token || s.accessToken) || tokenStorage.getAccessToken();
     const location = useLocation();
 
     useEffect(() => {
-        if (hasToken && !user && !isLoading) {
+        if (token && !user && !isLoading) {
             getMe();
         }
-    }, [hasToken, user, isLoading, getMe]);
+    }, [token, user, isLoading, getMe]);
 
-    if (!hasToken) {
+    if (!hydrated) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-black">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated || !token) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
@@ -30,10 +42,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         );
     }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
-    }
-
     return <>{children}</>;
 };
 
@@ -42,10 +50,12 @@ interface PublicRouteProps {
 }
 
 export const PublicRoute = ({ children }: PublicRouteProps) => {
-    const { isAuthenticated, isLoading } = useAuthStore();
-    const hasToken = tokenStorage.hasValidSession();
+    const hydrated = useAuthStore((s) => s.hydrated);
+    const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+    const isLoading = useAuthStore((s) => s.isLoading);
+    const token = useAuthStore((s) => s.token || s.accessToken) || tokenStorage.getAccessToken();
 
-    if (isLoading) {
+    if (!hydrated || isLoading) {
         return (
             <div className="flex h-screen items-center justify-center bg-black">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
@@ -53,7 +63,7 @@ export const PublicRoute = ({ children }: PublicRouteProps) => {
         );
     }
 
-    if (isAuthenticated && hasToken) {
+    if (isAuthenticated && token) {
         return <Navigate to="/dashboard" replace />;
     }
 

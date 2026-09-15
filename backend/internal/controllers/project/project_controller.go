@@ -96,8 +96,8 @@ func (ctrl *Controller) GetOrgProjects(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("orgId"))
-	if err != nil || orgID <= 0 {
+	organizeID, err := strconv.Atoi(c.Param("organizeId"))
+	if err != nil || organizeID <= 0 {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
@@ -106,7 +106,7 @@ func (ctrl *Controller) GetOrgProjects(c *gin.Context) {
 	limitRaw, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	page, limit := clampPagination(pageRaw, limitRaw)
 
-	projects, total, err := ctrl.service.GetByOrganization(c.Request.Context(), userID, orgID, page, limit)
+	projects, total, err := ctrl.service.GetByOrganization(c.Request.Context(), userID, organizeID, page, limit)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return

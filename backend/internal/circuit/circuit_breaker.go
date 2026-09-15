@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// State represents the circuit breaker state
 type State int
 
 const (
@@ -15,7 +14,6 @@ const (
 	StateHalfOpen
 )
 
-// CircuitBreaker prevents cascading failures
 type CircuitBreaker struct {
 	state           State
 	failureCount    int
@@ -26,7 +24,6 @@ type CircuitBreaker struct {
 	mu              sync.RWMutex
 }
 
-// NewCircuitBreaker creates a new circuit breaker
 func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 	return &CircuitBreaker{
 		state:       StateClosed,
@@ -35,7 +32,6 @@ func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 	}
 }
 
-// Execute executes a function with circuit breaker protection
 func (cb *CircuitBreaker) Execute(fn func() error) error {
 	if cb.isOpen() {
 		return errors.New("circuit breaker is open")
@@ -46,7 +42,6 @@ func (cb *CircuitBreaker) Execute(fn func() error) error {
 	return err
 }
 
-// isOpen checks if the circuit breaker is open
 func (cb *CircuitBreaker) isOpen() bool {
 	cb.mu.RLock()
 	defer cb.mu.RUnlock()
@@ -61,7 +56,6 @@ func (cb *CircuitBreaker) isOpen() bool {
 	return false
 }
 
-// recordResult records the result of an operation
 func (cb *CircuitBreaker) recordResult(err error) {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()

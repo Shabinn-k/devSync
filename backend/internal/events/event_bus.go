@@ -6,7 +6,6 @@ import (
 	"sync"
 )
 
-// Event represents a system event
 type Event struct {
 	Type      string
 	Payload   interface{}
@@ -14,10 +13,8 @@ type Event struct {
 	Timestamp int64
 }
 
-// EventHandler processes an event
 type EventHandler func(ctx context.Context, event Event) error
 
-// EventBus manages event distribution
 type EventBus struct {
 	subscribers map[string][]EventHandler
 	eventQueue  chan Event
@@ -28,7 +25,6 @@ type EventBus struct {
 	mu          sync.RWMutex
 }
 
-// NewEventBus creates a new event bus
 func NewEventBus(workers int, queueSize int) *EventBus {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &EventBus{
@@ -40,7 +36,6 @@ func NewEventBus(workers int, queueSize int) *EventBus {
 	}
 }
 
-// Subscribe subscribes to an event type
 func (eb *EventBus) Subscribe(eventType string, handler EventHandler) {
 	eb.mu.Lock()
 	defer eb.mu.Unlock()
@@ -48,7 +43,6 @@ func (eb *EventBus) Subscribe(eventType string, handler EventHandler) {
 	log.Printf("Handler subscribed to event: %s", eventType)
 }
 
-// Publish publishes an event
 func (eb *EventBus) Publish(ctx context.Context, event Event) {
 	select {
 	case eb.eventQueue <- event:
@@ -58,7 +52,6 @@ func (eb *EventBus) Publish(ctx context.Context, event Event) {
 	}
 }
 
-// Start starts the event bus
 func (eb *EventBus) Start() {
 	for i := 0; i < eb.workers; i++ {
 		eb.wg.Add(1)
@@ -67,7 +60,6 @@ func (eb *EventBus) Start() {
 	log.Printf("Event bus started with %d workers", eb.workers)
 }
 
-// worker processes events
 func (eb *EventBus) worker(id int) {
 	defer eb.wg.Done()
 	log.Printf("Event worker %d started", id)
@@ -85,7 +77,6 @@ func (eb *EventBus) worker(id int) {
 	}
 }
 
-// processEvent processes a single event
 func (eb *EventBus) processEvent(event Event) {
 	eb.mu.RLock()
 	handlers, exists := eb.subscribers[event.Type]
@@ -103,7 +94,6 @@ func (eb *EventBus) processEvent(event Event) {
 	}
 }
 
-// Stop stops the event bus
 func (eb *EventBus) Stop() {
 	log.Println("Stopping event bus...")
 	eb.cancel()

@@ -112,7 +112,7 @@ The system contains the following tables:
 
 # 7. Primary Keys
 
-Each table contains a UUID primary key.
+Each table contains a ID primary key.
 
 Example:
 
@@ -122,7 +122,7 @@ Example:
 - project_id
 - task_id
 
-UUIDs improve scalability and prevent predictable identifiers.
+IDs improve scalability and prevent predictable identifiers.
 
 ---
 
@@ -197,7 +197,7 @@ Passwords are never stored in plain text.
 The database design supports future expansion through:
 
 - Modular entity relationships
-- UUID identifiers
+- ID identifiers
 - Separate membership tables
 - Independent activity logging
 - Event-driven updates using Kafka

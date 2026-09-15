@@ -15,15 +15,20 @@ func RegisterInvitationRoutes(
 	cfg *config.AppConfig,
 	repo authRepo.Repository,
 ) {
-	// Protected routes (require auth)
 	inviteGroup := router.Group("/organizations")
 	inviteGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
 		inviteGroup.POST("/:id/invite", controller.Invite)
 	}
-
-	// Public routes (no auth required)
-	router.GET("/invite/accept", controller.Accept)
-	router.GET("/invite/decline", controller.Decline)
+ 
 	router.GET("/invite/info", controller.GetInfo)
+	router.POST("/invite/decline", controller.Decline)
+	router.GET("/invite/decline", controller.Decline)
+ 
+	acceptGroup := router.Group("/invite")
+	acceptGroup.Use(middleware.AuthRequired(cfg, repo))
+	{
+		acceptGroup.POST("/accept", controller.Accept)
+		acceptGroup.GET("/accept", controller.Accept)
+	}
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -54,14 +55,19 @@ func (h *Controller) GetByID(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	result, err := h.service.GetByID(c.Request.Context(), userID, orgID)
+	result, err := h.service.GetByID(c.Request.Context(), userID, organizeID)
 	if err != nil {
+		errLower := strings.ToLower(err.Error())
+		if strings.Contains(errLower, "unauthorized") || strings.Contains(errLower, "member required") {
+			response.Error(c, http.StatusForbidden, err.Error())
+			return
+		}
 		response.Error(c, http.StatusNotFound, err.Error())
 		return
 	}
@@ -90,7 +96,7 @@ func (h *Controller) Update(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -107,7 +113,7 @@ func (h *Controller) Update(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Update(c.Request.Context(), userID, orgID, &req)
+	result, err := h.service.Update(c.Request.Context(), userID, organizeID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -122,13 +128,13 @@ func (h *Controller) Delete(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	if err := h.service.Delete(c.Request.Context(), userID, orgID); err != nil {
+	if err := h.service.Delete(c.Request.Context(), userID, organizeID); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -161,7 +167,7 @@ func (h *Controller) AddMember(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -178,7 +184,7 @@ func (h *Controller) AddMember(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.AddMember(c.Request.Context(), userID, orgID, &req)
+	result, err := h.service.AddMember(c.Request.Context(), userID, organizeID, &req)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
@@ -193,13 +199,13 @@ func (h *Controller) GetMembers(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
-	result, err := h.service.GetMembers(c.Request.Context(), userID, orgID)
+	result, err := h.service.GetMembers(c.Request.Context(), userID, organizeID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
@@ -214,7 +220,7 @@ func (h *Controller) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -237,7 +243,7 @@ func (h *Controller) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.UpdateMemberRole(c.Request.Context(), userID, orgID, memberID, req.Role); err != nil {
+	if err := h.service.UpdateMemberRole(c.Request.Context(), userID, organizeID, memberID, req.Role); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -251,7 +257,7 @@ func (h *Controller) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	orgID, err := strconv.Atoi(c.Param("id"))
+	organizeID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid organization ID")
 		return
@@ -263,7 +269,7 @@ func (h *Controller) RemoveMember(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.RemoveMember(c.Request.Context(), userID, orgID, memberID); err != nil {
+	if err := h.service.RemoveMember(c.Request.Context(), userID, organizeID, memberID); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -295,4 +301,3 @@ func getUserID(c *gin.Context) (int, error) {
 	}
 	return 0, errors.New("unauthorized")
 }
-

@@ -5,19 +5,18 @@ import (
 )
 
 type Notification struct {
-	ID        int       `gorm:"primaryKey;autoIncrement"`
-	UserID    int       `gorm:"not null;index"`
-	Type      string    `gorm:"size:50;not null"`
-	Title     string    `gorm:"size:200;not null"`
-	Content   string    `gorm:"type:text;not null"`
-	ActionURL string    `gorm:"size:500"`
-	Metadata  string    `gorm:"type:jsonb"`
-	IsRead    bool      `gorm:"default:false;index"`
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID        int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID    int       `gorm:"not null;index" json:"user_id"`
+	Type      string    `gorm:"size:50;not null" json:"type"`
+	Title     string    `gorm:"size:200;not null" json:"title"`
+	Content   string    `gorm:"type:text;not null" json:"content"`
+	ActionURL string    `gorm:"size:500" json:"action_url"`
+	Metadata  string    `gorm:"type:jsonb" json:"metadata"`
+	IsRead    bool      `gorm:"default:false;index" json:"is_read"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
-
-	User User `gorm:"foreignKey:UserID"`
+	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
 func (Notification) TableName() string {

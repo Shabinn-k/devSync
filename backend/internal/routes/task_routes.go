@@ -18,7 +18,6 @@ func RegisterTaskRoutes(
 	taskGroup := router.Group("/tasks")
 	taskGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
-		// Task CRUD
 		taskGroup.POST("", controller.Create)
 		taskGroup.GET("/my", controller.GetMyTasks)
 		taskGroup.GET("/project/:projectId", controller.GetByProject)
@@ -27,7 +26,6 @@ func RegisterTaskRoutes(
 		taskGroup.PUT("/:id/status", controller.UpdateStatus)
 		taskGroup.DELETE("/:id", controller.Delete)
 
-		// Comments
 		taskGroup.POST("/:id/comments", controller.AddComment)
 		taskGroup.GET("/:id/comments", controller.GetComments)
 		taskGroup.DELETE("/:id/comments/:commentId", controller.DeleteComment)

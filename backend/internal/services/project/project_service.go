@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"devSync/config"
 	"devSync/internal/dto/request"
@@ -12,6 +13,7 @@ import (
 	"devSync/internal/repositories/auth"
 	"devSync/internal/repositories/organization"
 	"devSync/internal/repositories/project"
+	teamRepo "devSync/internal/repositories/team"
 	notifService "devSync/internal/services/notification"
 )
 
@@ -32,6 +34,7 @@ type Service interface {
 type service struct {
 	projectRepo project.Repository
 	orgRepo     organization.Repository
+	teamRepo    teamRepo.Repository  
 	authRepo    auth.Repository
 	cfg         *config.AppConfig
 	notifSvc    notifService.Service
@@ -40,6 +43,7 @@ type service struct {
 func NewService(
 	projectRepo project.Repository,
 	orgRepo organization.Repository,
+	teamRepo teamRepo.Repository, 
 	authRepo auth.Repository,
 	cfg *config.AppConfig,
 	notifSvc notifService.Service,
@@ -47,14 +51,15 @@ func NewService(
 	return &service{
 		projectRepo: projectRepo,
 		orgRepo:     orgRepo,
+		teamRepo:    teamRepo,
 		authRepo:    authRepo,
 		cfg:         cfg,
 		notifSvc:    notifSvc,
 	}
 }
-
+ 
 func (s *service) Create(ctx context.Context, userID int, req *request.CreateProjectRequest) (*response.ProjectResponse, error) {
-	// Only Team Leads and Admins can create projects
+
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -65,14 +70,33 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreatePro
 
 	isMember, err := s.orgRepo.IsMember(ctx, req.OrganizationID, userID)
 	if err != nil || !isMember {
-		return nil, errors.New("unauthorized: must be an organization member")
+		isAdmin, adminErr := s.orgRepo.IsAdmin(ctx, req.OrganizationID, userID)
+		if adminErr != nil || !isAdmin {
+			return nil, errors.New("unauthorized: must be an organization member")
+		}
+	}
+ 
+	if req.TeamID != nil && *req.TeamID > 0 {
+		team, err := s.teamRepo.GetByID(ctx, *req.TeamID)
+		if err != nil || team == nil {
+			return nil, errors.New("team not found")
+		}
+		if team.OrganizationID != req.OrganizationID {
+			return nil, errors.New("team does not belong to this organization")
+		}
+	}
+
+	priority := req.Priority
+	if priority == "" {
+		priority = model.ProjectPriorityMedium
 	}
 
 	proj := &model.Project{
 		OrganizationID: req.OrganizationID,
+		TeamID:         req.TeamID,
 		Name:           req.Name,
 		Description:    req.Description,
-		Priority:       req.Priority,
+		Priority:       priority,
 		StartDate:      req.StartDate,
 		EndDate:        req.EndDate,
 		CreatedBy:      userID,
@@ -84,14 +108,31 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreatePro
 		return nil, err
 	}
 
-	member := &model.ProjectMember{
+	creatorMember := &model.ProjectMember{
 		ProjectID: proj.ID,
 		UserID:    userID,
 		Role:      model.ProjectRoleAdmin,
 		IsActive:  true,
 	}
-	if err := s.projectRepo.AddMember(ctx, member); err != nil {
+	if err := s.projectRepo.AddMember(ctx, creatorMember); err != nil {
 		return nil, err
+	}
+
+	var orgMembers []model.OrganizationMember
+	if members, err := s.orgRepo.GetMembers(ctx, req.OrganizationID); err == nil {
+		orgMembers = members
+		for _, m := range orgMembers {
+			if m.UserID == userID {
+				continue
+			}
+			pm := &model.ProjectMember{
+				ProjectID: proj.ID,
+				UserID:    m.UserID,
+				Role:      model.ProjectRoleMember,
+				IsActive:  true,
+			}
+			_ = s.projectRepo.AddMember(ctx, pm)
+		}
 	}
 
 	if s.notifSvc != nil {
@@ -104,6 +145,25 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreatePro
 			fmt.Sprintf("/projects/%d", proj.ID),
 			map[string]interface{}{"project_id": proj.ID, "name": proj.Name},
 		)
+
+		for _, m := range orgMembers {
+			if m.UserID == userID {
+				continue
+			}
+			_ = s.notifSvc.NotifyUser(
+				ctx,
+				m.UserID,
+				model.TypeProjectCreated,
+				"New Project in Your Org",
+				fmt.Sprintf("Project '%s' was created by %s.", proj.Name, user.Name),
+				fmt.Sprintf("/projects/%d", proj.ID),
+				map[string]interface{}{
+					"project_id":      proj.ID,
+					"name":            proj.Name,
+					"organization_id": req.OrganizationID,
+				},
+			)
+		}
 	}
 
 	return s.mapToResponse(proj), nil
@@ -190,13 +250,16 @@ func (s *service) Update(ctx context.Context, userID int, projectID int, req *re
 		proj.Status = req.Status
 	}
 	if req.Priority != "" {
-		proj.Priority = req.Priority
+		proj.Priority = strings.ToLower(req.Priority)
 	}
 	if req.StartDate != nil {
 		proj.StartDate = req.StartDate
 	}
 	if req.EndDate != nil {
 		proj.EndDate = req.EndDate
+	}
+	if req.TeamID != nil {
+		proj.TeamID = req.TeamID
 	}
 
 	if err := s.projectRepo.Update(ctx, proj); err != nil {
@@ -333,9 +396,10 @@ func (s *service) RemoveMember(ctx context.Context, userID int, projectID, membe
 }
 
 func (s *service) mapToResponse(project *model.Project) *response.ProjectResponse {
-	return &response.ProjectResponse{
+	resp := &response.ProjectResponse{
 		ID:             project.ID,
 		OrganizationID: project.OrganizationID,
+		TeamID:         project.TeamID,
 		Name:           project.Name,
 		Description:    project.Description,
 		Status:         project.Status,
@@ -347,6 +411,10 @@ func (s *service) mapToResponse(project *model.Project) *response.ProjectRespons
 		CreatedAt:      project.CreatedAt,
 		UpdatedAt:      project.UpdatedAt,
 	}
+	if project.Team != nil {
+		resp.TeamName = project.Team.Name
+	}
+	return resp
 }
 
 func (s *service) mapToResponseWithCount(project *model.Project, taskCount int64) *response.ProjectResponse {
@@ -380,4 +448,3 @@ func (s *service) mapToMemberResponse(member *model.ProjectMember) *response.Pro
 		JoinedAt:  member.JoinedAt,
 	}
 }
-

@@ -1,35 +1,20 @@
-import { motion } from 'framer-motion';
-
-const companies = [
-  { name: 'GitHub', color: 'text-white/60' },
-  { name: 'Microsoft', color: 'text-white/60' },
-  { name: 'Google', color: 'text-white/60' },
-  { name: 'Amazon', color: 'text-white/60' },
-  { name: 'Netflix', color: 'text-white/60' },
-  { name: 'Spotify', color: 'text-white/60' },
-  { name: 'Adobe', color: 'text-white/60' },
-  { name: 'Jira', color: 'text-white/60' },
-  { name: 'Slack', color: 'text-white/60' },
-];
-
 export const TrustedBy = () => {
+  const teams = ['bridgeon', 'skillversity', 'northwind', 'acme-labs', 'hexagon', 'lumen'];
+
   return (
-    <section className="border-t border-white/5 py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-xs font-medium uppercase tracking-wider text-white/30">
-          Trusted by the world's most innovative teams
+    <section className="border-y border-white/5 bg-white/[0.01] px-6 py-10">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-center font-mono text-[10px] uppercase tracking-[0.2em] text-white/25">
+          powering engineering teams
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-          {companies.map((company, index) => (
-            <motion.span
-              key={company.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`text-sm font-semibold tracking-wide ${company.color} hover:text-white/90 transition-colors`}
+        <div className="mt-6 grid grid-cols-2 items-center justify-items-center gap-8 sm:grid-cols-3 lg:grid-cols-6">
+          {teams.map((t) => (
+            <span
+              key={t}
+              className="font-mono text-xs tracking-tight text-white/20 transition-colors hover:text-white/50"
             >
-              {company.name}
-            </motion.span>
+              {t}
+            </span>
           ))}
         </div>
       </div>

@@ -16,7 +16,6 @@ import (
 )
 
 type Service interface {
-	// Task operations
 	Create(ctx context.Context, userID int, req *request.CreateTaskRequest) (*response.TaskResponse, error)
 	GetByID(ctx context.Context, userID, taskID int) (*response.TaskDetailResponse, error)
 	GetByProject(ctx context.Context, userID, projectID int, page, limit int) ([]response.TaskResponse, int64, error)
@@ -25,7 +24,6 @@ type Service interface {
 	Delete(ctx context.Context, userID, taskID int) error
 	UpdateStatus(ctx context.Context, userID, taskID int, req *request.UpdateTaskStatusRequest) error
 
-	// Comment operations
 	AddComment(ctx context.Context, userID, taskID int, req *request.AddCommentRequest) (*response.CommentResponse, error)
 	GetComments(ctx context.Context, userID, taskID int, page, limit int) ([]response.CommentResponse, int64, error)
 	DeleteComment(ctx context.Context, userID, commentID int) error
@@ -56,7 +54,6 @@ func NewService(
 }
 
 func (s *service) Create(ctx context.Context, userID int, req *request.CreateTaskRequest) (*response.TaskResponse, error) {
-	// Check user role: only team leads and admins can create tasks
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -66,29 +63,48 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateTas
 		return nil, errors.New("only team leads and admins can create tasks")
 	}
 
-	// Check if user is project member
 	isMember, err := s.projectRepo.IsMember(ctx, req.ProjectID, userID)
 	if err != nil || !isMember {
-		return nil, errors.New("unauthorized: must be a project member")
+		if isAdmin || user.Role == model.RoleAdmin || user.Role == model.RoleTeamLead {
+			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
+				ProjectID: req.ProjectID,
+				UserID:    userID,
+				Role:      model.ProjectRoleAdmin,
+				IsActive:  true,
+			})
+		} else {
+			return nil, errors.New("unauthorized: must be a project member")
+		}
 	}
 
-	// If assignee is set, check if they exist and are a project member
-	if req.AssigneeID != nil {
+	if req.AssigneeID != nil && *req.AssigneeID > 0 {
 		_, err := s.authRepo.GetUserByID(ctx, *req.AssigneeID)
 		if err != nil {
 			return nil, errors.New("assignee user not found")
 		}
 		isAssigneeMember, err := s.projectRepo.IsMember(ctx, req.ProjectID, *req.AssigneeID)
 		if err != nil || !isAssigneeMember {
-			return nil, errors.New("assignee must be a member of the project")
+			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
+				ProjectID: req.ProjectID,
+				UserID:    *req.AssigneeID,
+				Role:      model.ProjectRoleMember,
+				IsActive:  true,
+			})
 		}
+	} else {
+		req.AssigneeID = nil
+	}
+
+	priority := req.Priority
+	if priority == "" {
+		priority = model.TaskPriorityMedium
 	}
 
 	task := &model.Task{
 		ProjectID:   req.ProjectID,
 		Title:       req.Title,
 		Description: req.Description,
-		Priority:    req.Priority,
+		Priority:    priority,
 		AssigneeID:  req.AssigneeID,
 		CreatedBy:   userID,
 		DueDate:     req.DueDate,
@@ -100,13 +116,11 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateTas
 		return nil, err
 	}
 
-	// Get full task with relations
 	task, err = s.taskRepo.GetByID(ctx, task.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Send notification if assigned
 	if req.AssigneeID != nil && *req.AssigneeID != userID {
 		s.sendNotification(ctx, *req.AssigneeID, model.TypeTaskAssigned,
 			"Task Assigned",
@@ -123,7 +137,6 @@ func (s *service) GetByID(ctx context.Context, userID, taskID int) (*response.Ta
 		return nil, err
 	}
 
-	// Check if user is project member
 	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
 	if err != nil || !isMember {
 		return nil, errors.New("unauthorized: must be project member")
@@ -148,38 +161,10 @@ func (s *service) GetByProject(ctx context.Context, userID, projectID int, page,
 		return nil, 0, errors.New("unauthorized: must be project member")
 	}
 
-	user, _ := s.authRepo.GetUserByID(ctx, userID)
 	offset := (page - 1) * limit
-	var tasks []model.Task
-	var total int64
-
-	if user != nil && user.Role == model.RoleDeveloper {
-		// Developers only see tasks assigned to them in the project
-		allMyTasks, _, err := s.taskRepo.GetByAssignee(ctx, userID, 1000, 0)
-		if err != nil {
-			return nil, 0, err
-		}
-		var filtered []model.Task
-		for _, t := range allMyTasks {
-			if t.ProjectID == projectID {
-				filtered = append(filtered, t)
-			}
-		}
-		total = int64(len(filtered))
-		start := offset
-		if start > len(filtered) {
-			start = len(filtered)
-		}
-		end := start + limit
-		if end > len(filtered) {
-			end = len(filtered)
-		}
-		tasks = filtered[start:end]
-	} else {
-		tasks, total, err = s.taskRepo.GetByProject(ctx, projectID, limit, offset)
-		if err != nil {
-			return nil, 0, err
-		}
+	tasks, total, err := s.taskRepo.GetByProject(ctx, projectID, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	result := make([]response.TaskResponse, len(tasks))
@@ -213,7 +198,6 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 		return nil, err
 	}
 
-	// Check if user is project member
 	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
 	if err != nil || !isMember {
 		return nil, errors.New("unauthorized: must be project member")
@@ -236,7 +220,12 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 		}
 		isAssigneeMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, *req.AssigneeID)
 		if err != nil || !isAssigneeMember {
-			return nil, errors.New("assignee must be a member of the project")
+			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
+				ProjectID: task.ProjectID,
+				UserID:    *req.AssigneeID,
+				Role:      model.ProjectRoleMember,
+				IsActive:  true,
+			})
 		}
 		task.AssigneeID = req.AssigneeID
 	}
@@ -253,7 +242,6 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 		return nil, err
 	}
 
-	// Notify new assignee if changed
 	if req.AssigneeID != nil && (oldAssigneeID == nil || *req.AssigneeID != *oldAssigneeID) && *req.AssigneeID != userID {
 		s.sendNotification(ctx, *req.AssigneeID, model.TypeTaskAssigned,
 			"Task Assigned",
@@ -270,7 +258,6 @@ func (s *service) Delete(ctx context.Context, userID, taskID int) error {
 		return err
 	}
 
-	// Check if user is project admin or task creator
 	isAdmin, err := s.projectRepo.IsAdmin(ctx, task.ProjectID, userID)
 	if err != nil {
 		return err
@@ -288,17 +275,17 @@ func (s *service) UpdateStatus(ctx context.Context, userID, taskID int, req *req
 		return err
 	}
 
-	// Check if user is project member
-	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
-	if err != nil || !isMember {
-		return errors.New("unauthorized: must be project member")
+	isAssignee := task.AssigneeID != nil && *task.AssigneeID == userID
+	isCreator := task.CreatedBy == userID
+	isMember, _ := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if !isAssignee && !isCreator && !isMember {
+		return errors.New("unauthorized: must be task assignee, creator, or project member")
 	}
 
 	if err := s.taskRepo.UpdateStatus(ctx, taskID, req.Status); err != nil {
 		return err
 	}
 
-	// Send notification if completed
 	if req.Status == model.TaskStatusDone {
 		if task.CreatedBy != userID {
 			s.sendNotification(ctx, task.CreatedBy, model.TypeTaskCompleted,
@@ -317,17 +304,17 @@ func (s *service) UpdateStatus(ctx context.Context, userID, taskID int, req *req
 	return nil
 }
 
-// Comment methods
 func (s *service) AddComment(ctx context.Context, userID, taskID int, req *request.AddCommentRequest) (*response.CommentResponse, error) {
 	task, err := s.taskRepo.GetByID(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if user is project member
-	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
-	if err != nil || !isMember {
-		return nil, errors.New("unauthorized: must be project member")
+	isAssignee := task.AssigneeID != nil && *task.AssigneeID == userID
+	isCreator := task.CreatedBy == userID
+	isMember, _ := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if !isAssignee && !isCreator && !isMember {
+		return nil, errors.New("unauthorized: must be task assignee, creator, or project member")
 	}
 
 	comment := &model.Comment{
@@ -340,13 +327,11 @@ func (s *service) AddComment(ctx context.Context, userID, taskID int, req *reque
 		return nil, err
 	}
 
-	// Get user for response
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Send notifications to task creator and assignee if different from commenter
 	if task.CreatedBy != userID {
 		s.sendNotification(ctx, task.CreatedBy, model.TypeCommentAdded,
 			"New Comment",
@@ -370,7 +355,6 @@ func (s *service) GetComments(ctx context.Context, userID, taskID int, page, lim
 		return nil, 0, err
 	}
 
-	// Check if user is project member
 	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
 	if err != nil || !isMember {
 		return nil, 0, errors.New("unauthorized: must be project member")
@@ -413,7 +397,6 @@ func (s *service) DeleteComment(ctx context.Context, userID, commentID int) erro
 	return s.taskRepo.DeleteComment(ctx, commentID)
 }
 
-// Helper methods
 func (s *service) sendNotification(ctx context.Context, userID int, notifType, title, content, actionURL string) {
 	if s.notifSvc == nil || userID <= 0 {
 		return

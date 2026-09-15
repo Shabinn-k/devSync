@@ -36,7 +36,8 @@ type OrganizationMember struct {
 }
 
 const (
-	OrgRoleAdmin  = RoleAdmin
-	RoleMember    = "member"
-	RoleViewer    = "viewer"
+	OrgRoleAdmin    = RoleAdmin
+	OrgRoleTeamLead = RoleTeamLead
+	RoleMember      = "member"
+	RoleViewer      = "viewer"
 )

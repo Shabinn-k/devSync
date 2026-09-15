@@ -21,12 +21,15 @@ export interface PaginatedResponse<T = any> {
   pagination: Pagination;
 }
 
+export type UserRole = 'developer' | 'team_lead' | 'admin';
+
 export interface User {
   id: number;
   name: string;
   email: string;
+  role?: UserRole;
   is_verified: boolean;
-  is_active: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }

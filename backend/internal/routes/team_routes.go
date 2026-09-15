@@ -14,7 +14,7 @@ func RegisterTeamRoutes(router *gin.Engine, ctrl *teamCtrl.Controller, cfg *conf
 	group.Use(middleware.AuthRequired(cfg, authRepository))
 	{
 		group.POST("", ctrl.Create)
-		group.GET("/organization/:orgId", ctrl.GetByOrganization)
+		group.GET("/organization/:organizeId", ctrl.GetByOrganization)
 		group.GET("/my", ctrl.GetMyTeams)
 		group.GET("/:id", ctrl.GetByID)
 		group.PUT("/:id", ctrl.Update)

@@ -18,7 +18,7 @@ func RegisterProjectRoutes(
 	projectGroup := router.Group("/projects")
 	projectGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
-		projectGroup.GET("/organization/:orgId", controller.GetOrgProjects)
+		projectGroup.GET("/organization/:organizeId", controller.GetOrgProjects)
 		projectGroup.POST("", controller.Create)
 		projectGroup.GET("", controller.GetUserProjects)
 		projectGroup.GET("/my", controller.GetMyProjects)

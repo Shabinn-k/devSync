@@ -5,22 +5,22 @@ import { useProjectStore } from '../store/projectStore';
 import { useAuthStore } from '../../../stores/authStore';
 
 export const ProjectDetailPage = () => {
-    const { id } = useParams<{ id: string }>();
+    const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const { currentProject, isLoading, error, fetchProjectById } = useProjectStore();
     const isLead = user?.role === 'team_lead' || user?.role === 'admin';
 
     useEffect(() => {
-        if (id) {
-            const projectId = Number(id);
-            if (!isNaN(projectId) && projectId > 0) {
-                fetchProjectById(projectId);
+        if (projectId) {
+            const id = Number(projectId);
+            if (!isNaN(id) && id > 0) {
+                fetchProjectById(id);
             } else {
                 navigate('/projects');
             }
         }
-    }, [id]);
+    }, [projectId, fetchProjectById, navigate]);
 
     if (isLoading) {
         return (
@@ -35,7 +35,7 @@ export const ProjectDetailPage = () => {
             <div className="flex h-64 flex-col items-center justify-center text-center">
                 <p className="text-red-400">{error || 'Project not found'}</p>
                 <button
-                    onClick={() => id && fetchProjectById(Number(id))}
+                    onClick={() => projectId && fetchProjectById(Number(projectId))}
                     className="mt-4 rounded-full border border-white/10 px-6 py-2 text-sm text-white hover:bg-white/10"
                 >
                     Try Again

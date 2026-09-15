@@ -7,6 +7,8 @@ import (
 type ProjectResponse struct {
 	ID             int        `json:"id"`
 	OrganizationID int        `json:"organization_id"`
+	TeamID         *int       `json:"team_id,omitempty"`    
+	TeamName       string     `json:"team_name,omitempty"`
 	Name           string     `json:"name"`
 	Description    string     `json:"description"`
 	Status         string     `json:"status"`

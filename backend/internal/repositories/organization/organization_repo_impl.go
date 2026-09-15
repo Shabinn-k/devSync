@@ -81,11 +81,11 @@ func (r *repository) List(ctx context.Context, userID int, limit, offset int) ([
 	return orgs, total, err
 }
 
-func (r *repository) GetMemberCount(ctx context.Context, orgID int) (int64, error) {
+func (r *repository) GetMemberCount(ctx context.Context, organizeID int) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
-		Where("organization_id = ? AND is_active = ?", orgID, true).
+		Where("organization_id = ? AND is_active = ?", organizeID, true).
 		Count(&count).Error
 	return count, err
 }
@@ -106,10 +106,10 @@ func (r *repository) AddMember(ctx context.Context, member *model.OrganizationMe
 	return r.db.WithContext(ctx).Create(member).Error
 }
 
-func (r *repository) GetMember(ctx context.Context, orgID, userID int) (*model.OrganizationMember, error) {
+func (r *repository) GetMember(ctx context.Context, organizeID, userID int) (*model.OrganizationMember, error) {
 	var member model.OrganizationMember
 	err := r.db.WithContext(ctx).
-		Where("organization_id = ? AND user_id = ? AND is_active = ?", orgID, userID, true).
+		Where("organization_id = ? AND user_id = ? AND is_active = ?", organizeID, userID, true).
 		First(&member).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrMemberNotFound
@@ -117,10 +117,10 @@ func (r *repository) GetMember(ctx context.Context, orgID, userID int) (*model.O
 	return &member, err
 }
 
-func (r *repository) GetMemberByID(ctx context.Context, orgID, memberID int) (*model.OrganizationMember, error) {
+func (r *repository) GetMemberByID(ctx context.Context, organizeID, memberID int) (*model.OrganizationMember, error) {
 	var member model.OrganizationMember
 	err := r.db.WithContext(ctx).
-		Where("organization_id = ? AND id = ? AND is_active = ?", orgID, memberID, true).
+		Where("organization_id = ? AND id = ? AND is_active = ?", organizeID, memberID, true).
 		First(&member).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrMemberNotFound
@@ -128,40 +128,58 @@ func (r *repository) GetMemberByID(ctx context.Context, orgID, memberID int) (*m
 	return &member, err
 }
 
-func (r *repository) GetMembers(ctx context.Context, orgID int) ([]model.OrganizationMember, error) {
+func (r *repository) GetMembers(ctx context.Context, organizeID int) ([]model.OrganizationMember, error) {
 	var members []model.OrganizationMember
 	err := r.db.WithContext(ctx).
-		Where("organization_id = ? AND is_active = ?", orgID, true).
+		Where("organization_id = ? AND is_active = ?", organizeID, true).
 		Preload("User").
 		Order("joined_at ASC").
 		Find(&members).Error
 	return members, err
 }
 
-func (r *repository) UpdateMemberRole(ctx context.Context, orgID, memberID int, role string) error {
+func (r *repository) UpdateMemberRole(ctx context.Context, organizeID, memberID int, role string) error {
 	return r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
-		Where("organization_id = ? AND id = ?", orgID, memberID).
+		Where("organization_id = ? AND id = ?", organizeID, memberID).
 		Updates(map[string]interface{}{
 			"role":       role,
 			"updated_at": time.Now(),
 		}).Error
 }
 
-func (r *repository) RemoveMember(ctx context.Context, orgID, memberID int) error {
+func (r *repository) RemoveMember(ctx context.Context, organizeID, memberID int) error {
 	return r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
-		Where("organization_id = ? AND id = ?", orgID, memberID).
+		Where("organization_id = ? AND id = ?", organizeID, memberID).
 		Update("is_active", false).Error
 }
 
-func (r *repository) IsMember(ctx context.Context, orgID, userID int) (bool, error) {
+func (r *repository) IsMember(ctx context.Context, organizeID, userID int) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
-		Where("organization_id = ? AND user_id = ? AND is_active = ?", orgID, userID, true).
+		Where("organization_id = ? AND user_id = ? AND is_active = ?", organizeID, userID, true).
 		Count(&count).Error
 	return count > 0, err
+}
+
+func (r *repository) IsAdmin(ctx context.Context, organizeID, userID int) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&model.OrganizationMember{}).
+		Where("organization_id = ? AND user_id = ? AND role IN (?, ?) AND is_active = ?", 
+			organizeID, userID, model.RoleAdmin, model.RoleTeamLead, true).
+		Count(&count).Error
+	if err == nil && count > 0 {
+		return true, nil
+	}
+	var orgCount int64
+	err = r.db.WithContext(ctx).
+		Model(&model.Organization{}).
+		Where("id = ? AND created_by = ? AND is_active = ?", organizeID, userID, true).
+		Count(&orgCount).Error
+	return orgCount > 0, err
 }
 
 func (r *repository) GetUserOrganizations(ctx context.Context, userID int) ([]model.Organization, error) {

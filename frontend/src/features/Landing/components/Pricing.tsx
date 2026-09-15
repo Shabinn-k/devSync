@@ -1,104 +1,100 @@
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
-
-const plans = [
-  {
-    name: 'Starter',
-    price: '0',
-    period: 'month',
-    description: 'Perfect for small teams getting started.',
-    features: ['Up to 5 users', 'Unlimited tasks', 'Public docs', 'GitHub sync'],
-    cta: 'Select',
-    popular: false
-  },
-  {
-    name: 'Pro',
-    price: '12',
-    period: 'month',
-    description: 'For teams that need more power and control.',
-    features: ['Unlimited users', 'Private documentation', 'Advanced analytics', 'GitHub Enterprise sync'],
-    cta: 'Start Trial',
-    popular: true
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: 'month',
-    description: 'For organizations with complex needs.',
-    features: ['Dedicated success manager', 'SSO/SCIM', 'Custom API rate limits', 'On-premise options'],
-    cta: 'Contact Sales',
-    popular: false
-  }
-];
 
 export const Pricing = () => {
+  const tiers = [
+    {
+      name: 'free',
+      price: '$0',
+      period: 'forever',
+      desc: 'For small teams getting started.',
+      features: ['up to 5 members', '3 projects', 'real-time chat', 'basic notifications', 'community support'],
+      cta: 'start free',
+      highlight: false,
+    },
+    {
+      name: 'team',
+      price: '$12',
+      period: 'per user / month',
+      desc: 'For growing teams that ship weekly.',
+      features: ['unlimited members', 'unlimited projects', 'sub-teams + advanced roles', 'priority support', 'custom domains'],
+      cta: 'get started',
+      highlight: true,
+    },
+    {
+      name: 'enterprise',
+      price: 'custom',
+      period: 'contact us',
+      desc: 'For orgs with strict requirements.',
+      features: ['SSO / SAML', 'audit logs', 'dedicated support', 'SLA', 'on-prem deployment'],
+      cta: 'contact sales',
+      highlight: false,
+    },
+  ];
+
   return (
-    <section className="border-t border-white/5 py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-white sm:text-4xl"
-          >
-            Scalable Plans
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            viewport={{ once: true }}
-            className="mx-auto mt-4 max-w-2xl text-lg text-white/60"
-          >
-            Simple pricing for teams of all sizes.
-          </motion.p>
+    <section id="pricing" className="border-t border-white/5 px-6 py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-2xl">
+        
+          <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+            Simple, honest pricing.{' '}
+            <span className="text-white/30">No surprises.</span>
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-white/50">
+            Start free. Upgrade when your team grows. Cancel anytime.
+          </p>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className={`relative rounded-2xl border p-8 transition-all ${plan.popular
-                  ? 'border-white/20 bg-white/10 shadow-2xl shadow-white/5'
-                  : 'border-white/5 bg-white/5 hover:border-white/20'
-                }`}
+        <div className="mt-14 grid gap-3 md:grid-cols-3">
+          {tiers.map((tier) => (
+            <div
+              key={tier.name}
+              className={`relative rounded-xl border bg-black p-6 transition-colors ${
+                tier.highlight ? 'border-white/30' : 'border-white/10 hover:border-white/20'
+              }`}
             >
-              {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-0.5 text-xs font-medium text-black">
-                  MOST POPULAR
-                </span>
+              {tier.highlight && (
+                <div className="absolute -top-2.5 left-6 rounded border border-green-500/30 bg-black px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-green-400">
+                  most popular
+                </div>
               )}
-              <h3 className="text-lg font-semibold text-white">{plan.name}</h3>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-white">${plan.price}</span>
-                <span className="text-sm text-white/40">/{plan.period}</span>
+
+              <div className="flex items-center justify-between">
+                <h3 className="font-mono text-xs uppercase tracking-widest text-white/60">
+                  {tier.name}
+                </h3>
+                <span className="font-mono text-[10px] text-white/20">
+                  tier_{tiers.indexOf(tier) + 1}
+                </span>
               </div>
-              <p className="mt-2 text-sm text-white/40">{plan.description}</p>
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-sm text-white/60">
-                    <Check className="h-4 w-4 text-white/40" />
-                    {feature}
+
+              <div className="mt-6 flex items-baseline gap-2">
+                <span className="text-3xl font-semibold text-white">{tier.price}</span>
+                <span className="font-mono text-[11px] text-white/40">/ {tier.period}</span>
+              </div>
+
+              <p className="mt-3 text-[13px] text-white/45">{tier.desc}</p>
+
+              <ul className="mt-6 space-y-2.5">
+                {tier.features.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 font-mono text-[12px] text-white/60">
+                    <span className="text-green-400">›</span>
+                    {f}
                   </li>
                 ))}
               </ul>
+
               <Link
-                to={plan.popular ? '/register' : plan.name === 'Enterprise' ? '/contact' : '/register'}
-                className={`mt-8 block w-full rounded-full py-3 text-center text-sm font-semibold transition-all ${plan.popular
-                    ? 'bg-white text-black hover:bg-white/90'
-                    : 'border border-white/20 text-white hover:bg-white/10'
-                  }`}
+                to={tier.name === 'enterprise' ? '/contact' : '/register'}
+                className={`mt-8 flex w-full items-center justify-center rounded-md border px-4 py-2.5 font-mono text-xs font-medium transition-all duration-200 ${
+                  tier.highlight
+                    ? 'border-white bg-white text-black hover:bg-green-500'
+                    : 'border-white/10 bg-black text-white/70 hover:bg-white/5 hover:text-white'
+                }`}
               >
-                {plan.cta}
+                {tier.cta} →
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

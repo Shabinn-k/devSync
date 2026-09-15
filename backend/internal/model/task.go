@@ -18,15 +18,13 @@ type Task struct {
 	IsActive    bool       `gorm:"default:true"`
 	CreatedAt   time.Time  `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time  `gorm:"autoUpdateTime"`
-
-	// Relationships
+ 
 	Project  Project   `gorm:"foreignKey:ProjectID"`
 	Assignee *User     `gorm:"foreignKey:AssigneeID"`
 	Creator  User      `gorm:"foreignKey:CreatedBy"`
 	Comments []Comment `gorm:"foreignKey:TaskID"`
 }
-
-// Task Status Constants
+ 
 const (
 	TaskStatusTodo       = "todo"
 	TaskStatusInProgress = "in_progress"
@@ -34,7 +32,6 @@ const (
 	TaskStatusDone       = "done"
 )
 
-// Task Priority Constants
 const (
 	TaskPriorityLow    = "low"
 	TaskPriorityMedium = "medium"
@@ -50,7 +47,6 @@ type Comment struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
-	// Relationships
 	Task Task `gorm:"foreignKey:TaskID"`
 	User User `gorm:"foreignKey:UserID"`
 }

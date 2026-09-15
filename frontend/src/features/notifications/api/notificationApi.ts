@@ -1,53 +1,48 @@
-import apiClient from '../../../lib/axios';
+import { apiClient } from '../../../lib/axios';
 import type { ApiResponse } from '../../../types/api';
 import type { Notification } from '../types/notification';
 
-export const notificationApi = {
-  getNotifications: async (page = 1, limit = 20): Promise<{ notifications: Notification[]; total: number; page: number; totalPages: number }> => {
-    const response = await apiClient.get<any>('/notifications', {
-      params: { page, limit },
-    });
+export const notificationApi = { 
+    getNotifications: (page?: number, limit?: number): Promise<Notification[]> =>
+    apiClient
+        .get<ApiResponse<any>>(`/notifications?page=${page || 1}&limit=${limit || 20}`)
+        .then((res) => {
+            if (!res.data.success || !res.data.data) return [];
 
-    const data = response.data;
-    if (data.success) {
-      let list: Notification[] = [];
-      if (Array.isArray(data.data)) {
-        list = data.data;
-      } else if (data.data && Array.isArray(data.data.notifications)) {
-        list = data.data.notifications;
-      }
-      return {
-        notifications: list,
-        total: data.pagination?.total_items ?? list.length,
-        page: data.pagination?.page ?? page,
-        totalPages: data.pagination?.total_pages ?? 1,
-      };
-    }
+            const d = res.data.data;
+ 
+            if (Array.isArray(d.notifications)) return d.notifications;
+ 
+            if (Array.isArray(d)) return d;
 
-    return { notifications: [], total: 0, page: 1, totalPages: 1 };
-  },
+            return [];
+        }),
 
-  getUnreadCount: async (): Promise<number> => {
-    const response = await apiClient.get<any>('/notifications/unread-count');
-    if (response.data.success && response.data.data) {
-      const cnt = response.data.data.count ?? response.data.data.unread_count;
-      return typeof cnt === 'number' ? cnt : 0;
-    }
-    return 0;
-  },
+    getUnreadCount: (): Promise<{ unread_count: number }> =>
+        apiClient
+            .get<ApiResponse<{ unread_count: number }>>('/notifications/unread-count')
+            .then((res) => {
+                if (res.data.success && res.data.data) {
+                    return res.data.data;  
+                }
+                return { unread_count: 0 };
+            }),
 
-  markAsRead: async (id: number): Promise<boolean> => {
-    const response = await apiClient.put<ApiResponse>(`/notifications/${id}/read`);
-    return response.data.success;
-  },
+    markAsRead: (id: number): Promise<void> =>
+        apiClient
+            .put<ApiResponse<{ message: string }>>(`/notifications/${id}/read`)
+            .then((res) => {
+                if (!res.data.success) {
+                    throw new Error(res.data.message || 'Failed to mark as read');
+                }
+            }),
 
-  markAllAsRead: async (): Promise<boolean> => {
-    const response = await apiClient.put<ApiResponse>('/notifications/read-all');
-    return response.data.success;
-  },
-
-  deleteNotification: async (id: number): Promise<boolean> => {
-    const response = await apiClient.delete<ApiResponse>(`/notifications/${id}`);
-    return response.data.success;
-  },
+    markAllAsRead: (): Promise<void> =>
+        apiClient
+            .put<ApiResponse<{ message: string }>>('/notifications/read-all')
+            .then((res) => {
+                if (!res.data.success) {
+                    throw new Error(res.data.message || 'Failed to mark all as read');
+                }
+            }),
 };

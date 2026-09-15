@@ -10,17 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Chain combines multiple middleware
 type Chain []gin.HandlerFunc
 
-// Then applies the chain to a handler
 func (c Chain) Then(handler gin.HandlerFunc) gin.HandlerFunc {
 	for i := len(c) - 1; i >= 0; i-- {
-		// ✅ Fix: Use the handler as the next function
 		next := handler
 		current := c[i]
 		handler = func(ctx *gin.Context) {
-			// Call the middleware with the next handler
 			current(ctx)
 			if !ctx.IsAborted() {
 				next(ctx)
@@ -30,7 +26,6 @@ func (c Chain) Then(handler gin.HandlerFunc) gin.HandlerFunc {
 	return handler
 }
 
-// RequestLogger logs all requests
 func RequestLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -52,7 +47,6 @@ func RequestLogger() gin.HandlerFunc {
 	}
 }
 
-// CustomRecovery handles panics
 func CustomRecovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
@@ -68,7 +62,6 @@ func CustomRecovery() gin.HandlerFunc {
 	}
 }
 
-// Timeout middleware
 func Timeout(timeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)

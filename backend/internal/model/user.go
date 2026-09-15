@@ -9,7 +9,7 @@ type User struct {
 	Name              string     `gorm:"size:100;not null"`
 	Email             string     `gorm:"size:100;uniqueIndex;not null"`
 	PasswordHash      string     `gorm:"type:text;not null"`
-	Role              string     `gorm:"size:20;default:'developer'"` // ✅ NEW: developer | team_lead | admin
+	Role              string     `gorm:"size:20;default:'developer'"` 
 	IsVerified        bool       `gorm:"default:false"`
 	VerificationOTP   string     `gorm:"size:10"`
 	OTPExpiresAt      *time.Time
@@ -20,8 +20,7 @@ type User struct {
 	IsActive          bool       `gorm:"default:true"`
 	CreatedAt         time.Time  `gorm:"autoCreateTime"`
 	UpdatedAt         time.Time  `gorm:"autoUpdateTime"`
-
-	// Relationships
+ 
 	RefreshTokens []RefreshToken    `gorm:"foreignKey:UserID"`
 	Organizations []OrganizationMember `gorm:"foreignKey:UserID"`
 	Projects      []ProjectMember   `gorm:"foreignKey:UserID"`

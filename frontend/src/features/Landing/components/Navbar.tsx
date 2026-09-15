@@ -1,70 +1,46 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
 
 export const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-black/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-
+    <nav className="fixed top-0 left-0 right-0 z-40 border-b border-white/5 bg-black/70 backdrop-blur-xl">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="h-6 w-6 rounded-[4px] border-2 border-white" />
-          <span className="text-sm font-bold tracking-[0.08em] text-white">DEVSYNC</span>
-        </Link>
-
-        <div className="hidden items-center gap-8 lg:flex">
-          <Link to="/features" className="text-sm text-white/60 hover:text-white transition-colors">
-            Features
-          </Link>
-          <Link to="/solutions" className="text-sm text-white/60 hover:text-white transition-colors">
-            Solutions
-          </Link>
-          <Link to="/pricing" className="text-sm text-white/60 hover:text-white transition-colors">
-            Pricing
-          </Link>
-          <Link to="/resources" className="text-sm text-white/60 hover:text-white transition-colors">
-            Resources
-          </Link>
-          <div className="flex items-center gap-4">
-
-            <Link
-              to="/login"
-              className="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white transition-all hover:bg-white hover:text-black"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="lg:hidden text-white/60 hover:text-white"
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {isOpen && (
-        <div className="border-t border-white/5 bg-black/95 px-4 py-6 lg:hidden">
-          <div className="flex flex-col space-y-4">
-            <Link to="/features" className="text-sm text-white/60 hover:text-white">Features</Link>
-            <Link to="/solutions" className="text-sm text-white/60 hover:text-white">Solutions</Link>
-            <Link to="/pricing" className="text-sm text-white/60 hover:text-white">Pricing</Link>
-            <Link to="/resources" className="text-sm text-white/60 hover:text-white">Resources</Link>
-            <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
-              <Link to="/login" className="text-sm text-white/60 hover:text-white">Login</Link>
-              <Link
-                to="/register"
-                className="rounded-full border border-white/20 px-5 py-2 text-center text-sm font-medium text-white hover:bg-white hover:text-black transition-all"
-              >
-                Get Started
-              </Link>
+          <div className="relative h-6 w-6">
+            <div className="absolute inset-0 rounded-md border border-white/20 bg-white/5" />
+            <div className="absolute inset-0 flex items-center justify-center font-mono text-[10px] font-bold text-white">
+              {'<>'}
             </div>
           </div>
+          <span className="font-mono text-[13px] font-medium tracking-tight text-white">
+            devsync
+          </span>
+          <span className="hidden rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-white/40 sm:inline">
+            BETA
+          </span>
+        </Link>
+
+        <div className="hidden items-center gap-7 md:flex">
+          <a href="#features" className="font-mono text-xs tracking-tight text-white/50 hover:text-white transition-colors">features</a>
+          <a href="#lifecycle" className="font-mono text-xs tracking-tight text-white/50 hover:text-white transition-colors">platform</a>
+          <a href="#pricing" className="font-mono text-xs tracking-tight text-white/50 hover:text-white transition-colors">pricing</a>
+          <a href="#faq" className="font-mono text-xs tracking-tight text-white/50 hover:text-white transition-colors">faq</a>
         </div>
-      )}
+
+        <div className="flex items-center gap-2">
+          <Link
+            to="/login"
+            className="hidden rounded-md px-3 py-1.5 font-mono text-xs text-white/60 hover:text-white hover:bg-white/5 transition-all sm:block"
+          >
+            sign in
+          </Link>
+          <Link
+            to="/register"
+            className="rounded-md border border-white/10 bg-white px-3 py-1.5 font-mono text-xs font-medium text-black transition-all duration-200 hover:bg-green-500"
+          >
+            get started →
+          </Link>
+        </div>
+      </div>
     </nav>
   );
 };

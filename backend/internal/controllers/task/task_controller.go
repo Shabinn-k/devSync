@@ -19,7 +19,6 @@ func NewController(s task.Service) *Controller {
 	return &Controller{service: s}
 }
 
-// Helper to extract user ID from context
 func getUserID(c *gin.Context) (int, error) {
 	val, exists := c.Get("userID")
 	if !exists {
@@ -31,7 +30,6 @@ func getUserID(c *gin.Context) (int, error) {
 	return 0, http.ErrNoCookie
 }
 
-// POST /tasks
 func (c *Controller) Create(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -54,7 +52,6 @@ func (c *Controller) Create(ctx *gin.Context) {
 	response.Created(ctx, result)
 }
 
-// GET /tasks/my
 func (c *Controller) GetMyTasks(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -74,7 +71,6 @@ func (c *Controller) GetMyTasks(ctx *gin.Context) {
 	response.SuccessWithPagination(ctx, result, page, limit, total)
 }
 
-// GET /tasks/project/:projectId
 func (c *Controller) GetByProject(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -100,7 +96,6 @@ func (c *Controller) GetByProject(ctx *gin.Context) {
 	response.SuccessWithPagination(ctx, result, page, limit, total)
 }
 
-// GET /tasks/:id
 func (c *Controller) GetByID(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -123,7 +118,6 @@ func (c *Controller) GetByID(ctx *gin.Context) {
 	response.Success(ctx, result)
 }
 
-// PUT /tasks/:id
 func (c *Controller) Update(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -152,7 +146,6 @@ func (c *Controller) Update(ctx *gin.Context) {
 	response.Success(ctx, result)
 }
 
-// PUT /tasks/:id/status
 func (c *Controller) UpdateStatus(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -180,7 +173,6 @@ func (c *Controller) UpdateStatus(ctx *gin.Context) {
 	response.Success(ctx, gin.H{"message": "Task status updated successfully"})
 }
 
-// DELETE /tasks/:id
 func (c *Controller) Delete(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -202,7 +194,6 @@ func (c *Controller) Delete(ctx *gin.Context) {
 	response.Success(ctx, gin.H{"message": "Task deleted successfully"})
 }
 
-// POST /tasks/:id/comments
 func (c *Controller) AddComment(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -231,7 +222,6 @@ func (c *Controller) AddComment(ctx *gin.Context) {
 	response.Created(ctx, result)
 }
 
-// GET /tasks/:id/comments
 func (c *Controller) GetComments(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {
@@ -257,7 +247,6 @@ func (c *Controller) GetComments(ctx *gin.Context) {
 	response.SuccessWithPagination(ctx, result, page, limit, total)
 }
 
-// DELETE /tasks/:id/comments/:commentId
 func (c *Controller) DeleteComment(ctx *gin.Context) {
 	userID, err := getUserID(ctx)
 	if err != nil {

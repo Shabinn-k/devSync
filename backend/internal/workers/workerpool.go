@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// Job represents a unit of work
 type Job struct {
 	ID        string
 	Type      string
@@ -18,7 +17,6 @@ type Job struct {
 	CreatedAt time.Time
 }
 
-// JobResult represents the result of a job
 type JobResult struct {
 	JobID       string
 	Success     bool
@@ -26,10 +24,8 @@ type JobResult struct {
 	ProcessedAt time.Time
 }
 
-// JobHandler is a function that processes a job
 type JobHandler func(ctx context.Context, job Job) error
 
-// WorkerPool manages concurrent job processing
 type WorkerPool struct {
 	jobQueue    chan Job
 	resultQueue chan JobResult
@@ -41,7 +37,6 @@ type WorkerPool struct {
 	mu          sync.RWMutex
 }
 
-// NewWorkerPool creates a new worker pool
 func NewWorkerPool(workers int, queueSize int) *WorkerPool {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &WorkerPool{
@@ -54,15 +49,13 @@ func NewWorkerPool(workers int, queueSize int) *WorkerPool {
 	}
 }
 
-// RegisterHandler registers a job handler
 func (wp *WorkerPool) RegisterHandler(jobType string, handler JobHandler) {
 	wp.mu.Lock()
 	defer wp.mu.Unlock()
 	wp.handlers[jobType] = handler
-	log.Printf("✅ Registered handler for job type: %s", jobType)
+	log.Printf(" Registered handler for job type: %s", jobType)
 }
 
-// Start starts the worker pool
 func (wp *WorkerPool) Start() {
 	for i := 0; i < wp.workers; i++ {
 		wp.wg.Add(1)
@@ -71,7 +64,6 @@ func (wp *WorkerPool) Start() {
 	log.Printf("🚀 Worker pool started with %d workers", wp.workers)
 }
 
-// worker processes jobs from the queue
 func (wp *WorkerPool) worker(id int) {
 	defer wp.wg.Done()
 	log.Printf("🔄 Worker %d started", id)
@@ -91,14 +83,13 @@ func (wp *WorkerPool) worker(id int) {
 	}
 }
 
-// processJob processes a single job with retry logic
 func (wp *WorkerPool) processJob(job Job) {
 	wp.mu.RLock()
 	handler, exists := wp.handlers[job.Type]
 	wp.mu.RUnlock()
 
 	if !exists {
-		log.Printf("❌ No handler for job type: %s", job.Type)
+		log.Printf("No handler for job type: %s", job.Type)
 		wp.resultQueue <- JobResult{
 			JobID:       job.ID,
 			Success:     false,
@@ -112,7 +103,6 @@ func (wp *WorkerPool) processJob(job Job) {
 	for attempt := 0; attempt <= job.MaxRetry; attempt++ {
 		if attempt > 0 {
 			log.Printf("🔄 Retrying job %s (attempt %d/%d)", job.ID, attempt, job.MaxRetry)
-			time.Sleep(time.Duration(attempt*attempt) * time.Second) // Exponential backoff
 		}
 
 		err = handler(wp.ctx, job)
@@ -123,7 +113,7 @@ func (wp *WorkerPool) processJob(job Job) {
 				Error:       nil,
 				ProcessedAt: time.Now(),
 			}
-			log.Printf("✅ Job %s completed successfully", job.ID)
+			log.Printf(" Job %s completed successfully", job.ID)
 			return
 		}
 	}
@@ -134,10 +124,9 @@ func (wp *WorkerPool) processJob(job Job) {
 		Error:       err,
 		ProcessedAt: time.Now(),
 	}
-	log.Printf("❌ Job %s failed after %d attempts: %v", job.ID, job.MaxRetry, err)
+	log.Printf("Job %s failed after %d attempts: %v", job.ID, job.MaxRetry, err)
 }
 
-// Submit submits a job to the queue
 func (wp *WorkerPool) Submit(job Job) {
 	job.CreatedAt = time.Now()
 	if job.MaxRetry == 0 {
@@ -152,7 +141,6 @@ func (wp *WorkerPool) Submit(job Job) {
 	}
 }
 
-// SubmitWithPayload submits a job with payload
 func (wp *WorkerPool) SubmitWithPayload(id, jobType string, payload interface{}) {
 	wp.Submit(Job{
 		ID:       id,
@@ -162,17 +150,15 @@ func (wp *WorkerPool) SubmitWithPayload(id, jobType string, payload interface{})
 	})
 }
 
-// GetResults returns the result channel
 func (wp *WorkerPool) GetResults() <-chan JobResult {
 	return wp.resultQueue
 }
 
-// Stop stops the worker pool gracefully
 func (wp *WorkerPool) Stop() {
 	log.Println("🛑 Stopping worker pool...")
 	wp.cancel()
 	close(wp.jobQueue)
 	wp.wg.Wait()
 	close(wp.resultQueue)
-	log.Println("✅ Worker pool stopped")
+	log.Println(" Worker pool stopped")
 }

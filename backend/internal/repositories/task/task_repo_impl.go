@@ -53,15 +53,16 @@ func (r *repository) GetByAssignee(ctx context.Context, userID int, limit, offse
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&model.Task{}).
-		Where("assignee_id = ? AND is_active = ? AND status != ?", userID, true, model.TaskStatusDone)
+		Where("(created_by = ? OR assignee_id = ?) AND is_active = ?", userID, userID, true)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
 	err := query.
-		Preload("Project").
+		Preload("Assignee").
 		Preload("Creator").
+		Preload("Project").
 		Order("due_date ASC, created_at DESC").
 		Limit(limit).
 		Offset(offset).

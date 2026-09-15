@@ -17,7 +17,7 @@ func RegisterAuthRoutes(
 ) {
 	authGroup := router.Group("/auth")
 	{
-		// Public routes (no auth required)
+		// Public routes  
 		authGroup.POST("/register", controller.Register)
 		authGroup.POST("/login", controller.Login)
 		authGroup.POST("/verify-email", controller.VerifyEmail)
@@ -27,7 +27,7 @@ func RegisterAuthRoutes(
 		authGroup.POST("/reset-password", controller.ResetPassword)
 		authGroup.POST("/refresh-token", controller.RefreshToken)
 
-		// Protected routes (auth required)
+		// Protected routes 
 		authGroup.POST("/logout", middleware.AuthRequired(cfg, repo), controller.Logout)
 		authGroup.GET("/me", middleware.AuthRequired(cfg, repo), controller.Me)
 	}

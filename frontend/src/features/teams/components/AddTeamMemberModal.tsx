@@ -27,14 +27,15 @@ export const AddTeamMemberModal = ({ teamId, onClose, onSuccess }: AddTeamMember
         }
 
         try {
-            await addMember(teamId, {
-                user_id: parsedId,
-                role,
-            });
+            await addMember(teamId, parsedId, role);
             onSuccess?.();
             onClose();
         } catch (err: any) {
-            setError(err.message || 'Failed to add member to team');
+            setError(
+                err?.response?.data?.message ||
+                err.message ||
+                'Failed to add member to team'
+            );
         }
     };
 

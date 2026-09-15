@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-
+	"devSync/utils/smtp"
 	"devSync/config"
 	"devSync/internal/bootstrap"
 )
@@ -11,6 +11,7 @@ func main() {
 	cfg := config.LoadConfig()
 	db := config.ConnectDatabase(cfg)
 	redisClient := config.ConnectRedis(cfg)
+	smtp.Init(cfg)
 
 	router := bootstrap.InitRouter(cfg, db, redisClient)
 

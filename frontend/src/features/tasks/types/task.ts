@@ -32,9 +32,11 @@ export interface TaskComment {
     updated_at: string;
 }
 
-export interface TaskDetail extends Task {
+export interface TaskWithComments extends Task {
     comments: TaskComment[];
 }
+
+export type TaskDetail = TaskWithComments;
 
 export interface CreateTaskRequest {
     project_id: number;

@@ -1,74 +1,69 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-
-const faqs = [
-  {
-    question: 'Does DevSync replace GitHub?',
-    answer: 'No. DevSync integrates seamlessly with GitHub, providing a unified workspace while your code stays in GitHub.'
-  },
-  {
-    question: 'Is my data secure?',
-    answer: 'Yes. We use end-to-end encryption, SOC2 compliance, and enterprise-grade security practices to protect your data.'
-  },
-  {
-    question: 'Can I export my data?',
-    answer: 'Yes. You can export all your data at any time in multiple formats including JSON, CSV, and Markdown.'
-  }
-];
 
 export const FAQ = () => {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const faqs = [
+    {
+      q: 'how long does setup take?',
+      a: 'Under two minutes. Create an account, verify your email, spin up an organization, and start inviting. No credit card, no sales call.',
+    },
+    {
+      q: 'can I belong to multiple orgs?',
+      a: 'Yes. You can belong to multiple organizations with different roles in each — admin in one, member in another. Switch between them from the sidebar.',
+    },
+    {
+      q: 'is chat really real-time?',
+      a: 'Yes. Messages are broadcast over WebSockets to every connected channel member. No polling, no refresh, sub-100ms delivery when your connection allows.',
+    },
+    {
+      q: 'what happens when a member leaves?',
+      a: 'Admins can remove them from the org. Their tasks stay assigned, their messages remain in history, and their access is revoked instantly across all endpoints.',
+    },
+    {
+      q: 'can I self-host?',
+      a: 'On the enterprise plan, yes. We ship a Docker Compose bundle with the Go backend, Postgres, and Redis. SSO/SAML and audit logging come standard.',
+    },
+    {
+      q: 'how is my data protected?',
+      a: 'JWT with refresh tokens, bcrypt password hashing, email verification, OTP flows, and rate-limited APIs on every endpoint. All traffic over HTTPS in production.',
+    },
+  ];
+
+  const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="border-t border-white/5 py-24">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-white sm:text-4xl"
-          >
-            Frequently Asked Questions
-          </motion.h2>
-        </div>
+    <section id="faq" className="border-t border-white/5 px-6 py-24">
+      <div className="mx-auto max-w-3xl">
+         
+        <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+          Questions.{' '}
+          <span className="text-white/30">Answered.</span>
+        </h2>
 
-        <div className="mt-12 space-y-4">
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              viewport={{ once: true }}
-              className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="flex w-full items-center justify-between px-6 py-4 text-left"
-              >
-                <span className="text-sm font-medium text-white">{faq.question}</span>
-                <ChevronDown
-                  className={`h-5 w-5 text-white/40 transition-transform ${openIndex === index ? 'rotate-180' : ''
-                    }`}
-                />
-              </button>
-              <AnimatePresence>
-                {openIndex === index && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="px-6 pb-4 text-sm text-white/60">{faq.answer}</div>
-                  </motion.div>
+        <div className="mt-12 divide-y divide-white/5 border-y border-white/5">
+          {faqs.map((f, i) => {
+            const isOpen = open === i;
+            return (
+              <div key={f.q}>
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-white"
+                >
+                  <span className="font-mono text-sm text-white/80">
+                    <span className="mr-3 text-white/30">{String(i + 1).padStart(2, '0')}</span>
+                    {f.q}
+                  </span>
+                  <span className={`font-mono text-lg text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`}>
+                    +
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="pb-5 pl-9 pr-8 text-[13px] leading-relaxed text-white/50">
+                    {f.a}
+                  </div>
                 )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

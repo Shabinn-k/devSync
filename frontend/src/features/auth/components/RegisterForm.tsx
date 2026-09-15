@@ -26,8 +26,7 @@ export const RegisterForm = () => {
     selectedRole,
     setSelectedRole 
   } = useAuthStore();
-
-  // ✅ Redirect if no role selected
+ 
   useEffect(() => {
     if (!selectedRole) {
       navigate('/role');
@@ -55,12 +54,11 @@ export const RegisterForm = () => {
       return;
     }
 
-    // ✅ Pass the selected role during registration
     registerUser({
       name: fullName,
       email,
       password,
-      role: selectedRole!, // ✅ Role from store
+      role: selectedRole!, 
     })
       .then(() => {
         toast.success('Account created! Please verify your email.');
@@ -81,8 +79,7 @@ export const RegisterForm = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="w-full"
-    >
-      {/* ✅ Header with Role Badge */}
+    > 
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-white sm:text-2xl">Create your account</h2>

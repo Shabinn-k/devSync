@@ -22,7 +22,6 @@ type service struct {
 	cache *redis.Client
 }
 
-// ✅ Fix: Accept redisClient as third parameter
 func NewService(repo dashboard.Repository, cfg *config.AppConfig, cache *redis.Client) Service {
 	return &service{
 		repo:  repo,
@@ -32,13 +31,14 @@ func NewService(repo dashboard.Repository, cfg *config.AppConfig, cache *redis.C
 }
 
 func (s *service) GetDashboard(ctx context.Context, userID int) (*response.DashboardResponse, error) {
-	// Check cache first
 	cacheKey := fmt.Sprintf("dashboard:user:%d", userID)
-	cached, err := s.cache.Get(ctx, cacheKey).Result()
-	if err == nil {
-		var dashboard response.DashboardResponse
-		if err := json.Unmarshal([]byte(cached), &dashboard); err == nil {
-			return &dashboard, nil
+	if s.cache != nil {
+		cached, err := s.cache.Get(ctx, cacheKey).Result()
+		if err == nil {
+			var dashboard response.DashboardResponse
+			if err := json.Unmarshal([]byte(cached), &dashboard); err == nil {
+				return &dashboard, nil
+			}
 		}
 	}
 
@@ -68,7 +68,6 @@ func (s *service) GetDashboard(ctx context.Context, userID int) (*response.Dashb
 		Tasks:      s.mapTasks(upcomingTasks),
 	}
 
-	// Cache for 5 minutes
 	data, _ := json.Marshal(dashboard)
 	s.cache.Set(ctx, cacheKey, data, 5*time.Minute)
 

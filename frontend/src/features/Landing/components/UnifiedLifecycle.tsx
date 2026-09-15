@@ -1,62 +1,86 @@
-import { motion } from 'framer-motion';
-import { Code, GitPullRequest, CheckCircle, Rocket, Monitor } from 'lucide-react';
-
-const steps = [
-  { icon: Code, label: 'PLAN', sub: 'CONCEPT' },
-  { icon: GitPullRequest, label: 'CODE', sub: 'DEVELOPMENT' },
-  { icon: CheckCircle, label: 'REVIEW', sub: 'VALIDATION' },
-  { icon: Rocket, label: 'DEPLOY', sub: 'RELEASE' },
-  { icon: Monitor, label: 'MONITOR', sub: 'PERFORMANCE' },
-];
-
 export const UnifiedLifecycle = () => {
+  const stages = [
+    {
+      step: '01',
+      name: 'plan',
+      title: 'Set up your org',
+      cmd: '$ devsync init --org bridgeon',
+      points: [
+        'Create organizations',
+        'Invite teammates by email',
+        'Set roles: admin, lead, member',
+        'Spin up projects in seconds',
+      ],
+    },
+    {
+      step: '02',
+      name: 'build',
+      title: 'Move the work',
+      cmd: '$ devsync task move --to in-progress',
+      points: [
+        'Kanban with drag-and-drop',
+        'Real-time status sync across team',
+        'Threaded comments on tasks',
+        'Live chat in project channels',
+      ],
+    },
+    {
+      step: '03',
+      name: 'ship',
+      title: 'Prove the work',
+      cmd: '$ devsync task close --all',
+      points: [
+        'Mark tasks done, track velocity',
+        'Instant notifications to stakeholders',
+        'Auto-generated activity feed',
+        'Full audit trail per project',
+      ],
+    },
+  ];
+
   return (
-    <section className="border-t border-white/5 py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-white sm:text-4xl"
-          >
-            Unified Lifecycle
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            viewport={{ once: true }}
-            className="mx-auto mt-4 max-w-2xl text-lg text-white/60"
-          >
-            End-to-end visibility across your entire development lifecycle.
-          </motion.p>
+    <section id="lifecycle" className="border-t border-white/5 px-6 py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-2xl">
+          
+          <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+            One workspace.{' '}
+            <span className="text-white/30">Full lifecycle.</span>
+          </h2>
+          <p className="mt-4 text-sm leading-relaxed text-white/50">
+            From the first invite to the final task — DevSync carries your team
+            through every stage without switching tools.
+          </p>
         </div>
 
-        <div className="mt-16 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.label}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="flex items-center gap-4"
-            >
-              <div className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/5">
-                  <step.icon className="h-5 w-5 text-white/80" />
-                </div>
-                <span className="mt-2 text-xs font-semibold uppercase tracking-wider text-white/60">
-                  {step.label}
+        <div className="mt-14 grid gap-3 md:grid-cols-3">
+          {stages.map((s) => (
+            <div key={s.step} className="rounded-xl border border-white/10 bg-black p-6">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-mono text-[10px] tracking-widest text-white/25">
+                  {s.step}
                 </span>
-                <span className="text-[10px] text-white/30">{step.sub}</span>
+                <span className="font-mono text-[10px] tracking-widest text-white/40">
+                  {s.name}
+                </span>
               </div>
-              {index < steps.length - 1 && (
-                <div className="hidden h-px w-8 bg-white/10 sm:block" />
-              )}
-            </motion.div>
+
+              <h3 className="text-base font-semibold text-white">{s.title}</h3>
+
+              {/* terminal snippet */}
+              <div className="mt-4 rounded-md border border-white/5 bg-white/[0.02] px-3 py-2">
+                <code className="font-mono text-[10px] text-green-400">{s.cmd}</code>
+              </div>
+
+              <ul className="mt-5 space-y-2">
+                {s.points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-[13px] text-white/50">
+                    <span className="mt-1 h-1 w-1 flex-shrink-0 rounded-full bg-white/30" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
       </div>

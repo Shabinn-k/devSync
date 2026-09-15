@@ -20,7 +20,7 @@ export interface RegisterRequest {
     email: string;
     password: string;
     confirm_password?: string;
-    role: UserRole;  // ✅ Role is required
+    role: UserRole;  
 }
 
 export interface AuthResponse {

@@ -12,23 +12,23 @@ export const TaskPriorityBadge = ({ priority, size = 'md', className = '' }: Tas
             case 'urgent':
                 return {
                     label: 'Urgent',
-                    color: 'text-red-400 bg-red-500/15 border-red-500/30',
+                    color: 'text-red-400 bg-red-500/10 border-red-500/30',
                 };
             case 'high':
                 return {
                     label: 'High',
-                    color: 'text-orange-400 bg-orange-500/15 border-orange-500/30',
+                    color: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
                 };
             case 'medium':
                 return {
                     label: 'Medium',
-                    color: 'text-yellow-400 bg-yellow-500/15 border-yellow-500/30',
+                    color: 'text-white/70 bg-white/5 border-white/15',
                 };
             case 'low':
             default:
                 return {
                     label: 'Low',
-                    color: 'text-blue-400 bg-blue-500/15 border-blue-500/30',
+                    color: 'text-white/50 bg-white/5 border-white/10',
                 };
         }
     };
@@ -43,9 +43,11 @@ export const TaskPriorityBadge = ({ priority, size = 'md', className = '' }: Tas
 
     return (
         <span
-            className={`inline-flex items-center rounded-full border font-medium uppercase tracking-wider ${sizeStyles[size]} ${details.color} ${className}`}
+            className={`inline-flex items-center rounded-full border font-mono uppercase tracking-wider transition-all duration-200 ${sizeStyles[size]} ${details.color} ${className}`}
         >
             {details.label}
         </span>
     );
 };
+
+export default TaskPriorityBadge;
