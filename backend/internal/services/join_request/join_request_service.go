@@ -43,7 +43,6 @@ func NewService(
 	return &service{repo: repo, orgRepo: orgRepo, authRepo: authRepo, notifSvc: notifSvc, cfg: cfg}
 }
 
-// ---------- Developer ----------
 
 func (s *service) Create(ctx context.Context, userID, orgID int, req *joinRequestRequest.CreateJoinRequestRequest) (*joinRequestResponse.JoinRequestResponse, error) {
 	user, err := s.authRepo.GetUserByID(ctx, userID)
@@ -82,7 +81,6 @@ func (s *service) Create(ctx context.Context, userID, orgID int, req *joinReques
 		return nil, err
 	}
 
-	// Notify all org admins
 	if s.notifSvc != nil {
 		admins, _ := s.orgRepo.GetMembers(ctx, orgID)
 		for _, m := range admins {
@@ -136,7 +134,6 @@ func (s *service) Cancel(ctx context.Context, userID, requestID int) error {
 	return s.repo.Update(ctx, jr)
 }
 
-// ---------- Team lead ----------
 
 func (s *service) ListForOrg(ctx context.Context, reviewerID, orgID int, status string, page, limit int) ([]joinRequestResponse.JoinRequestResponse, int64, error) {
 	if !s.isOrgAdmin(ctx, orgID, reviewerID) {
@@ -220,7 +217,6 @@ func (s *service) Review(ctx context.Context, reviewerID, orgID, requestID int, 
 	return nil
 }
 
-// ---------- helpers ----------
 
 func (s *service) isOrgAdmin(ctx context.Context, orgID, userID int) bool {
 	member, err := s.orgRepo.GetMember(ctx, orgID, userID)
@@ -228,8 +224,6 @@ func (s *service) isOrgAdmin(ctx context.Context, orgID, userID int) bool {
 		return true
 	}
 
-	// Global team leads and admins manage join requests across organizations,
-	// even when they do not hold a membership in the target organization.
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil || user == nil {
 		return false
