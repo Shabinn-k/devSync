@@ -33,6 +33,7 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 
 	if err := db.AutoMigrate(
 		&model.User{},
+		&model.Role{},
 		&model.RefreshToken{},
 		&model.UserProfile{},
 		&model.Organization{},

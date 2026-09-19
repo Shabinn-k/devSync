@@ -86,8 +86,7 @@ func (s *service) Create(ctx context.Context, userID int, req request.CreateTeam
 
 	team := &model.Team{
 		OrganizationID: req.OrganizationID,
-		Name:           req.Name,
-		Description:    req.Description,
+		Name:           req.Name, 
 		LeadID:         req.LeadID,
 		IsActive:       true,
 	}
@@ -200,9 +199,7 @@ func (s *service) Update(ctx context.Context, userID, teamID int, req request.Up
 	if req.Name != "" {
 		team.Name = req.Name
 	}
-	if req.Description != "" {
-		team.Description = req.Description
-	}
+	 
 	if req.LeadID != 0 {
 		_, err := s.authRepo.GetUserByID(ctx, req.LeadID)
 		if err != nil {
@@ -360,8 +357,7 @@ func (s *service) mapToResponse(team *model.Team, lead *model.User) *response.Te
 	return &response.TeamResponse{
 		ID:             team.ID,
 		OrganizationID: team.OrganizationID,
-		Name:           team.Name,
-		Description:    team.Description,
+		Name:           team.Name, 
 		LeadID:         team.LeadID,
 		IsActive:       team.IsActive,
 		CreatedAt:      team.CreatedAt,
@@ -378,8 +374,7 @@ func (s *service) mapToResponseWithCount(team *model.Team, memberCount int) *res
 	resp := &response.TeamResponse{
 		ID:             team.ID,
 		OrganizationID: team.OrganizationID,
-		Name:           team.Name,
-		Description:    team.Description,
+		Name:           team.Name, 
 		LeadID:         team.LeadID,
 		MemberCount:    memberCount,
 		IsActive:       team.IsActive,

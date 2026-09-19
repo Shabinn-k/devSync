@@ -8,6 +8,7 @@ type UserResponse struct {
 	ID         int       `json:"id"`
 	Name       string    `json:"name"`
 	Email      string    `json:"email"`
+	RoleID     int       `json:"role_id"`
 	Role       string    `json:"role"`
 	IsVerified bool      `json:"is_verified"`
 	IsActive   bool      `json:"is_active"`

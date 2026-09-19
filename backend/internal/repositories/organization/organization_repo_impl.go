@@ -168,8 +168,8 @@ func (r *repository) IsAdmin(ctx context.Context, organizeID, userID int) (bool,
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
-		Where("organization_id = ? AND user_id = ? AND role IN (?, ?) AND is_active = ?", 
-			organizeID, userID, model.RoleAdmin, model.RoleTeamLead, true).
+		Where("organization_id = ? AND user_id = ? AND role IN (?, ?) AND is_active = ?",
+	organizeID, userID, model.OrgRoleAdmin, model.OrgRoleTeamLead, true).
 		Count(&count).Error
 	if err == nil && count > 0 {
 		return true, nil

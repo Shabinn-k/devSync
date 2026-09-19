@@ -18,9 +18,9 @@ type UpdateOrganizationRequest struct {
 type AddMemberRequest struct {
 	UserID int    `json:"user_id" validate:"omitempty"`
 	Email  string `json:"email" validate:"omitempty"`
-	Role   string `json:"role" validate:"required,oneof=admin member viewer"`
+	Role   string `json:"role" validate:"required,oneof=admin member"`
 }
 
 type UpdateMemberRoleRequest struct {
-	Role string `json:"role" validate:"required,oneof=admin member viewer"`
+	Role string `json:"role" validate:"required,oneof=admin member"`
 }

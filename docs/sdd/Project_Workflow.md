@@ -71,11 +71,9 @@ The organization owner or administrator invites developers to join the organizat
 
 Each member is assigned an appropriate role such as:
 
-- Owner
 - Admin
-- Project Manager
+- developer
 - Developer
-- Viewer
 
 ---
 

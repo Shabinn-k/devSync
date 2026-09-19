@@ -26,9 +26,9 @@ type UpdateProjectRequest struct {
 
 type AddProjectMemberRequest struct {
 	UserID int    `json:"user_id" validate:"required"`
-	Role   string `json:"role" validate:"required,oneof=admin member viewer"`
+	Role   string `json:"role" validate:"required,oneof=admin member"`
 }
 
 type UpdateProjectMemberRoleRequest struct {
-	Role string `json:"role" validate:"required,oneof=admin member viewer"`
+	Role string `json:"role" validate:"required,oneof=admin member"`
 }

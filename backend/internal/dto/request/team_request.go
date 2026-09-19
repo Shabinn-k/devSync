@@ -2,14 +2,12 @@ package request
 
 type CreateTeamRequest struct {
 	OrganizationID int    `json:"organization_id" validate:"required"`
-	Name           string `json:"name" validate:"required,min=2,max=100"`
-	Description    string `json:"description" validate:"omitempty,max=500"`
+	Name           string `json:"name" validate:"required,min=2,max=100"` 
 	LeadID         int    `json:"lead_id" validate:"required"`
 }
 
 type UpdateTeamRequest struct {
-	Name        string `json:"name" validate:"omitempty,min=2,max=100"`
-	Description string `json:"description" validate:"omitempty,max=500"`
+	Name        string `json:"name" validate:"omitempty,min=2,max=100"` 
 	LeadID      int    `json:"lead_id" validate:"omitempty"`
 	IsActive    *bool  `json:"is_active"`
 }

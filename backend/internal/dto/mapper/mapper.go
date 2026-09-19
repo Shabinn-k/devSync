@@ -6,15 +6,19 @@ import (
 )
 
 func ToUserResponse(user *model.User) authResponse.UserResponse {
-	return authResponse.UserResponse{
+	resp := authResponse.UserResponse{
 		ID:         user.ID,
 		Name:       user.Name,
 		Email:      user.Email,
-		Role:       user.Role,
+		RoleID:     user.RoleID,
 		IsVerified: user.IsVerified,
 		IsActive:   user.IsActive,
 		CreatedAt:  user.CreatedAt,
 	}
+	if user.Role.ID != 0 {
+		resp.Role = user.Role.Name
+	}
+	return resp
 }
 
 func ToTokenResponse(accessToken, refreshToken string, expiresIn int64) authResponse.TokenResponse {

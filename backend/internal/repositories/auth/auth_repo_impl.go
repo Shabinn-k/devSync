@@ -26,7 +26,7 @@ func (r *repository) CreateUser(ctx context.Context, user *model.User) error {
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
-	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	err := r.db.WithContext(ctx).Preload("Role").Where("email = ?", email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound
 	}
@@ -35,7 +35,7 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*model.U
 
 func (r *repository) GetUserByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
-	err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
+	err := r.db.WithContext(ctx).Preload("Role").Where("id = ?", id).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, ErrNotFound
 	}
@@ -62,20 +62,8 @@ func (r *repository) UpdatePassword(ctx context.Context, userID int, passwordHas
 
 func (r *repository) VerifyEmail(ctx context.Context, userID int) error {
 	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"is_verified":      true,
-		"verification_otp": "",
-		"otp_expires_at":   nil,
-		"updated_at":       time.Now(),
-	}).Error
-}
-
-func (r *repository) UpdateOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"verification_otp":   otp,
-		"otp_expires_at":     expiresAt,
-		"last_otp_resend_at": now,
-		"updated_at":         now,
+		"is_verified": true,
+		"updated_at":  time.Now(),
 	}).Error
 }
 
@@ -105,21 +93,11 @@ func (r *repository) RevokeAllUserTokens(ctx context.Context, userID int) error 
 	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("user_id = ?", userID).Update("is_revoked", true).Error
 }
 
-func (r *repository) SaveResetOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error {
-	now := time.Now()
-	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"reset_otp":            otp,
-		"reset_otp_expires_at": expiresAt,
-		"last_otp_resend_at":   now,
-		"updated_at":           now,
-	}).Error
+func (r *repository) UpdateRole(ctx context.Context, userID, roleID int) error {
+	return r.db.WithContext(ctx).Model(&model.User{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"role_id":    roleID,
+			"updated_at": time.Now(),
+		}).Error
 }
-
-func (r *repository) ClearResetOTP(ctx context.Context, userID int) error {
-	return r.db.WithContext(ctx).Model(&model.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
-		"reset_otp":            nil,
-		"reset_otp_expires_at": nil,
-		"updated_at":           time.Now(),
-	}).Error
-}
-

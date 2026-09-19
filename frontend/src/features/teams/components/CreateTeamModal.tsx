@@ -15,8 +15,7 @@ export const CreateTeamModal = ({ organizationId, onClose, onSuccess }: CreateTe
     const { user } = useAuthStore();
     const [formData, setFormData] = useState<CreateTeamRequest>({
         organization_id: organizationId,
-        name: '',
-        description: '',
+        name: '', 
         lead_id: user?.id || 1,
     });
     const [error, setError] = useState<string | null>(null);
@@ -78,19 +77,6 @@ export const CreateTeamModal = ({ organizationId, onClose, onSuccess }: CreateTe
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
                         required
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider text-white/40">
-                        Description
-                    </label>
-                    <textarea
-                        placeholder="Describe the team's purpose..."
-                        rows={3}
-                        value={formData.description || ''}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
                     />
                 </div>
 

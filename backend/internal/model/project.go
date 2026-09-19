@@ -57,5 +57,4 @@ type ProjectMember struct {
 const (
 	ProjectRoleAdmin  = "admin"
 	ProjectRoleMember = "member"
-	ProjectRoleViewer = "viewer"
 )

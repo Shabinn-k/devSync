@@ -92,7 +92,6 @@ export const AddMemberModal = ({ projectId, onClose, onSuccess }: AddMemberModal
                     >
                         <option value="member">Member</option>
                         <option value="admin">Admin</option>
-                        <option value="viewer">Viewer</option>
                     </select>
                 </div>
 

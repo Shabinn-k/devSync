@@ -87,7 +87,7 @@ func (r *repository) GetTaskCount(ctx context.Context, projectID int) (int64, er
 		Count(&count).Error
 	return count, err
 }
- 
+
 func (r *repository) AddMember(ctx context.Context, member *model.ProjectMember) error {
 	var existing model.ProjectMember
 	err := r.db.WithContext(ctx).
@@ -183,11 +183,10 @@ func (r *repository) IsAdmin(ctx context.Context, projectID int, userID int) (bo
 		return true, nil
 	}
 	var user model.User
-	if err := r.db.WithContext(ctx).Select("role").Where("id = ?", userID).First(&user).Error; err == nil {
-		if user.Role == model.RoleAdmin || user.Role == model.RoleTeamLead {
+	if err := r.db.WithContext(ctx).Select("role_id").Where("id = ?", userID).First(&user).Error; err == nil {
+		if user.RoleID == model.RoleIDAdmin || user.RoleID == model.RoleIDTeamLead {
 			return true, nil
 		}
 	}
 	return false, err
 }
-

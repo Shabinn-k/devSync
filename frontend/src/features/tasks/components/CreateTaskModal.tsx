@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { X, PlusCircle, Save, Loader2, User } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
 import { useProjectStore } from '../../projects/store/projectStore';
+import api from '../../../lib/axios'; 
 import type { CreateTaskRequest, TaskPriority } from '../types/task';
 
 interface CreateTaskModalProps {
@@ -12,9 +13,20 @@ interface CreateTaskModalProps {
     onSuccess?: () => void;
 }
 
+interface ProjectMember {
+    id: number;
+    user_id: number;
+    user_name: string;
+    user_email: string;
+    role: string;
+}
+
 export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskModalProps) => {
     const { projects, fetchMyProjects } = useProjectStore();
     const [selectedProjectId, setSelectedProjectId] = useState<number>(projectId || 0);
+    const [members, setMembers] = useState<ProjectMember[]>([]);
+    const [loadingMembers, setLoadingMembers] = useState(false);
+
     const [formData, setFormData] = useState<CreateTaskRequest>({
         project_id: projectId || 0,
         title: '',
@@ -26,6 +38,7 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
     const [error, setError] = useState<string | null>(null);
     const { createTask, isSaving } = useTaskStore();
 
+    // Load user's projects if no project was passed in
     useEffect(() => {
         if (!projectId) {
             fetchMyProjects();
@@ -39,6 +52,38 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
         }
     }, [projectId, projects, selectedProjectId]);
 
+    // Load members whenever the target project changes
+    useEffect(() => {
+        const targetProjId = projectId || selectedProjectId || formData.project_id;
+        if (!targetProjId) {
+            setMembers([]);
+            return;
+        }
+        let cancelled = false;
+        setLoadingMembers(true);
+        api.get<ProjectMember[]>(`/projects/${targetProjId}/members`)
+            .then((res) => {
+                if (!cancelled) setMembers(res.data || []);
+            })
+            .catch(() => {
+                if (!cancelled) setMembers([]);
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingMembers(false);
+            });
+        return () => { cancelled = true; };
+    }, [projectId, selectedProjectId, formData.project_id]);
+
+    // If the selected assignee isn't in this project anymore, clear it
+    useEffect(() => {
+        if (formData.assignee_id && members.length > 0) {
+            const stillMember = members.some((m) => m.user_id === formData.assignee_id);
+            if (!stillMember) {
+                setFormData((prev) => ({ ...prev, assignee_id: null }));
+            }
+        }
+    }, [members]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -48,7 +93,6 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
             setError('Please select a project');
             return;
         }
-
         if (!formData.title.trim()) {
             setError('Task title is required');
             return;
@@ -100,16 +144,14 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
                             onChange={(e) => {
                                 const id = Number(e.target.value);
                                 setSelectedProjectId(id);
-                                setFormData((prev) => ({ ...prev, project_id: id }));
+                                setFormData((prev) => ({ ...prev, project_id: id, assignee_id: null }));
                             }}
                             className="mt-1 w-full rounded border border-white/10 bg-black px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/30"
                             required
                         >
                             <option value={0} disabled>Select a project...</option>
                             {projects.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                    {p.name}
-                                </option>
+                                <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
                     </div>
@@ -177,15 +219,29 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
                         Assign To
                     </label>
                     <div className="relative">
-                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                        <input
-                            type="text"
-                            placeholder="Enter user ID or email..."
-                            value={formData.assignee_id || ''}
-                            onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value ? Number(e.target.value) : null })}
-                            className="mt-1 w-full rounded border border-white/10 bg-white/5 pl-10 pr-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
-                        />
+                        <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30 pointer-events-none" />
+                        <select
+                            value={formData.assignee_id ?? ''}
+                            onChange={(e) => {
+                                const v = e.target.value;
+                                setFormData({ ...formData, assignee_id: v ? Number(v) : null });
+                            }}
+                            disabled={loadingMembers}
+                            className="mt-1 w-full appearance-none rounded border border-white/10 bg-black pl-10 pr-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/30 disabled:opacity-50"
+                        >
+                            <option value="">
+                                {loadingMembers ? 'Loading members...' : 'Unassigned'}
+                            </option>
+                            {members.map((m) => (
+                                <option key={m.user_id} value={m.user_id}>
+                                    {m.user_name} ({m.user_email})
+                                </option>
+                            ))}
+                        </select>
                     </div>
+                    {!loadingMembers && members.length === 0 && (projectId || selectedProjectId) && (
+                        <p className="mt-1 text-xs text-white/30">No members in this project yet.</p>
+                    )}
                 </div>
 
                 <button

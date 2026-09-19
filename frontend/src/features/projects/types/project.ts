@@ -1,6 +1,6 @@
 export type ProjectStatus = 'active' | 'inactive' | 'completed' | 'archived';
 export type ProjectPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type ProjectRole = 'admin' | 'member' | 'viewer';
+export type ProjectRole = 'admin' | 'member' ;
 
 export interface Project {
   id: number;

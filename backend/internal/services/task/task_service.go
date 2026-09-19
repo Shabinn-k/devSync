@@ -59,13 +59,13 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateTas
 		return nil, errors.New("user not found")
 	}
 	isAdmin, _ := s.projectRepo.IsAdmin(ctx, req.ProjectID, userID)
-	if user.Role != model.RoleTeamLead && user.Role != model.RoleAdmin && !isAdmin {
+	if user.RoleID != model.RoleIDTeamLead && user.RoleID != model.RoleIDAdmin && !isAdmin {
 		return nil, errors.New("only team leads and admins can create tasks")
 	}
 
 	isMember, err := s.projectRepo.IsMember(ctx, req.ProjectID, userID)
 	if err != nil || !isMember {
-		if isAdmin || user.Role == model.RoleAdmin || user.Role == model.RoleTeamLead {
+	if isAdmin || user.RoleID == model.RoleIDAdmin || user.RoleID == model.RoleIDTeamLead {
 			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
 				ProjectID: req.ProjectID,
 				UserID:    userID,

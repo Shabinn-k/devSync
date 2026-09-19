@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, Building2, Users, User } from 'lucide-react';
 import { useChatStore } from '../store/chatStore';
 import { useOrganizationStore } from '../../organizations/store/organizationStore';
-import { useTeamStore } from '../../teams/store/teamStore';
-import type { ChannelType } from '../types/chat';
+import { useTeamStore } from '../../teams/store/teamStore'; 
 
 interface CreateChannelModalProps {
   onClose: () => void;

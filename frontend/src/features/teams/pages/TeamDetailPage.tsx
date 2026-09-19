@@ -86,9 +86,7 @@ export const TeamDetailPage = () => {
                   Lead: {currentTeam.lead_name}
                 </p>
               )}
-              {currentTeam.description && (
-                <p className="mt-3 text-sm text-white/50">{currentTeam.description}</p>
-              )}
+             
             </div>
 
             {isAdmin && (

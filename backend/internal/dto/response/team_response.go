@@ -5,8 +5,7 @@ import "time"
 type TeamResponse struct {
 	ID             int          `json:"id"`
 	OrganizationID int          `json:"organization_id"`
-	Name           string       `json:"name"`
-	Description    string       `json:"description"`
+	Name           string       `json:"name"` 
 	LeadID         int          `json:"lead_id"`
 	Lead           *UserResponse `json:"lead,omitempty"`
 	MemberCount    int          `json:"member_count"`

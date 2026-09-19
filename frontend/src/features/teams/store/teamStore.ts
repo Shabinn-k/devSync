@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { teamApi } from '../api/teamApi';
 import type {
   Team,
+  TeamDetail,
   TeamMember,
   TeamRole,
   CreateTeamRequest,
@@ -10,7 +11,7 @@ import type {
 
 interface TeamState {
   teams: Team[];
-  currentTeam: Team | null;
+  currentTeam: TeamDetail | null;
   members: TeamMember[];
   isLoading: boolean;
   isSaving: boolean;
@@ -66,7 +67,7 @@ export const useTeamStore = create<TeamState>((set, _) => ({
     set({ isLoading: true, error: null });
     try {
       const team = await teamApi.getById(id);
-      set({ currentTeam: team, isLoading: false });
+      set({ currentTeam: team as TeamDetail, isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to load team', isLoading: false });
     }
@@ -90,7 +91,10 @@ export const useTeamStore = create<TeamState>((set, _) => ({
       const updated = await teamApi.update(id, data);
       set((s) => ({
         teams: s.teams.map((t) => (t.id === id ? updated : t)),
-        currentTeam: s.currentTeam?.id === id ? updated : s.currentTeam,
+        currentTeam:
+          s.currentTeam?.id === id
+            ? ({ ...updated, members: s.currentTeam.members } as TeamDetail)
+            : s.currentTeam,
         isSaving: false,
       }));
     } catch (err: any) {

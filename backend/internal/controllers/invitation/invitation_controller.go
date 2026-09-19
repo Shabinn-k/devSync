@@ -45,7 +45,7 @@ func (c *Controller) Invite(ctx *gin.Context) {
 
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
-		Role  string `json:"role" binding:"required,oneof=admin member viewer"`
+		Role  string `json:"role" binding:"required,oneof=admin member"`
 	}
 
 	log.Printf("📥 Invite request: user=%d, org=%d", userID, organizeID)

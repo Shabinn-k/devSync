@@ -100,11 +100,7 @@ export const TeamsTab = ({ organizationId, canEdit }: TeamsTabProps) => {
                       </span>
                     )}
                   </div>
-                  {team.description && (
-                    <p className="mt-0.5 text-xs text-white/40 line-clamp-1">
-                      {team.description}
-                    </p>
-                  )}
+                  
                   <p className="mt-1 text-[11px] font-mono text-white/30">
                     {team.member_count ?? team.members?.length ?? 0} members
                   </p>

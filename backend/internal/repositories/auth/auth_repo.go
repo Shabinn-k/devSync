@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"time"
+	
 
 	"devSync/internal/model"
 )
@@ -15,15 +15,12 @@ type Repository interface {
 	UpdateUser(ctx context.Context, user *model.User) error
 	UpdatePassword(ctx context.Context, userID int, passwordHash string) error
 	VerifyEmail(ctx context.Context, userID int) error
-	UpdateLastLogin(ctx context.Context, userID int) error
-	UpdateOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error
-
+	UpdateLastLogin(ctx context.Context, userID int) error 
+	UpdateRole(ctx context.Context, userID, roleID int) error
 	CreateRefreshToken(ctx context.Context, token *model.RefreshToken) error
 	GetRefreshTokenByHash(ctx context.Context, hash string) (*model.RefreshToken, error)
 	RevokeRefreshToken(ctx context.Context, id int) error
 	RevokeAllUserTokens(ctx context.Context, userID int) error
-
-	SaveResetOTP(ctx context.Context, userID int, otp string, expiresAt time.Time) error
-	ClearResetOTP(ctx context.Context, userID int) error
+ 
 }
 

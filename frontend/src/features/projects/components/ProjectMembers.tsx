@@ -106,8 +106,7 @@ export const ProjectMembers = ({ project, onAddMember }: ProjectMembersProps) =>
                                             className={`rounded border px-2 py-1 text-xs outline-none ${getRoleColor(member.role)}`}
                                         >
                                             <option value="admin">Admin</option>
-                                            <option value="member">Member</option>
-                                            <option value="viewer">Viewer</option>
+                                            <option value="member">Member</option> 
                                         </select>
                                         <button
                                             onClick={() => handleRemoveMember(member.id)}

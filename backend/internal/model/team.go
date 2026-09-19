@@ -8,7 +8,6 @@ type Team struct {
 	ID             int        `gorm:"primaryKey;autoIncrement"`
 	OrganizationID int        `gorm:"not null;index"`
 	Name           string     `gorm:"size:100;not null"`
-	Description    string     `gorm:"type:text"`
 	LeadID         int        `gorm:"not null;index"`
 	IsActive       bool       `gorm:"default:true"`
 	CreatedAt      time.Time  `gorm:"autoCreateTime"`

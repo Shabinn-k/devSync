@@ -57,7 +57,7 @@ func (s *service) IsAdmin(ctx context.Context, organizeID, userID int) (bool, er
 	if err != nil {
 		return false, err
 	}
-	return (member.Role == model.RoleAdmin || member.Role == model.RoleTeamLead) && member.IsActive, nil
+return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive, nil
 }
 
 func (s *service) CreateInvitation(ctx context.Context, userID, organizeID int, email, role string) (*model.OrganizationInvitation, error) {

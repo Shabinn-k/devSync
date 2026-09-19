@@ -14,7 +14,6 @@ export interface Team {
   id: number;
   organization_id: number;
   name: string;
-  description?: string;
   lead_id: number;
   lead_name?: string;
   is_active: boolean;
@@ -24,16 +23,19 @@ export interface Team {
   members?: TeamMember[];
 }
 
+// NEW — what /teams/:id returns (team + guaranteed members)
+export interface TeamDetail extends Team {
+  members: TeamMember[];
+}
+
 export interface CreateTeamRequest {
   organization_id: number;
   name: string;
-  description?: string;
   lead_id?: number;
 }
 
 export interface UpdateTeamRequest {
   name?: string;
-  description?: string;
   lead_id?: number;
 }
 

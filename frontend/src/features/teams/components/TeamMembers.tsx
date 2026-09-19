@@ -14,9 +14,9 @@ export const TeamMembers = ({ team, onAddMember }: TeamMembersProps) => {
     const { updateMemberRole, removeMember } = useTeamStore();
     const [actionError, setActionError] = useState<string | null>(null);
 
-    const isAdmin = team.members.some(
-        (m) => m.user_id === user?.id && m.role === 'admin'
-    ) || team.lead_id === user?.id;
+    const isAdmin =
+        team.members.some((m) => m.user_id === user?.id && m.role === 'admin') ||
+        team.lead_id === user?.id;
 
     const handleRoleChange = async (memberId: number, newRole: TeamRole) => {
         setActionError(null);
@@ -74,11 +74,13 @@ export const TeamMembers = ({ team, onAddMember }: TeamMembersProps) => {
                         >
                             <div className="flex items-center gap-3">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-medium text-white">
-                                    {member.user?.name?.[0]?.toUpperCase() || 'U'}
+                                    {member.user_name?.[0]?.toUpperCase() || 'U'}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-sm text-white">{member.user?.name || `User #${member.user_id}`}</p>
+                                        <p className="text-sm text-white">
+                                            {member.user_name || `User #${member.user_id}`}
+                                        </p>
                                         {isLead && (
                                             <span className="inline-flex items-center gap-1 rounded bg-yellow-500/10 px-1.5 py-0.5 text-[10px] text-yellow-400">
                                                 <Crown className="h-2.5 w-2.5" />
@@ -86,7 +88,9 @@ export const TeamMembers = ({ team, onAddMember }: TeamMembersProps) => {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-white/30">{member.user?.email || `ID: ${member.user_id}`}</p>
+                                    <p className="text-xs text-white/30">
+                                        {member.email || `ID: ${member.user_id}`}
+                                    </p>
                                 </div>
                             </div>
 

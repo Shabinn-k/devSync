@@ -50,9 +50,9 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrg
 		return nil, errors.New("user not found")
 	}
 
-	if user.Role != model.RoleTeamLead && user.Role != model.RoleAdmin {
-		return nil, errors.New("only team leads and admins can create organizations")
-	}
+	if user.RoleID != model.RoleIDTeamLead && user.RoleID != model.RoleIDAdmin {
+	return nil, errors.New("only team leads and admins can create organizations")
+}
 
 	slug := strings.TrimSpace(req.Slug)
 	if slug == "" {
@@ -91,11 +91,11 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrg
 	}
 
 	member := &model.OrganizationMember{
-		OrganizationID: org.ID,
-		UserID:         userID,
-		Role:           model.RoleAdmin,
-		IsActive:       true,
-	}
+	OrganizationID: org.ID,
+	UserID:         userID,
+	Role:           model.OrgRoleAdmin,
+	IsActive:       true,
+}
 	if err := s.orgRepo.AddMember(ctx, member); err != nil {
 		s.orgRepo.Delete(ctx, org.ID)
 		return nil, errors.New("failed to add creator as admin")
@@ -345,7 +345,7 @@ func (s *service) isAdmin(ctx context.Context, organizeID, userID int) bool {
 	if err != nil {
 		return false
 	}
-	return (member.Role == model.RoleAdmin || member.Role == model.RoleTeamLead) && member.IsActive
+return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive
 }
 
 func (s *service) mapToResponse(ctx context.Context, org *model.Organization) *response.OrganizationResponse {

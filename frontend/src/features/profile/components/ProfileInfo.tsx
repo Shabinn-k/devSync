@@ -1,4 +1,4 @@
-import { Mail, MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
+import { Mail, MapPin, Link as LinkIcon} from 'lucide-react';
 import { GithubIcon } from './SocialIcons';
 import { SocialLink } from './SocialLink';
 import type { Profile } from '../types/profile';
@@ -32,7 +32,6 @@ export const ProfileInfo = ({ profile }: ProfileInfoProps) => {
       value: profile.portfolio_url,
       href: profile.portfolio_url ? (profile.portfolio_url.match(/^https?:\/\//i) ? profile.portfolio_url : `https://${profile.portfolio_url}`) : undefined,
     },
-    { icon: Calendar, label: 'Joined', value: new Date(profile.created_at).toLocaleDateString() },
   ].filter((row) => row.value);
 
   return (
