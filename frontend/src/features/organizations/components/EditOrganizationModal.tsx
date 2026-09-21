@@ -63,7 +63,7 @@ export const EditOrganizationModal = ({ organization, onClose, onSuccess }: Edit
       transition={{ duration: 0.3 }}
       className="space-y-5"
     >
-      {/* Header */}
+    
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-white/40" />

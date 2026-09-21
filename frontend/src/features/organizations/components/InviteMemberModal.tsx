@@ -72,7 +72,6 @@ export const InviteMemberModal = ({
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop with blur */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -81,7 +80,6 @@ export const InviteMemberModal = ({
                         className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md"
                     />
 
-                    {/* Modal */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -91,7 +89,6 @@ export const InviteMemberModal = ({
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black/95 p-6 shadow-2xl">
-                            {/* Header */}
                             <div className="flex items-center justify-between mb-5">
                                 <div className="flex items-center gap-3">
                                     <div className="rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-2.5">
@@ -111,7 +108,6 @@ export const InviteMemberModal = ({
                                 </button>
                             </div>
 
-                            {/* Success State */}
                             {invitationSent ? (
                                 <motion.div
                                     initial={{ opacity: 0, y: 10 }}
@@ -139,7 +135,6 @@ export const InviteMemberModal = ({
                                 </motion.div>
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-4">
-                                    {/* Error */}
                                     {displayError && (
                                         <motion.div
                                             initial={{ opacity: 0, height: 0 }}
@@ -151,7 +146,6 @@ export const InviteMemberModal = ({
                                         </motion.div>
                                     )}
 
-                                    {/* Email Input */}
                                     <div>
                                         <label className="block text-xs font-medium uppercase tracking-wider text-white/40">
                                             Email Address <span className="text-red-400">*</span>
@@ -175,7 +169,6 @@ export const InviteMemberModal = ({
                                         </p>
                                     </div>
 
-                                    {/* Role Selection */}
                                     <div>
                                         <label className="block text-xs font-medium uppercase tracking-wider text-white/40">
                                             Role
@@ -196,7 +189,6 @@ export const InviteMemberModal = ({
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
                                     <div className="flex gap-3 pt-2">
                                         <button
                                             type="button"

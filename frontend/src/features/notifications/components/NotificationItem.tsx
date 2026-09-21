@@ -85,12 +85,12 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         isUnread ? 'bg-white/[0.02]' : ''
       }`}
     >
-      {/* Icon */}
+    
       <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
         {getNotificationIcon(notification.type)}
       </div>
 
-      {/* Content */}
+       
       <div className="min-w-0 flex-1 pr-10">
         <div className="flex items-baseline justify-between gap-2">
           <p
@@ -112,8 +112,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           </p>
         )}
       </div>
-
-      {/* Hover actions */}
+ 
       <div className="absolute right-2 top-3 flex items-center gap-1 rounded-md bg-black/90 p-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         {isUnread && (
           <button
@@ -134,8 +133,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           </button>
         )}
       </div>
-
-      {/* Unread dot */}
+ 
       {isUnread && (
         <span className="absolute left-1.5 top-3.5 h-1.5 w-1.5 rounded-full bg-green-400" />
       )}

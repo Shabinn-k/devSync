@@ -57,16 +57,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
           onMarkAsRead={onMarkAsRead}
         />
       ))}
-      {/* {hasMore && (
-        <div className="p-2 text-center">
-          <button
-            onClick={onLoadMore}
-            className="text-xs text-white/40 hover:text-white transition-colors"
-          >
-            Load more
-          </button>
-        </div>
-      )} */}
+     
     </div>
   );
 };

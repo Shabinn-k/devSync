@@ -66,8 +66,7 @@ export const UnifiedLifecycle = () => {
               </div>
 
               <h3 className="text-base font-semibold text-white">{s.title}</h3>
-
-              {/* terminal snippet */}
+ 
               <div className="mt-4 rounded-md border border-white/5 bg-white/[0.02] px-3 py-2">
                 <code className="font-mono text-[10px] text-green-400">{s.cmd}</code>
               </div>
