@@ -85,7 +85,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {/* Organization Name */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60">
               <Building2 className="h-3.5 w-3.5 text-white/40" />
@@ -103,7 +102,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({
             />
           </div>
 
-          {/* Slug */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60">
               <Tag className="h-3.5 w-3.5 text-white/40" />
@@ -121,7 +119,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-1.5">
           <label className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60">
             <AlignLeft className="h-3.5 w-3.5 text-white/40" />
@@ -139,7 +136,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {/* Website */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60">
               <Globe className="h-3.5 w-3.5 text-white/40" />
@@ -156,7 +152,6 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({
             />
           </div>
 
-          {/* Location */}
           <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/60">
               <MapPin className="h-3.5 w-3.5 text-white/40" />

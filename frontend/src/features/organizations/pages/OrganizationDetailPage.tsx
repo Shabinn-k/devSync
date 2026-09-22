@@ -167,7 +167,6 @@ export const OrganizationDetailPage = () => {
           </div>
         )}
 
-        {/* Header */}
         <div className="rounded-2xl border border-white/10 bg-black p-6 sm:p-8">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="min-w-0">
@@ -210,7 +209,6 @@ export const OrganizationDetailPage = () => {
             </div>
 
             <div className="flex gap-2 flex-wrap">
-              {/* Team lead / super admin: Join Requests */}
               {isAdmin && (
                 <button
                   onClick={() => navigate(`/organizations/${id}/join-requests`)}
@@ -221,7 +219,6 @@ export const OrganizationDetailPage = () => {
                 </button>
               )}
 
-              {/* Team lead / super admin: Invite */}
               {isAdmin && (
                 <button
                   onClick={() => setShowInviteModal(true)}
@@ -232,7 +229,6 @@ export const OrganizationDetailPage = () => {
                 </button>
               )}
 
-              {/* Team lead / super admin: Delete */}
               {isAdmin && (
                 <button
                   onClick={() => setPendingDeleteOrg(true)}
@@ -243,7 +239,6 @@ export const OrganizationDetailPage = () => {
                 </button>
               )}
 
-              {/* Developer (non-member): Request to Join */}
               {canRequestToJoin && hasLoadedMyRequests && !myLoading && !pendingRequest && (
                 <button
                   onClick={() => setShowJoinModal(true)}
@@ -254,7 +249,6 @@ export const OrganizationDetailPage = () => {
                 </button>
               )}
 
-              {/* Developer (non-member): Pending state */}
               {canRequestToJoin && hasLoadedMyRequests && !myLoading && pendingRequest && (
                 <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400">
                   <Clock className="h-3.5 w-3.5" />
@@ -264,7 +258,6 @@ export const OrganizationDetailPage = () => {
             </div>
           </div>
 
-          {/* Tabs — only for members */}
           {isMember && (
             <div className="mt-6 flex border-b border-white/10 gap-6">
               <button
@@ -304,7 +297,6 @@ export const OrganizationDetailPage = () => {
           )}
         </div>
 
-        {/* Non-member notice */}
         {!isMember && (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
             <Users className="mx-auto h-10 w-10 text-white/20 mb-3" />
@@ -319,7 +311,6 @@ export const OrganizationDetailPage = () => {
           </div>
         )}
 
-        {/* Tab Content — only for members */}
         {isMember && (
           <div className="mt-6">
             {activeTab === 'members' && (
