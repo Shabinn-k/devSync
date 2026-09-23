@@ -58,16 +58,16 @@ export const CreateProjectPage = () => {
       return toast.error('End date must be after start date');
     }
 
-   try {
-  const project = await createProject({
-    organization_id: form.organization_id,
-    team_id: form.team_id || undefined,
-    name: form.name.trim(),
-    description: form.description.trim() || undefined,
-    priority: form.priority,
-    start_date: form.start_date ? `${form.start_date}T00:00:00Z` : null,
-    end_date: form.end_date ? `${form.end_date}T23:59:59Z` : null,
-  });
+    try {
+      const project = await createProject({
+        organization_id: form.organization_id,
+        team_id: form.team_id || undefined,
+        name: form.name.trim(),
+        description: form.description.trim() || undefined,
+        priority: form.priority,
+        start_date: form.start_date ? `${form.start_date}T00:00:00Z` : null,
+        end_date: form.end_date ? `${form.end_date}T23:59:59Z` : null,
+      });
       toast.success('Project created');
       navigate(`/projects/${project.id}`);
     } catch (err: any) {
@@ -94,7 +94,7 @@ export const CreateProjectPage = () => {
           <p className="mt-1 text-sm text-white/40">Set up a new workspace for your team</p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            {/* Organization */}
+
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
                 Organization
@@ -112,7 +112,6 @@ export const CreateProjectPage = () => {
               </select>
             </div>
 
-            {/* Team */}
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
                 Team
@@ -144,7 +143,6 @@ export const CreateProjectPage = () => {
               )}
             </div>
 
-            {/* Name */}
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
                 Project Name
@@ -158,7 +156,6 @@ export const CreateProjectPage = () => {
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
                 Description
@@ -173,7 +170,6 @@ export const CreateProjectPage = () => {
               />
             </div>
 
-            {/* Priority */}
             <div>
               <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
                 Priority
@@ -184,11 +180,10 @@ export const CreateProjectPage = () => {
                     key={p}
                     type="button"
                     onClick={() => setForm({ ...form, priority: p })}
-                    className={`rounded-lg border px-3 py-2.5 text-xs capitalize transition-all ${
-                      form.priority === p
+                    className={`rounded-lg border px-3 py-2.5 text-xs capitalize transition-all ${form.priority === p
                         ? 'border-white/30 bg-white/5 text-white'
                         : 'border-white/10 bg-black text-white/40 hover:border-white/20 hover:text-white/70'
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>
@@ -196,7 +191,6 @@ export const CreateProjectPage = () => {
               </div>
             </div>
 
-            {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-white/40 mb-2">
@@ -222,7 +216,6 @@ export const CreateProjectPage = () => {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
