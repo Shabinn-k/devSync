@@ -61,8 +61,6 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 	}
 
 	roleID := model.RoleIDDeveloper
-	// Dev-only: honor a client-supplied team lead role. Production always
-	// assigns developer, and admin is never selectable through signup.
 	if s.cfg.Env != "production" && req.Role == model.RoleNameTeamLead {
 		roleID = model.RoleIDTeamLead
 	}
@@ -289,8 +287,6 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 		ExpiresAt: time.Now().Add(s.cfg.JWTRefreshExpiry),
 		IsRevoked: false,
 	}
-	// Atomically revoke the old token and persist its replacement. Concurrent
-	// refresh attempts can only rotate once.
 	if err := s.repo.RotateRefreshToken(ctx, oldToken.ID, newToken); err != nil {
 		return nil, errors.New("invalid or revoked refresh token")
 	}
