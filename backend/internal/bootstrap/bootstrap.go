@@ -72,7 +72,6 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 
 	router.Static("/uploads", "./uploads")
 
-	// ---- Health ----
 	sqlDB, _ := db.DB()
 	healthService := health.NewHealthService()
 	healthService.AddCheck("database", health.DatabaseCheck(sqlDB), 5*time.Second)
@@ -81,13 +80,11 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 
 	go healthService.Run(ctx)
 
-	// ---- Cache & WebSocket hub ----
 	cacheLayer := cache.NewRedisCache(redisClient)
 
 	wsHub := ws.NewHub()
 	go wsHub.Run()
 
-	// ---- Repositories ----
 	authRepository := authRepo.NewRepository(db)
 	profileRepository := profileRepo.NewRepository(db)
 	dashboardRepository := dashboardRepo.NewRepository(db)
@@ -101,57 +98,46 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 	adminRepository := adminRepo.NewRepository(db)
 	joinRequestRepository := joinRequestRepo.NewRepository(db)
 
-	// ---- Auth ----
 	authSvc := authService.NewService(authRepository, cfg, cacheLayer)
 	authController := auth.NewController(authSvc)
 	routes.RegisterAuthRoutes(router, authController, cfg, authRepository)
 
-	// ---- Profile ----
 	profileSvc := profileService.NewService(profileRepository, cfg)
 	profileController := profile.NewController(profileSvc)
 	routes.RegisterProfileRoutes(router, profileController, cfg, authRepository)
 
-	// ---- Dashboard ----
 	dashboardSvc := dashboardService.NewService(dashboardRepository, cfg, redisClient)
 	dashboardController := dashboard.NewController(dashboardSvc)
 	routes.RegisterDashboardRoutes(router, dashboardController, cfg, authRepository)
 
-	// ---- Notifications ----
 	notifSvc := notifService.NewService(notifRepository, wsHub, cfg)
 	notifController := notification.NewController(notifSvc)
 	routes.RegisterNotificationRoutes(router, notifController, wsHub, cfg, authRepository)
 
-	// ---- Organizations ----
 	orgSvc := orgService.NewService(orgRepository, authRepository, cfg)
 	orgController := organization.NewController(orgSvc)
 	routes.RegisterOrganizationRoutes(router, orgController, cfg, authRepository)
 
-	// ---- Projects ----
 	projSvc := projectService.NewService(projRepository, orgRepository, teamRepository, authRepository, cfg, notifSvc)
 	projController := project.NewController(projSvc)
 	routes.RegisterProjectRoutes(router, projController, cfg, authRepository)
 
-	// ---- Tasks ----
 	taskSvc := taskService.NewService(taskRepository, projRepository, authRepository, cfg, notifSvc)
 	taskController := taskCtrl.NewController(taskSvc)
 	routes.RegisterTaskRoutes(router, taskController, cfg, authRepository)
 
-	// ---- Teams ----
 	teamSvc := teamService.NewService(teamRepository, orgRepository, authRepository, cfg, notifSvc)
 	teamController := teamCtrl.NewController(teamSvc)
 	routes.RegisterTeamRoutes(router, teamController, cfg, authRepository)
 
-	// ---- Invitations ----
 	invitationSvc := invitationService.NewService(db, invitationRepository, orgRepository, authRepository, cfg)
 	invitationController := invitationCtrl.NewController(invitationSvc)
 	routes.RegisterInvitationRoutes(router, invitationController, cfg, authRepository)
 
-	// ---- Chat ----
 	chatSvc := chatService.NewService(chatRepository, authRepository, orgRepository, projRepository, wsHub, cfg)
 	chatController := chatCtrl.NewController(chatSvc)
 	routes.RegisterChatRoutes(router, chatController, cfg, authRepository)
 
-	// ---- Admin ----
 	adminSvc := adminService.NewService(adminRepository, authRepository, redisClient, cfg)
 	adminController := adminCtrl.NewController(adminSvc)
 	routes.RegisterAdminRoutes(
@@ -161,7 +147,6 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 		middleware.RequireAdmin(),
 	)
 
-	// ---- Join Requests ----
 	joinRequestSvc := joinRequestService.NewService(joinRequestRepository, orgRepository, authRepository, notifSvc, cfg)
 	joinRequestController := joinRequestCtrl.NewController(joinRequestSvc)
 	routes.RegisterJoinRequestRoutes(router, joinRequestController, cfg, authRepository)
