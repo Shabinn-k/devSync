@@ -38,6 +38,7 @@ func ConnectDatabase(cfg *AppConfig) *gorm.DB {
 		&model.UserProfile{},
 		&model.Organization{},
 		&model.OrganizationMember{},
+		&model.OrganizationJoinRequest{},
 		&model.Project{},
 		&model.ProjectMember{},
 		&model.Task{},

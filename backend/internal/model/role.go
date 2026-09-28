@@ -11,8 +11,8 @@ type Role struct {
 }
 
 const (
-	RoleIDTeamLead  = 1
-	RoleIDDeveloper = 2
+	RoleIDDeveloper = 1
+	RoleIDTeamLead  = 2
 	RoleIDAdmin     = 3
 )
 

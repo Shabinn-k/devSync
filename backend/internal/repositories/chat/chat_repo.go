@@ -13,6 +13,7 @@ type Repository interface {
 	GetOrgChannels(ctx context.Context, organizeID int) ([]model.ChatChannel, error)
 	GetProjectChannels(ctx context.Context, projectID int) ([]model.ChatChannel, error)
 	FindDirectChannel(ctx context.Context, user1ID, user2ID int) (*model.ChatChannel, error)
+	ListDMCandidates(ctx context.Context, currentUserID int) ([]model.User, error)
 	AddMember(ctx context.Context, member *model.ChatMember) error
 	GetChannelMembers(ctx context.Context, channelID int) ([]model.ChatMember, error)
 	IsChannelMember(ctx context.Context, channelID, userID int) (bool, error)

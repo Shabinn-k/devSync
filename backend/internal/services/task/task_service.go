@@ -65,16 +65,7 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateTas
 
 	isMember, err := s.projectRepo.IsMember(ctx, req.ProjectID, userID)
 	if err != nil || !isMember {
-	if isAdmin || user.RoleID == model.RoleIDAdmin || user.RoleID == model.RoleIDTeamLead {
-			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
-				ProjectID: req.ProjectID,
-				UserID:    userID,
-				Role:      model.ProjectRoleAdmin,
-				IsActive:  true,
-			})
-		} else {
-			return nil, errors.New("unauthorized: must be a project member")
-		}
+		return nil, errors.New("unauthorized: must be a project member")
 	}
 
 	if req.AssigneeID != nil && *req.AssigneeID > 0 {
@@ -84,12 +75,7 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateTas
 		}
 		isAssigneeMember, err := s.projectRepo.IsMember(ctx, req.ProjectID, *req.AssigneeID)
 		if err != nil || !isAssigneeMember {
-			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
-				ProjectID: req.ProjectID,
-				UserID:    *req.AssigneeID,
-				Role:      model.ProjectRoleMember,
-				IsActive:  true,
-			})
+			return nil, errors.New("assignee must be a project member")
 		}
 	} else {
 		req.AssigneeID = nil
@@ -220,12 +206,7 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 		}
 		isAssigneeMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, *req.AssigneeID)
 		if err != nil || !isAssigneeMember {
-			_ = s.projectRepo.AddMember(ctx, &model.ProjectMember{
-				ProjectID: task.ProjectID,
-				UserID:    *req.AssigneeID,
-				Role:      model.ProjectRoleMember,
-				IsActive:  true,
-			})
+			return nil, errors.New("assignee must be a project member")
 		}
 		task.AssigneeID = req.AssigneeID
 	}
@@ -411,34 +392,34 @@ func (s *service) mapToResponse(task *model.Task) *response.TaskResponse {
 
 func (s *service) mapToResponseWithCount(task *model.Task, commentCount int64) *response.TaskResponse {
 	resp := &response.TaskResponse{
-		ID:          task.ID,
-		ProjectID:   task.ProjectID,
-		Title:       task.Title,
-		Description: task.Description,
-		Status:      task.Status,
-		Priority:    task.Priority,
-		AssigneeID:  task.AssigneeID,
-		CreatedBy:   task.CreatedBy,
-		DueDate:     task.DueDate,
-		CompletedAt: task.CompletedAt,
+		ID:           task.ID,
+		ProjectID:    task.ProjectID,
+		Title:        task.Title,
+		Description:  task.Description,
+		Status:       task.Status,
+		Priority:     task.Priority,
+		AssigneeID:   task.AssigneeID,
+		CreatedBy:    task.CreatedBy,
+		DueDate:      task.DueDate,
+		CompletedAt:  task.CompletedAt,
 		CommentCount: int(commentCount),
-		IsActive:    task.IsActive,
-		CreatedAt:   task.CreatedAt,
-		UpdatedAt:   task.UpdatedAt,
+		IsActive:     task.IsActive,
+		CreatedAt:    task.CreatedAt,
+		UpdatedAt:    task.UpdatedAt,
 	}
 
 	if task.Assignee != nil {
 		resp.Assignee = &response.UserResponse{
-			ID:   task.Assignee.ID,
-			Name: task.Assignee.Name,
+			ID:    task.Assignee.ID,
+			Name:  task.Assignee.Name,
 			Email: task.Assignee.Email,
 		}
 	}
 
 	if task.Creator.ID != 0 {
 		resp.Creator = &response.UserResponse{
-			ID:   task.Creator.ID,
-			Name: task.Creator.Name,
+			ID:    task.Creator.ID,
+			Name:  task.Creator.Name,
 			Email: task.Creator.Email,
 		}
 	}
@@ -462,10 +443,10 @@ func (s *service) mapToDetailResponse(task *model.Task, comments []model.Comment
 
 func (s *service) mapToCommentResponse(comment *model.Comment, user *model.User) response.CommentResponse {
 	return response.CommentResponse{
-		ID:      comment.ID,
-		TaskID:  comment.TaskID,
-		UserID:  comment.UserID,
-		Content: comment.Content,
+		ID:        comment.ID,
+		TaskID:    comment.TaskID,
+		UserID:    comment.UserID,
+		Content:   comment.Content,
 		CreatedAt: comment.CreatedAt,
 		UpdatedAt: comment.UpdatedAt,
 		User: &response.UserResponse{

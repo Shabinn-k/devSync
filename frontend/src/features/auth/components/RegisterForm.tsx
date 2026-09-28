@@ -58,7 +58,8 @@ export const RegisterForm = () => {
       name: fullName,
       email,
       password,
-      role: selectedRole!, 
+      confirm_password: confirmPassword,
+      role: selectedRole === 'team_lead' ? 'team_lead' : 'developer',
     })
       .then(() => {
         toast.success('Account created! Please verify your email.');

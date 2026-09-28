@@ -13,6 +13,7 @@ import (
 	"devSync/internal/repositories/chat"
 	"devSync/internal/repositories/organization"
 	"devSync/internal/repositories/project"
+	"gorm.io/gorm"
 )
 
 type Broadcaster interface {
@@ -20,6 +21,7 @@ type Broadcaster interface {
 }
 
 type Service interface {
+	ListDMCandidates(ctx context.Context, currentUserID int) ([]response.UserSummary, error)
 	CreateChannel(ctx context.Context, userID int, req *request.CreateChannelRequest) (*response.ChatChannelResponse, error)
 	GetDirectChannel(ctx context.Context, userID, recipientID int) (*response.ChatChannelResponse, error)
 	GetUserChannels(ctx context.Context, userID int) ([]response.ChatChannelResponse, error)
@@ -66,7 +68,7 @@ func (s *service) CreateChannel(ctx context.Context, userID int, req *request.Cr
 	channel := &model.ChatChannel{
 		OrganizationID: req.OrganizationID,
 		ProjectID:      req.ProjectID,
-		TeamID:         req.TeamID,         
+		TeamID:         req.TeamID,
 		Name:           req.Name,
 		Type:           req.Type,
 		CreatedBy:      userID,
@@ -88,6 +90,9 @@ func (s *service) GetDirectChannel(ctx context.Context, userID, recipientID int)
 	existing, err := s.chatRepo.FindDirectChannel(ctx, userID, recipientID)
 	if err == nil && existing != nil {
 		return s.mapChannelToResponse(existing), nil
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
 	}
 
 	recipient, err := s.authRepo.GetUserByID(ctx, recipientID)
@@ -121,6 +126,18 @@ func (s *service) GetDirectChannel(ctx context.Context, userID, recipientID int)
 	})
 
 	return s.GetChannelByID(ctx, userID, channel.ID)
+}
+
+func (s *service) ListDMCandidates(ctx context.Context, currentUserID int) ([]response.UserSummary, error) {
+	users, err := s.chatRepo.ListDMCandidates(ctx, currentUserID)
+	if err != nil {
+		return nil, err
+	}
+	candidates := make([]response.UserSummary, 0, len(users))
+	for _, user := range users {
+		candidates = append(candidates, response.UserSummary{ID: user.ID, Name: user.Name, Email: user.Email})
+	}
+	return candidates, nil
 }
 
 func (s *service) GetUserChannels(ctx context.Context, userID int) ([]response.ChatChannelResponse, error) {
@@ -162,10 +179,10 @@ func (s *service) SendMessage(ctx context.Context, userID, channelID int, req *r
 		Message:       req.Message,
 		AttachmentURL: req.AttachmentURL,
 	}
- 
+
 	if err := s.chatRepo.CreateMessage(ctx, msg); err != nil {
 		return nil, err
-	} 
+	}
 	if msg.Sender.ID == 0 {
 		if user, err := s.authRepo.GetUserByID(ctx, userID); err == nil && user != nil {
 			msg.Sender = *user
@@ -175,7 +192,7 @@ func (s *service) SendMessage(ctx context.Context, userID, channelID int, req *r
 	msgRes := s.mapMessageToResponse(msg)
 
 	if s.broadcaster != nil {
-		payload := msgRes  
+		payload := msgRes
 		go func() {
 			members, err := s.chatRepo.GetChannelMembers(context.Background(), channelID)
 			if err == nil {

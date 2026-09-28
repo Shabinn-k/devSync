@@ -12,6 +12,7 @@ import type {
 
 interface OrganizationState {
   organizations: Organization[];
+  browseOrganizations: Organization[];
   currentOrganization: OrganizationDetail | null;
   members: OrganizationMember[];
   isLoading: boolean;
@@ -20,6 +21,7 @@ interface OrganizationState {
 
   fetchOrganizations: () => Promise<void>;
   fetchMyOrganizations: () => Promise<void>;
+  fetchBrowseOrganizations: () => Promise<void>;
   fetchOrganizationById: (id: number) => Promise<void>;
   createOrganization: (data: CreateOrganizationRequest) => Promise<Organization>;
   updateOrganization: (id: number, data: UpdateOrganizationRequest) => Promise<void>;
@@ -36,6 +38,7 @@ interface OrganizationState {
 
 export const useOrganizationStore = create<OrganizationState>((set) => ({
   organizations: [],
+  browseOrganizations: [],
   currentOrganization: null,
   members: [],
   isLoading: false,
@@ -59,6 +62,16 @@ export const useOrganizationStore = create<OrganizationState>((set) => ({
       set({ organizations: data || [], isLoading: false });
     } catch (err: any) {
       set({ error: err.message || 'Failed to fetch organizations', isLoading: false });
+    }
+  },
+
+  fetchBrowseOrganizations: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const data = await organizationApi.browseOrganizations();
+      set({ browseOrganizations: data || [], isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message || 'Failed to browse organizations', isLoading: false });
     }
   },
 

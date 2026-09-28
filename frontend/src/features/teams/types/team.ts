@@ -22,8 +22,7 @@ export interface Team {
   updated_at: string;
   members?: TeamMember[];
 }
-
-// NEW — what /teams/:id returns (team + guaranteed members)
+ 
 export interface TeamDetail extends Team {
   members: TeamMember[];
 }

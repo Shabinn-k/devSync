@@ -160,6 +160,30 @@ func (h *Controller) List(c *gin.Context) {
 	response.SuccessWithPagination(c, result, page, limit, total)
 }
 
+func (h *Controller) Browse(c *gin.Context) {
+	if _, err := getUserID(c); err != nil {
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	result, total, err := h.service.Browse(c.Request.Context(), page, limit)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "Failed to browse organizations")
+		return
+	}
+	response.SuccessWithPagination(c, result, page, limit, total)
+}
+
 func (h *Controller) AddMember(c *gin.Context) {
 	userID, err := getUserID(c)
 	if err != nil {

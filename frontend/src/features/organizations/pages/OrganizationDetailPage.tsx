@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Loader2, ArrowLeft, Users, Globe, MapPin, Calendar,
-  UserPlus, Trash2,  X,
+  UserPlus, Trash2, X, Clock, Inbox,
 } from 'lucide-react';
 import { useOrganizationStore } from '../store/organizationStore';
 import { useAuthStore } from '../../../stores/authStore';
+import { useJoinRequestStore } from '../store/joinRequestStore';
 import { InviteMemberModal } from '../components/InviteMemberModal';
 import { OrganizationSettings } from '../components/OrganizationSettings';
+import { RequestToJoinModal } from '../components/RequestToJoinModal';
 import { TeamsTab } from '../../teams/components/TeamsTab';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { OrgChatButton } from '../../chat/components/OrgChatButton';
@@ -18,7 +20,8 @@ export const OrganizationDetailPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invitation') || searchParams.get('token');
-  const initialTab = (searchParams.get('tab') as 'members' | 'teams' | 'settings') || 'members';
+  const initialTab =
+    (searchParams.get('tab') as 'members' | 'teams' | 'settings') || 'members';
 
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
@@ -32,8 +35,12 @@ export const OrganizationDetailPage = () => {
     removeMember,
   } = useOrganizationStore();
 
+  const { myRequests, myLoading, fetchMy } = useJoinRequestStore();
+
   const [activeTab, setActiveTab] = useState<'members' | 'teams' | 'settings'>(initialTab);
+  const [hasLoadedMyRequests, setHasLoadedMyRequests] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingDeleteOrg, setPendingDeleteOrg] = useState(false);
   const [isDeletingOrg, setIsDeletingOrg] = useState(false);
@@ -51,10 +58,14 @@ export const OrganizationDetailPage = () => {
       fetchOrganizationById(Number(id));
     }
   }, [id, inviteToken, fetchOrganizationById]);
- 
+
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
+
+  useEffect(() => {
+    fetchMy().finally(() => setHasLoadedMyRequests(true));
+  }, [fetchMy]);
 
   if (inviteToken) return null;
 
@@ -124,11 +135,17 @@ export const OrganizationDetailPage = () => {
   };
 
   const currentMember = currentOrganization.members.find((m) => m.user_id === user?.id);
+  const isMember = Boolean(currentMember);
   const isAdmin =
     currentMember?.role === 'admin' ||
-    user?.role === 'admin' ||
-    user?.role === 'team_lead';
+    user?.role_id === 3 ||
+    user?.role_id === 2;
   const canEdit = Boolean(isAdmin);
+
+  const pendingRequest = myRequests.find(
+    (r) => r.organization_id === Number(id) && r.status === 'pending'
+  );
+  const canRequestToJoin = !isMember;
 
   return (
     <div className="min-h-screen bg-black px-4 py-6 sm:px-6 lg:px-8">
@@ -152,8 +169,8 @@ export const OrganizationDetailPage = () => {
 
         {/* Header */}
         <div className="rounded-2xl border border-white/10 bg-black p-6 sm:p-8">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div className="min-w-0">
               <h1 className="text-2xl font-bold text-white">{currentOrganization.name}</h1>
               <p className="text-sm text-white/40 font-mono">@{currentOrganization.slug}</p>
               {currentOrganization.description && (
@@ -191,7 +208,20 @@ export const OrganizationDetailPage = () => {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex gap-2 flex-wrap">
+              {/* Team lead / super admin: Join Requests */}
+              {isAdmin && (
+                <button
+                  onClick={() => navigate(`/organizations/${id}/join-requests`)}
+                  className="rounded-lg border border-white/10 bg-black px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
+                >
+                  <Inbox className="h-3.5 w-3.5 inline mr-1" />
+                  Join Requests
+                </button>
+              )}
+
+              {/* Team lead / super admin: Invite */}
               {isAdmin && (
                 <button
                   onClick={() => setShowInviteModal(true)}
@@ -201,6 +231,8 @@ export const OrganizationDetailPage = () => {
                   Invite
                 </button>
               )}
+
+              {/* Team lead / super admin: Delete */}
               {isAdmin && (
                 <button
                   onClick={() => setPendingDeleteOrg(true)}
@@ -210,128 +242,171 @@ export const OrganizationDetailPage = () => {
                   Delete
                 </button>
               )}
+
+              {/* Developer (non-member): Request to Join */}
+              {canRequestToJoin && hasLoadedMyRequests && !myLoading && !pendingRequest && (
+                <button
+                  onClick={() => setShowJoinModal(true)}
+                  className="rounded-lg bg-white px-4 py-1.5 text-xs font-semibold text-black hover:bg-white/90 transition-all duration-200"
+                >
+                  <UserPlus className="h-3.5 w-3.5 inline mr-1" />
+                  Request to Join
+                </button>
+              )}
+
+              {/* Developer (non-member): Pending state */}
+              {canRequestToJoin && hasLoadedMyRequests && !myLoading && pendingRequest && (
+                <div className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-400">
+                  <Clock className="h-3.5 w-3.5" />
+                  Request Pending
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="mt-6 flex border-b border-white/10 gap-6">
-            <button
-              onClick={() => setActiveTab('members')}
-              className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
-                activeTab === 'members' ? 'text-white' : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Members ({currentOrganization.members.length})
-              {activeTab === 'members' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('teams')}
-              className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
-                activeTab === 'teams' ? 'text-white' : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Teams
-              {activeTab === 'teams' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
-                activeTab === 'settings' ? 'text-white' : 'text-white/40 hover:text-white/70'
-              }`}
-            >
-              Settings
-              {activeTab === 'settings' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        <div className="mt-6">
-          {activeTab === 'members' && (
-            <div className="rounded-2xl border border-white/10 bg-black p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-white/60">Members</h3>
-                {isAdmin && (
-                  <button
-                    onClick={() => setShowInviteModal(true)}
-                    className="inline-flex items-center gap-1 text-sm text-white/40 hover:text-white transition-all duration-200"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Invite Member
-                  </button>
+          {/* Tabs — only for members */}
+          {isMember && (
+            <div className="mt-6 flex border-b border-white/10 gap-6">
+              <button
+                onClick={() => setActiveTab('members')}
+                className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
+                  activeTab === 'members' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                Members ({currentOrganization.members.length})
+                {activeTab === 'members' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
                 )}
-              </div>
-              <div className="space-y-2">
-                {currentOrganization.members.map((member) => {
-                  const isSelf = member.user_id === user?.id;
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between rounded-lg border border-white/10 bg-black px-4 py-3"
-                    >
-                      <div>
-                        <p className="text-sm text-white">
-                          {member.user_name || member.user_email || 'Member'}
-                        </p>
-                        <p className="text-xs text-white/40 font-mono">{member.user_email}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {isAdmin && !isSelf ? (
-                          <>
-                            <select
-                              value={member.role}
-                              onChange={(e) =>
-                                handleRoleChange(member.id, e.target.value as OrganizationRole)
-                              }
-                              className="rounded border border-white/10 bg-black px-2 py-1 text-xs text-white outline-none focus:border-white/30 transition-all duration-200"
-                            >
-                              <option value="member">Member</option>
-                              <option value="admin">Admin</option>
-                            </select>
-                            <button
-                              onClick={() =>
-                                setPendingRemoveMember({
-                                  id: member.id,
-                                  name: member.user_name || member.user_email,
-                                })
-                              }
-                              className="text-white/30 hover:text-red-400 p-1 transition-all duration-200"
-                              title="Remove Member"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </>
-                        ) : (
-                          <span className="text-xs text-white/40 capitalize bg-white/5 px-2.5 py-1 rounded-full border border-white/10 font-mono">
-                            {member.role}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('teams')}
+                className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
+                  activeTab === 'teams' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                Teams
+                {activeTab === 'teams' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className={`pb-3 text-sm font-medium transition-all duration-200 relative ${
+                  activeTab === 'settings' ? 'text-white' : 'text-white/40 hover:text-white/70'
+                }`}
+              >
+                Settings
+                {activeTab === 'settings' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white" />
+                )}
+              </button>
             </div>
           )}
-
-          {activeTab === 'teams' && (
-            <TeamsTab organizationId={Number(id)} canEdit={canEdit} />
-          )}
-
-          {activeTab === 'settings' && (
-            <OrganizationSettings
-              organization={currentOrganization}
-              canEdit={canEdit}
-              onUpdated={() => id && fetchOrganizationById(Number(id))}
-            />
-          )}
         </div>
+
+        {/* Non-member notice */}
+        {!isMember && (
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+            <Users className="mx-auto h-10 w-10 text-white/20 mb-3" />
+            <p className="text-white/60 text-sm">
+              You are not a member of this organization.
+            </p>
+            <p className="text-white/30 text-xs mt-1">
+              {pendingRequest
+                ? 'Your join request is pending approval from an admin.'
+                : 'Request to join to see members, teams, and projects.'}
+            </p>
+          </div>
+        )}
+
+        {/* Tab Content — only for members */}
+        {isMember && (
+          <div className="mt-6">
+            {activeTab === 'members' && (
+              <div className="rounded-2xl border border-white/10 bg-black p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-white/60">Members</h3>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setShowInviteModal(true)}
+                      className="inline-flex items-center gap-1 text-sm text-white/40 hover:text-white transition-all duration-200"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Invite Member
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {currentOrganization.members.map((member) => {
+                    const isSelf = member.user_id === user?.id;
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between rounded-lg border border-white/10 bg-black px-4 py-3"
+                      >
+                        <div>
+                          <p className="text-sm text-white">
+                            {member.user_name || member.user_email || 'Member'}
+                          </p>
+                          <p className="text-xs text-white/40 font-mono">
+                            {member.user_email}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {isAdmin && !isSelf ? (
+                            <>
+                              <select
+                                value={member.role}
+                                onChange={(e) =>
+                                  handleRoleChange(
+                                    member.id,
+                                    e.target.value as OrganizationRole
+                                  )
+                                }
+                                className="rounded border border-white/10 bg-black px-2 py-1 text-xs text-white outline-none focus:border-white/30 transition-all duration-200"
+                              >
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                              </select>
+                              <button
+                                onClick={() =>
+                                  setPendingRemoveMember({
+                                    id: member.id,
+                                    name: member.user_name || member.user_email,
+                                  })
+                                }
+                                className="text-white/30 hover:text-red-400 p-1 transition-all duration-200"
+                                title="Remove Member"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-white/40 capitalize bg-white/5 px-2.5 py-1 rounded-full border border-white/10 font-mono">
+                              {member.role}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'teams' && (
+              <TeamsTab organizationId={Number(id)} canEdit={canEdit} />
+            )}
+
+            {activeTab === 'settings' && (
+              <OrganizationSettings
+                organization={currentOrganization}
+                canEdit={canEdit}
+                onUpdated={() => id && fetchOrganizationById(Number(id))}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <InviteMemberModal
@@ -341,6 +416,17 @@ export const OrganizationDetailPage = () => {
         onClose={() => setShowInviteModal(false)}
         onSuccess={() => fetchOrganizationById(Number(id))}
       />
+
+      {showJoinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <RequestToJoinModal
+            orgId={Number(id)}
+            orgName={currentOrganization.name}
+            onClose={() => setShowJoinModal(false)}
+            onSuccess={() => fetchMy()}
+          />
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={pendingDeleteOrg}

@@ -19,11 +19,10 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
   const [type, setType] = useState<ModalType>('org');
   const [orgId, setOrgId] = useState<number>(0);
   const [teamId, setTeamId] = useState<number>(0);
-  const [recipientId, setRecipientId] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { createChannel, openDirectChat } = useChatStore();
+  const { createChannel, openDirectChat, dmCandidates, dmCandidatesLoading, fetchDMCandidates } = useChatStore();
   const { organizations, fetchMyOrganizations } = useOrganizationStore();
   const { teams, fetchMyTeams } = useTeamStore();
  
@@ -43,58 +42,56 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
       setTeamId(teams[0].id);
     }
   }, [type, teamId, teams]);
- 
-  const allMembers = React.useMemo(() => {
-    const map = new Map<number, { id: number; name: string; email: string }>();
-    organizations.forEach((org: any) => {
-      (org.members || []).forEach((m: any) => {
-        const uid = m.user_id ?? m.id;
-        if (!map.has(uid)) {
-          map.set(uid, {
-            id: uid,
-            name: m.user_name || m.name || `User #${uid}`,
-            email: m.email || '',
-          });
-        }
+
+  useEffect(() => {
+    if (type === 'direct') {
+      fetchDMCandidates().catch((err: any) => {
+        setError(err?.response?.data?.message || err.message || 'Failed to load members');
       });
-    });
-    return Array.from(map.values());
-  }, [organizations]);
+    }
+  }, [type, fetchDMCandidates]);
+
+  const handleOpenDirectChat = async (userId: number) => {
+    if (isSubmitting) return;
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await openDirectChat(userId);
+      onSuccess?.();
+      onClose();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message || 'Failed to open direct chat');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (type === 'direct') return;
 
     try {
-      if (type === 'direct') {
-        if (!recipientId) {
-          setError('Please select a user');
-          return;
-        }
-        setIsSubmitting(true);
-        await openDirectChat(recipientId);
-      } else {
-        if (!name.trim()) {
-          setError('Channel name is required');
-          return;
-        }
-        if (type === 'org' && !orgId) {
-          setError('Please select an organization');
-          return;
-        }
-        if (type === 'team' && !teamId) {
-          setError('Please select a team');
-          return;
-        }
-
-        setIsSubmitting(true);
-        await createChannel({
-          name: name.trim(),
-          type: type === 'team' ? 'project' : type,  
-          organization_id: type === 'org' ? orgId : undefined,
-          team_id: type === 'team' ? teamId : undefined, 
-        });
+      if (!name.trim()) {
+        setError('Channel name is required');
+        return;
       }
+      if (type === 'org' && !orgId) {
+        setError('Please select an organization');
+        return;
+      }
+      if (type === 'team' && !teamId) {
+        setError('Please select a team');
+        return;
+      }
+
+      setIsSubmitting(true);
+      await createChannel({
+        name: name.trim(),
+        type: type === 'team' ? 'project' : type,
+        organization_id: type === 'org' ? orgId : undefined,
+        team_id: type === 'team' ? teamId : undefined,
+      });
 
       onSuccess?.();
       onClose();
@@ -237,27 +234,29 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
               <label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-white/40 mb-1.5">
                 <User className="h-3 w-3" /> Select User
               </label>
-              {allMembers.length === 0 ? (
+              {dmCandidatesLoading ? (
+                <div className="flex items-center gap-2 text-xs text-white/40">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading members...
+                </div>
+              ) : dmCandidates.length === 0 ? (
                 <p className="text-xs text-white/40">
-                  No other members in your organizations.
+                  No members across your organizations yet.
                 </p>
               ) : (
-                <select
-                  value={recipientId}
-                  onChange={(e) => setRecipientId(Number(e.target.value))}
-                  className={selectClass}
-                  required
-                >
-                  <option value={0} disabled>
-                    Choose a user
-                  </option>
-                  {allMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                      {m.email ? ` (${m.email})` : ''}
-                    </option>
+                <div className="max-h-56 space-y-1 overflow-y-auto">
+                  {dmCandidates.map((member) => (
+                    <button
+                      key={member.id}
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleOpenDirectChat(member.id)}
+                      className="flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-left text-sm text-white hover:bg-white/10 disabled:opacity-50"
+                    >
+                      <span>{member.name}</span>
+                      <span className="ml-3 text-xs text-white/40">{member.email}</span>
+                    </button>
                   ))}
-                </select>
+                </div>
               )}
             </div>
           )}
@@ -271,7 +270,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
             >
               Cancel
             </button>
-            <button
+            {type !== 'direct' && <button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 rounded-lg border border-white/10 bg-black py-2.5 text-sm font-medium text-white transition-all hover:bg-green-600 hover:border-green-500 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -281,7 +280,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
               ) : (
                 'Create'
               )}
-            </button>
+            </button>}
           </div>
         </form>
       </div>

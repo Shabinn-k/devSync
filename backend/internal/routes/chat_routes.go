@@ -14,6 +14,7 @@ func RegisterChatRoutes(router *gin.Engine, ctrl *chatCtrl.Controller, cfg *conf
 	group.Use(middleware.AuthRequired(cfg, authRepository))
 	{
 		group.GET("/channels", ctrl.GetChannels)
+		group.GET("/dm-candidates", ctrl.ListDMCandidates)
 		group.POST("/channels", ctrl.CreateChannel)
 		group.POST("/direct", ctrl.DirectChannel)
 		group.GET("/channels/:id", ctrl.GetChannel)

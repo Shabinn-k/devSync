@@ -1,28 +1,60 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, UserPlus, Save, Loader2 } from 'lucide-react';
 import { useTeamStore } from '../store/teamStore';
+import { teamApi } from '../api/teamApi';
+import { organizationApi } from '../../organizations/api/organizationApi';
+import type { OrganizationMember } from '../../organizations/types/organization';
+import type { TeamMember } from '../types/team';
 import type { TeamRole } from '../types/team';
 
 interface AddTeamMemberModalProps {
     teamId: number;
+    orgId: number;
     onClose: () => void;
     onSuccess?: () => void;
 }
 
-export const AddTeamMemberModal = ({ teamId, onClose, onSuccess }: AddTeamMemberModalProps) => {
-    const [userId, setUserId] = useState<string>('');
+export const AddTeamMemberModal = ({ teamId, orgId, onClose, onSuccess }: AddTeamMemberModalProps) => {
+    const [selectedUserId, setSelectedUserId] = useState<string>('');
+    const [orgMembers, setOrgMembers] = useState<OrganizationMember[]>([]);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [role, setRole] = useState<TeamRole>('member');
     const [error, setError] = useState<string | null>(null);
     const { addMember, isSaving } = useTeamStore();
+
+    useEffect(() => {
+        let cancelled = false;
+        setIsLoadingMembers(true);
+        Promise.all([organizationApi.getMembers(orgId), teamApi.getMembers(teamId)])
+            .then(([organizationMembers, currentTeamMembers]) => {
+                if (cancelled) return;
+                setOrgMembers(organizationMembers ?? []);
+                setTeamMembers(currentTeamMembers ?? []);
+            })
+            .catch((err: any) => {
+                if (!cancelled) {
+                    setError(err?.response?.data?.message || err.message || 'Failed to load members');
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingMembers(false);
+            });
+        return () => { cancelled = true; };
+    }, [orgId, teamId]);
+
+    const eligibleMembers = orgMembers.filter(
+        (member) => member.is_active !== false && !teamMembers.some((teamMember) => teamMember.user_id === member.user_id)
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
 
-        const parsedId = Number(userId);
+        const parsedId = Number(selectedUserId);
         if (!parsedId || isNaN(parsedId)) {
-            setError('Valid User ID is required');
+            setError('Select a member');
             return;
         }
 
@@ -68,16 +100,24 @@ export const AddTeamMemberModal = ({ teamId, onClose, onSuccess }: AddTeamMember
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-xs font-medium uppercase tracking-wider text-white/40">
-                        User ID *
+                        Member *
                     </label>
-                    <input
-                        type="number"
-                        placeholder="User ID (e.g. 2)"
-                        value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        className="mt-1 w-full rounded border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none transition-colors focus:border-white/30"
+                    <select
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                        disabled={isLoadingMembers || eligibleMembers.length === 0}
+                        className="mt-1 w-full rounded border border-white/10 bg-black px-3 py-2 text-sm text-white outline-none focus:border-white/30 disabled:opacity-50"
                         required
-                    />
+                    >
+                        <option value="">
+                            {isLoadingMembers ? 'Loading members...' : eligibleMembers.length === 0 ? 'No members available to add' : 'Select a member...'}
+                        </option>
+                        {eligibleMembers.map((member) => (
+                            <option key={member.user_id} value={member.user_id}>
+                                {member.user_name || member.user_email} ({member.user_email})
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 <div>
@@ -104,7 +144,7 @@ export const AddTeamMemberModal = ({ teamId, onClose, onSuccess }: AddTeamMember
                     </button>
                     <button
                         type="submit"
-                        disabled={isSaving}
+                        disabled={isSaving || isLoadingMembers || !selectedUserId || eligibleMembers.length === 0}
                         className="flex items-center gap-1.5 rounded bg-white px-4 py-2 text-xs font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                         {isSaving ? (

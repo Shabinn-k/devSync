@@ -28,6 +28,14 @@ apiClient.interceptors.request.use(
     }
     if (!token) token = tokenStorage.getAccessToken();
 
+    const hasToken = !!(token && token !== 'undefined' && token !== 'null');
+    const tokenPreview = token ? token.slice(0, 20) : '';
+    console.log('[Axios Interceptor]', {
+      hasToken,
+      tokenPreview,
+      url: config.url,
+    });
+
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
     }

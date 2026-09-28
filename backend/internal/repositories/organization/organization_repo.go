@@ -21,6 +21,7 @@ type Repository interface {
 	Update(ctx context.Context, org *model.Organization) error
 	Delete(ctx context.Context, id int) error
 	List(ctx context.Context, userID int, limit, offset int) ([]model.Organization, int64, error)
+	ListActive(ctx context.Context, limit, offset int) ([]model.Organization, int64, error)
 	GetMemberCount(ctx context.Context, organizeID int) (int64, error)
 
 	AddMember(ctx context.Context, member *model.OrganizationMember) error
@@ -30,7 +31,6 @@ type Repository interface {
 	UpdateMemberRole(ctx context.Context, organizeID, memberID int, role string) error
 	RemoveMember(ctx context.Context, organizeID, memberID int) error
 	IsMember(ctx context.Context, organizeID, userID int) (bool, error)
-	 IsAdmin(ctx context.Context, organizeID, userID int) (bool, error)
+	IsAdmin(ctx context.Context, organizeID, userID int) (bool, error)
 	GetUserOrganizations(ctx context.Context, userID int) ([]model.Organization, error)
 }
-

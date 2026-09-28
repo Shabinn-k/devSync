@@ -37,8 +37,7 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
     });
     const [error, setError] = useState<string | null>(null);
     const { createTask, isSaving } = useTaskStore();
-
-    // Load user's projects if no project was passed in
+ 
     useEffect(() => {
         if (!projectId) {
             fetchMyProjects();
@@ -51,8 +50,7 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
             setFormData((prev) => ({ ...prev, project_id: projects[0].id }));
         }
     }, [projectId, projects, selectedProjectId]);
-
-    // Load members whenever the target project changes
+ 
     useEffect(() => {
         const targetProjId = projectId || selectedProjectId || formData.project_id;
         if (!targetProjId) {
@@ -74,7 +72,6 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
         return () => { cancelled = true; };
     }, [projectId, selectedProjectId, formData.project_id]);
 
-    // If the selected assignee isn't in this project anymore, clear it
     useEffect(() => {
         if (formData.assignee_id && members.length > 0) {
             const stillMember = members.some((m) => m.user_id === formData.assignee_id);
@@ -82,7 +79,7 @@ export const CreateTaskModal = ({ projectId, onClose, onSuccess }: CreateTaskMod
                 setFormData((prev) => ({ ...prev, assignee_id: null }));
             }
         }
-    }, [members]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [members]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

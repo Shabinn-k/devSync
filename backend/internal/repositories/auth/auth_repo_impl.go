@@ -86,7 +86,31 @@ func (r *repository) GetRefreshTokenByHash(ctx context.Context, hash string) (*m
 }
 
 func (r *repository) RevokeRefreshToken(ctx context.Context, id int) error {
-	return r.db.WithContext(ctx).Model(&model.RefreshToken{}).Where("id = ?", id).Update("is_revoked", true).Error
+	result := r.db.WithContext(ctx).Model(&model.RefreshToken{}).
+		Where("id = ? AND is_revoked = ? AND expires_at > ?", id, false, time.Now()).
+		Update("is_revoked", true)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return errors.New("refresh token already revoked or expired")
+	}
+	return nil
+}
+
+func (r *repository) RotateRefreshToken(ctx context.Context, oldID int, replacement *model.RefreshToken) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&model.RefreshToken{}).
+			Where("id = ? AND is_revoked = ? AND expires_at > ?", oldID, false, time.Now()).
+			Update("is_revoked", true)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != 1 {
+			return errors.New("refresh token already revoked or expired")
+		}
+		return tx.Create(replacement).Error
+	})
 }
 
 func (r *repository) RevokeAllUserTokens(ctx context.Context, userID int) error {

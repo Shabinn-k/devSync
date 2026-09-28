@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"log"
+	"strings"
 
 	"devSync/config"
 	"devSync/internal/dto/request"
@@ -22,6 +22,7 @@ type Service interface {
 	Update(ctx context.Context, userID, organizeID int, req *request.UpdateOrganizationRequest) (*response.OrganizationResponse, error)
 	Delete(ctx context.Context, userID, organizeID int) error
 	List(ctx context.Context, userID int, page, limit int) ([]response.OrganizationResponse, int64, error)
+	Browse(ctx context.Context, page, limit int) ([]response.OrganizationResponse, int64, error)
 
 	AddMember(ctx context.Context, userID, organizeID int, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error)
 	GetMembers(ctx context.Context, userID, organizeID int) ([]response.OrganizationMemberResponse, error)
@@ -51,8 +52,8 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrg
 	}
 
 	if user.RoleID != model.RoleIDTeamLead && user.RoleID != model.RoleIDAdmin {
-	return nil, errors.New("only team leads and admins can create organizations")
-}
+		return nil, errors.New("only team leads and admins can create organizations")
+	}
 
 	slug := strings.TrimSpace(req.Slug)
 	if slug == "" {
@@ -91,11 +92,11 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrg
 	}
 
 	member := &model.OrganizationMember{
-	OrganizationID: org.ID,
-	UserID:         userID,
-	Role:           model.OrgRoleAdmin,
-	IsActive:       true,
-}
+		OrganizationID: org.ID,
+		UserID:         userID,
+		Role:           model.OrgRoleAdmin,
+		IsActive:       true,
+	}
 	if err := s.orgRepo.AddMember(ctx, member); err != nil {
 		s.orgRepo.Delete(ctx, org.ID)
 		return nil, errors.New("failed to add creator as admin")
@@ -106,8 +107,8 @@ func (s *service) Create(ctx context.Context, userID int, req *request.CreateOrg
 
 func (s *service) GetByID(ctx context.Context, userID, id int) (*response.OrganizationDetailResponse, error) {
 	isMember, err := s.orgRepo.IsMember(ctx, id, userID)
-	if err != nil || !isMember {
-		return nil, errors.New("unauthorized: organization member required")
+	if err != nil {
+		return nil, err
 	}
 
 	org, err := s.orgRepo.GetByID(ctx, id)
@@ -115,9 +116,12 @@ func (s *service) GetByID(ctx context.Context, userID, id int) (*response.Organi
 		return nil, err
 	}
 
-	members, err := s.orgRepo.GetMembers(ctx, id)
-	if err != nil {
-		return nil, err
+	members := make([]model.OrganizationMember, 0)
+	if isMember {
+		members, err = s.orgRepo.GetMembers(ctx, id)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s.mapToDetailResponse(ctx, org, members), nil
@@ -190,6 +194,27 @@ func (s *service) List(ctx context.Context, userID int, page, limit int) ([]resp
 	return result, total, nil
 }
 
+func (s *service) Browse(ctx context.Context, page, limit int) ([]response.OrganizationResponse, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	orgs, total, err := s.orgRepo.ListActive(ctx, limit, (page-1)*limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	result := make([]response.OrganizationResponse, len(orgs))
+	for i := range orgs {
+		result[i] = *s.mapToResponse(ctx, &orgs[i])
+	}
+	return result, total, nil
+}
+
 func (s *service) AddMember(ctx context.Context, userID, organizeID int, req *request.AddMemberRequest) (*response.OrganizationMemberResponse, error) {
 	if !s.isAdmin(ctx, organizeID, userID) {
 		return nil, errors.New("unauthorized: admin role required")
@@ -251,7 +276,7 @@ func (s *service) sendInvitationEmail(ctx context.Context, email string, organiz
 	}
 
 	invitationLink := fmt.Sprintf("%s/register?email=%s&org=%d", s.cfg.FrontendURL, email, organizeID)
-	
+
 	subject := fmt.Sprintf("Invitation to join %s on DevSync", org.Name)
 	body := fmt.Sprintf(`
 		<h2>You've been invited to join %s on DevSync!</h2>
@@ -266,7 +291,6 @@ func (s *service) sendInvitationEmail(ctx context.Context, email string, organiz
 	log.Printf("Subject: %s", subject)
 	log.Printf("Body: %s", body)
 
-	
 	return nil
 }
 func (s *service) GetMembers(ctx context.Context, userID, organizeID int) ([]response.OrganizationMemberResponse, error) {
@@ -345,7 +369,7 @@ func (s *service) isAdmin(ctx context.Context, organizeID, userID int) bool {
 	if err != nil {
 		return false
 	}
-return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive
+	return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive
 }
 
 func (s *service) mapToResponse(ctx context.Context, org *model.Organization) *response.OrganizationResponse {

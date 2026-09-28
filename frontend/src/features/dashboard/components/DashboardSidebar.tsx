@@ -4,8 +4,10 @@ import {
   FolderKanban,
   CheckSquare,
   Building2,
+  Shield,
   X,
 } from 'lucide-react';
+import { useAuthStore } from '../../../stores/authStore';
 
 interface DashboardSidebarProps {
   isOpen: boolean;
@@ -21,6 +23,8 @@ const NAV_ITEMS = [
 
 export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => {
   const location = useLocation();
+  const { user } = useAuthStore();
+  const isAdmin = user?.role_id === 3 || Number(user?.role_id) === 3 || user?.role === 'admin';
 
   return (
     <>
@@ -76,6 +80,22 @@ export const DashboardSidebar = ({ isOpen, onClose }: DashboardSidebarProps) => 
               </NavLink>
             );
           })}
+
+          {/* Show Admin link ONLY when user has Admin role (role_id === 3) */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
+              onClick={onClose}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                location.pathname.startsWith('/admin')
+                  ? 'bg-amber-400/20 text-amber-300 font-medium'
+                  : 'text-amber-400/80 hover:bg-amber-400/10 hover:text-amber-300'
+              }`}
+            >
+              <Shield className="h-4 w-4 flex-shrink-0 text-amber-400" />
+              Admin
+            </NavLink>
+          )}
         </nav>
 
         <div className="border-t border-white/5 p-3">

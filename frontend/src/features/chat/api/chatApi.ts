@@ -5,9 +5,14 @@ import type {
     ChatMessage,
     CreateChannelRequest,
     SendMessageRequest,
+    UserSummary,
 } from '../types/chat';
 
 export const chatApi = {
+    listDMCandidates: (): Promise<UserSummary[]> =>
+        apiClient.get<ApiResponse<UserSummary[]>>('/chat/dm-candidates')
+            .then((res) => res.data.data || []),
+
     getChannels: (): Promise<ChatChannel[]> =>
         apiClient.get<ApiResponse<ChatChannel[]>>('/chat/channels')
             .then((res) => {

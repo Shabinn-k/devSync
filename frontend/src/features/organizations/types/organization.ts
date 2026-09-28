@@ -20,6 +20,7 @@ export interface OrganizationMember {
   user_id: number;
   user_name: string;
   user_email: string;
+  is_active?: boolean;
   role: OrganizationRole;
   joined_at: string;
 }

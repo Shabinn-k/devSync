@@ -1,14 +1,6 @@
-export type UserRole = 'developer' | 'team_lead' | 'admin';
-
-export interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: UserRole;
-    is_verified: boolean;
-    created_at: string;
-    updated_at: string;
-}
+import type { UserRole, User } from '../../../types/api';
+export type { UserRole, User };
+export type SignupRole = 'developer' | 'team_lead';
 
 export interface LoginRequest {
     email: string;
@@ -19,8 +11,8 @@ export interface RegisterRequest {
     name: string;
     email: string;
     password: string;
-    confirm_password?: string;
-    role: UserRole;  
+    confirm_password: string;
+    role?: SignupRole;
 }
 
 export interface AuthResponse {

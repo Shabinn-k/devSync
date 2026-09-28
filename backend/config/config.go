@@ -43,13 +43,14 @@ type AppConfig struct {
 
 	// Frontend URL
 	FrontendURL string
+	CORSOrigins string
 
 	// Environment
 	Env string
 }
 
 func LoadConfig() *AppConfig {
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(".env", "backend/.env", "../.env"); err != nil {
 		log.Println("Warning: .env file not found, using environment variables")
 	}
 
@@ -81,6 +82,7 @@ func LoadConfig() *AppConfig {
 		SMTPFrom:     getEnv("SMTP_FROM", "noreply@devsync.com"),
 
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
+		CORSOrigins: getEnv("CORS_ORIGINS", getEnv("FRONTEND_URL", "http://localhost:5173")),
 
 		Env: getEnv("ENV", "development"),
 	}

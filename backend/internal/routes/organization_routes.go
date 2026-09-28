@@ -20,6 +20,7 @@ func RegisterOrganizationRoutes(
 	{
 		orgGroup.POST("", controller.Create)
 		orgGroup.GET("", controller.List)
+		orgGroup.GET("/browse", controller.Browse)
 		orgGroup.GET("/me", controller.GetUserOrganizations)
 		orgGroup.GET("/slug/:slug", controller.GetBySlug)
 

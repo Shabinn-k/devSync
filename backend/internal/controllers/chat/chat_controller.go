@@ -44,6 +44,20 @@ func (ctrl *Controller) GetChannels(c *gin.Context) {
 	response.Success(c, channels)
 }
 
+func (ctrl *Controller) ListDMCandidates(c *gin.Context) {
+	userID, ok := getUserID(c)
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	candidates, err := ctrl.service.ListDMCandidates(c.Request.Context(), userID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.Success(c, candidates)
+}
+
 func (ctrl *Controller) CreateChannel(c *gin.Context) {
 	userID, ok := getUserID(c)
 	if !ok {

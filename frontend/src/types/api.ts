@@ -27,11 +27,12 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role?: UserRole;
+  role?: UserRole | string;
+  role_id: number;          
   is_verified: boolean;
   is_active?: boolean;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface LoginPayload {

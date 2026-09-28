@@ -9,7 +9,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Purpose namespaces OTP keys so email-verification and password-reset don't collide.
 type Purpose string
 
 const (
@@ -47,7 +46,6 @@ func NewRedisCache(client *redis.Client) Cache {
 	return &redisCache{client: client}
 }
 
-// --- OTP ---
 
 func (r *redisCache) SetOTP(ctx context.Context, p Purpose, email, otp string, ttl time.Duration) error {
 	return r.client.Set(ctx, otpKey(p, email), otp, ttl).Err()
@@ -65,7 +63,6 @@ func (r *redisCache) DeleteOTP(ctx context.Context, p Purpose, email string) err
 	return r.client.Del(ctx, otpKey(p, email)).Err()
 }
 
-// --- Attempts ---
 
 func (r *redisCache) IncrOTPAttempts(ctx context.Context, p Purpose, email string, ttl time.Duration) (int64, error) {
 	key := attemptsKey(p, email)
@@ -74,7 +71,6 @@ func (r *redisCache) IncrOTPAttempts(ctx context.Context, p Purpose, email strin
 		return 0, err
 	}
 	if n == 1 {
-		// set TTL only on first increment so it doesn't slide on every attempt
 		_ = r.client.Expire(ctx, key, ttl).Err()
 	}
 	return n, nil
@@ -84,7 +80,6 @@ func (r *redisCache) DeleteOTPAttempts(ctx context.Context, p Purpose, email str
 	return r.client.Del(ctx, attemptsKey(p, email)).Err()
 }
 
-// --- Cooldown ---
 
 func (r *redisCache) SetOTPCooldown(ctx context.Context, p Purpose, email string, ttl time.Duration) error {
 	return r.client.Set(ctx, cooldownKey(p, email), "1", ttl).Err()
@@ -118,7 +113,6 @@ func (r *redisCache) DeleteOTPVerified(ctx context.Context, p Purpose, email str
 	return r.client.Del(ctx, verifiedKey(p, email)).Err()
 }
 
-// --- key builders ---
 
 func otpKey(p Purpose, email string) string      { return fmt.Sprintf("otp:%s:%s", p, email) }
 func attemptsKey(p Purpose, email string) string { return fmt.Sprintf("otp:attempts:%s:%s", p, email) }

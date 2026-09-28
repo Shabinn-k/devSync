@@ -5,7 +5,7 @@ type RegisterRequest struct {
 	Email           string `json:"email" validate:"required,email,max=100"`
 	Password        string `json:"password" validate:"required,min=8,max=72,password_complexity"`
 	ConfirmPassword string `json:"confirm_password" validate:"required,eqfield=Password"`
-	Role     string `json:"role" validate:"required,oneof=developer team_lead admin"`
+	Role            string `json:"role" validate:"omitempty,oneof=developer team_lead"`
 }
 
 type LoginRequest struct {

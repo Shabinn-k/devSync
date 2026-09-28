@@ -81,6 +81,17 @@ func (r *repository) List(ctx context.Context, userID int, limit, offset int) ([
 	return orgs, total, err
 }
 
+func (r *repository) ListActive(ctx context.Context, limit, offset int) ([]model.Organization, int64, error) {
+	var orgs []model.Organization
+	var total int64
+	query := r.db.WithContext(ctx).Model(&model.Organization{}).Where("is_active = ?", true)
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&orgs).Error
+	return orgs, total, err
+}
+
 func (r *repository) GetMemberCount(ctx context.Context, organizeID int) (int64, error) {
 	var count int64
 	err := r.db.WithContext(ctx).
@@ -169,7 +180,7 @@ func (r *repository) IsAdmin(ctx context.Context, organizeID, userID int) (bool,
 	err := r.db.WithContext(ctx).
 		Model(&model.OrganizationMember{}).
 		Where("organization_id = ? AND user_id = ? AND role IN (?, ?) AND is_active = ?",
-	organizeID, userID, model.OrgRoleAdmin, model.OrgRoleTeamLead, true).
+			organizeID, userID, model.OrgRoleAdmin, model.OrgRoleTeamLead, true).
 		Count(&count).Error
 	if err == nil && count > 0 {
 		return true, nil
@@ -193,4 +204,3 @@ func (r *repository) GetUserOrganizations(ctx context.Context, userID int) ([]mo
 		Find(&orgs).Error
 	return orgs, err
 }
-

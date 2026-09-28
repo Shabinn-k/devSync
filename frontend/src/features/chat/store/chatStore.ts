@@ -4,6 +4,7 @@ import type {
   ChatChannel,
   ChatMessage,
   CreateChannelRequest,
+  UserSummary,
 } from '../types/chat';
 
 interface ChatState {
@@ -14,8 +15,11 @@ interface ChatState {
   isLoadingMessages: boolean;
   isSending: boolean;
   error: string | null;
+  dmCandidates: UserSummary[];
+  dmCandidatesLoading: boolean;
 
   fetchChannels: () => Promise<void>;
+  fetchDMCandidates: () => Promise<void>;
   selectChannel: (channel: ChatChannel) => Promise<void>;
   fetchMessages: (channelId: number) => Promise<void>;
   sendMessage: (channelId: number, message: string, attachmentUrl?: string) => Promise<void>;
@@ -33,6 +37,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isLoadingMessages: false,
   isSending: false,
   error: null,
+  dmCandidates: [],
+  dmCandidatesLoading: false,
+
+  fetchDMCandidates: async () => {
+    set({ dmCandidatesLoading: true, error: null });
+    try {
+      const users = await chatApi.listDMCandidates();
+      const deduplicated = Array.from(new Map(users.map((user) => [user.id, user])).values());
+      set({ dmCandidates: deduplicated, dmCandidatesLoading: false });
+    } catch (err: any) {
+      set({ error: err.message || 'Failed to load members', dmCandidatesLoading: false });
+      throw err;
+    }
+  },
 
   fetchChannels: async () => {
     set({ isLoadingChannels: true, error: null });

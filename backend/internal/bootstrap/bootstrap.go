@@ -12,10 +12,12 @@ import (
 
 	"devSync/config"
 	"devSync/internal/cache"
+	adminCtrl "devSync/internal/controllers/admin"
 	"devSync/internal/controllers/auth"
 	chatCtrl "devSync/internal/controllers/chat"
 	"devSync/internal/controllers/dashboard"
 	invitationCtrl "devSync/internal/controllers/invitation"
+	joinRequestCtrl "devSync/internal/controllers/join_request"
 	"devSync/internal/controllers/notification"
 	"devSync/internal/controllers/organization"
 	"devSync/internal/controllers/profile"
@@ -24,10 +26,12 @@ import (
 	teamCtrl "devSync/internal/controllers/team"
 	"devSync/internal/health"
 	"devSync/internal/middleware"
+	adminRepo "devSync/internal/repositories/admin"
 	authRepo "devSync/internal/repositories/auth"
 	chatRepo "devSync/internal/repositories/chat"
 	dashboardRepo "devSync/internal/repositories/dashboard"
 	invitationRepo "devSync/internal/repositories/invitations"
+	joinRequestRepo "devSync/internal/repositories/join_request"
 	notifRepo "devSync/internal/repositories/notification"
 	orgRepo "devSync/internal/repositories/organization"
 	profileRepo "devSync/internal/repositories/profile"
@@ -35,10 +39,12 @@ import (
 	taskRepo "devSync/internal/repositories/task"
 	teamRepo "devSync/internal/repositories/team"
 	"devSync/internal/routes"
+	adminService "devSync/internal/services/admin"
 	authService "devSync/internal/services/auth"
 	chatService "devSync/internal/services/chat"
 	dashboardService "devSync/internal/services/dashboard"
 	invitationService "devSync/internal/services/invitation"
+	joinRequestService "devSync/internal/services/join_request"
 	notifService "devSync/internal/services/notification"
 	orgService "devSync/internal/services/organization"
 	profileService "devSync/internal/services/profile"
@@ -51,7 +57,7 @@ import (
 func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
 	router := gin.Default()
 
-	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.CORSMiddleware(cfg.CORSOrigins))
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.CustomRecovery())
 
@@ -66,73 +72,102 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 
 	router.Static("/uploads", "./uploads")
 
-
+	// ---- Health ----
 	sqlDB, _ := db.DB()
 	healthService := health.NewHealthService()
 	healthService.AddCheck("database", health.DatabaseCheck(sqlDB), 5*time.Second)
 	healthService.AddCheck("redis", health.RedisCheck(redisClient), 5*time.Second)
 	router.GET("/health", healthService.HealthHandler)
 
-	go healthService.Run(ctx)   
- 
-	cache := cache.NewRedisCache(redisClient)
+	go healthService.Run(ctx)
+
+	// ---- Cache & WebSocket hub ----
+	cacheLayer := cache.NewRedisCache(redisClient)
 
 	wsHub := ws.NewHub()
 	go wsHub.Run()
-	
-	authRepo := authRepo.NewRepository(db)
-	profileRepo := profileRepo.NewRepository(db)
-	dashboardRepo := dashboardRepo.NewRepository(db)
-	notifRepo := notifRepo.NewRepository(db)
-	orgRepo := orgRepo.NewRepository(db)
-	projRepo := projectRepo.NewRepository(db)
-	taskRepo := taskRepo.NewRepository(db)
-	teamRepo := teamRepo.NewRepository(db)
-	chatRepo := chatRepo.NewRepository(db)
 
-	authSvc := authService.NewService(authRepo, cfg, cache)
-	authCtrl := auth.NewController(authSvc)
-	routes.RegisterAuthRoutes(router, authCtrl, cfg, authRepo)
+	// ---- Repositories ----
+	authRepository := authRepo.NewRepository(db)
+	profileRepository := profileRepo.NewRepository(db)
+	dashboardRepository := dashboardRepo.NewRepository(db)
+	notifRepository := notifRepo.NewRepository(db)
+	orgRepository := orgRepo.NewRepository(db)
+	projRepository := projectRepo.NewRepository(db)
+	taskRepository := taskRepo.NewRepository(db)
+	teamRepository := teamRepo.NewRepository(db)
+	chatRepository := chatRepo.NewRepository(db)
+	invitationRepository := invitationRepo.NewRepository(db)
+	adminRepository := adminRepo.NewRepository(db)
+	joinRequestRepository := joinRequestRepo.NewRepository(db)
 
-	profileSvc := profileService.NewService(profileRepo, cfg)
-	profileCtrl := profile.NewController(profileSvc)
-	routes.RegisterProfileRoutes(router, profileCtrl, cfg, authRepo)
+	// ---- Auth ----
+	authSvc := authService.NewService(authRepository, cfg, cacheLayer)
+	authController := auth.NewController(authSvc)
+	routes.RegisterAuthRoutes(router, authController, cfg, authRepository)
 
-	dashboardSvc := dashboardService.NewService(dashboardRepo, cfg, redisClient)
-	dashboardCtrl := dashboard.NewController(dashboardSvc)
-	routes.RegisterDashboardRoutes(router, dashboardCtrl, cfg, authRepo)
+	// ---- Profile ----
+	profileSvc := profileService.NewService(profileRepository, cfg)
+	profileController := profile.NewController(profileSvc)
+	routes.RegisterProfileRoutes(router, profileController, cfg, authRepository)
 
-	notifSvc := notifService.NewService(notifRepo, wsHub, cfg)
-	notifCtrl := notification.NewController(notifSvc)
-	routes.RegisterNotificationRoutes(router, notifCtrl, wsHub, cfg, authRepo)
+	// ---- Dashboard ----
+	dashboardSvc := dashboardService.NewService(dashboardRepository, cfg, redisClient)
+	dashboardController := dashboard.NewController(dashboardSvc)
+	routes.RegisterDashboardRoutes(router, dashboardController, cfg, authRepository)
 
-	orgSvc := orgService.NewService(orgRepo, authRepo, cfg)
-	orgCtrl := organization.NewController(orgSvc)
-	routes.RegisterOrganizationRoutes(router, orgCtrl, cfg, authRepo)
+	// ---- Notifications ----
+	notifSvc := notifService.NewService(notifRepository, wsHub, cfg)
+	notifController := notification.NewController(notifSvc)
+	routes.RegisterNotificationRoutes(router, notifController, wsHub, cfg, authRepository)
 
-	projSvc := projectService.NewService(projRepo, orgRepo, teamRepo, authRepo, cfg, notifSvc)
-	projCtrl := project.NewController(projSvc)
-	routes.RegisterProjectRoutes(router, projCtrl, cfg, authRepo)
+	// ---- Organizations ----
+	orgSvc := orgService.NewService(orgRepository, authRepository, cfg)
+	orgController := organization.NewController(orgSvc)
+	routes.RegisterOrganizationRoutes(router, orgController, cfg, authRepository)
 
-	taskSvc := taskService.NewService(taskRepo, projRepo, authRepo, cfg, notifSvc)
-	taskCtrl := taskCtrl.NewController(taskSvc)
-	routes.RegisterTaskRoutes(router, taskCtrl, cfg, authRepo)
+	// ---- Projects ----
+	projSvc := projectService.NewService(projRepository, orgRepository, teamRepository, authRepository, cfg, notifSvc)
+	projController := project.NewController(projSvc)
+	routes.RegisterProjectRoutes(router, projController, cfg, authRepository)
 
-	teamSvc := teamService.NewService(teamRepo, orgRepo, authRepo, cfg, notifSvc)
-	teamCtrl := teamCtrl.NewController(teamSvc)
-	routes.RegisterTeamRoutes(router, teamCtrl, cfg, authRepo)
+	// ---- Tasks ----
+	taskSvc := taskService.NewService(taskRepository, projRepository, authRepository, cfg, notifSvc)
+	taskController := taskCtrl.NewController(taskSvc)
+	routes.RegisterTaskRoutes(router, taskController, cfg, authRepository)
 
-	invitationRepo := invitationRepo.NewRepository(db)
-	invitationSvc := invitationService.NewService(db, invitationRepo, orgRepo, authRepo, cfg)
-	invitationCtrl := invitationCtrl.NewController(invitationSvc)
-	routes.RegisterInvitationRoutes(router, invitationCtrl, cfg, authRepo)
+	// ---- Teams ----
+	teamSvc := teamService.NewService(teamRepository, orgRepository, authRepository, cfg, notifSvc)
+	teamController := teamCtrl.NewController(teamSvc)
+	routes.RegisterTeamRoutes(router, teamController, cfg, authRepository)
 
-	chatSvc := chatService.NewService(chatRepo, authRepo, orgRepo, projRepo, wsHub, cfg)
-	chatCtrl := chatCtrl.NewController(chatSvc)
-	routes.RegisterChatRoutes(router, chatCtrl, cfg, authRepo)
+	// ---- Invitations ----
+	invitationSvc := invitationService.NewService(db, invitationRepository, orgRepository, authRepository, cfg)
+	invitationController := invitationCtrl.NewController(invitationSvc)
+	routes.RegisterInvitationRoutes(router, invitationController, cfg, authRepository)
 
-	log.Println(" All services initialized successfully")
-	log.Println(" Server is ready to handle requests")
+	// ---- Chat ----
+	chatSvc := chatService.NewService(chatRepository, authRepository, orgRepository, projRepository, wsHub, cfg)
+	chatController := chatCtrl.NewController(chatSvc)
+	routes.RegisterChatRoutes(router, chatController, cfg, authRepository)
+
+	// ---- Admin ----
+	adminSvc := adminService.NewService(adminRepository, authRepository, redisClient, cfg)
+	adminController := adminCtrl.NewController(adminSvc)
+	routes.RegisterAdminRoutes(
+		router,
+		adminController,
+		middleware.AuthRequired(cfg, authRepository),
+		middleware.RequireAdmin(),
+	)
+
+	// ---- Join Requests ----
+	joinRequestSvc := joinRequestService.NewService(joinRequestRepository, orgRepository, authRepository, notifSvc, cfg)
+	joinRequestController := joinRequestCtrl.NewController(joinRequestSvc)
+	routes.RegisterJoinRequestRoutes(router, joinRequestController, cfg, authRepository)
+
+	log.Println("All services initialized successfully")
+	log.Println("Server is ready to handle requests")
 
 	return router
 }

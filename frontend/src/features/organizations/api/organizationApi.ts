@@ -36,6 +36,11 @@ export const organizationApi = {
       .get<ApiResponse<Organization[]>>(`/organizations?page=${page || 1}&limit=${limit || 20}`)
       .then((res) => res.data.data),
 
+  browseOrganizations: (page = 1, limit = 20) =>
+    apiClient
+      .get<ApiResponse<Organization[]>>(`/organizations/browse?page=${page}&limit=${limit}`)
+      .then((res) => res.data.data ?? []),
+
   getMyOrganizations: () =>
     apiClient.get<ApiResponse<Organization[]>>('/organizations/me')
       .then((res) => res.data.data),

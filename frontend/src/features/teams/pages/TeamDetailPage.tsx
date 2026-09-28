@@ -111,6 +111,7 @@ export const TeamDetailPage = () => {
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-black p-6">
             <AddTeamMemberModal
               teamId={Number(teamId)}
+              orgId={currentTeam.organization_id}
               onClose={() => setShowAddMember(false)}
               onSuccess={() => teamId && fetchById(Number(teamId))}
             />

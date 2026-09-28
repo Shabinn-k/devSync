@@ -49,8 +49,9 @@ export const LoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
-      navigate('/dashboard', { replace: true });
+     await login({ email, password });
+const user = useAuthStore.getState().user;
+navigate(user?.role_id === 3 ? '/admin' : '/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login failed:', err);
     } finally {

@@ -86,6 +86,22 @@ func (r *repository) FindDirectChannel(ctx context.Context, user1ID, user2ID int
 	return &channel, nil
 }
 
+func (r *repository) ListDMCandidates(ctx context.Context, currentUserID int) ([]model.User, error) {
+	var users []model.User
+	subquery := r.db.WithContext(ctx).
+		Table("organization_members").
+		Select("organization_id").
+		Where("user_id = ? AND is_active = ?", currentUserID, true)
+	err := r.db.WithContext(ctx).
+		Table("users AS u").
+		Select("DISTINCT u.id, u.name, u.email").
+		Joins("JOIN organization_members AS om ON om.user_id = u.id").
+		Where("om.organization_id IN (?) AND om.is_active = ? AND u.is_active = ? AND u.id <> ?", subquery, true, true, currentUserID).
+		Order("u.name ASC").
+		Scan(&users).Error
+	return users, err
+}
+
 func (r *repository) AddMember(ctx context.Context, member *model.ChatMember) error {
 	var count int64
 	r.db.WithContext(ctx).Model(&model.ChatMember{}).
@@ -117,7 +133,9 @@ func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int)
 		r.db.WithContext(ctx).Model(&model.OrganizationMember{}).
 			Where("organization_id = ? AND user_id = ? AND is_active = true", *channel.OrganizationID, userID).
 			Count(&count)
-		if count > 0 { return true, nil }
+		if count > 0 {
+			return true, nil
+		}
 	}
 
 	if channel.Type == model.ChatTypeProject && channel.ProjectID != nil {
@@ -125,15 +143,19 @@ func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int)
 		r.db.WithContext(ctx).Model(&model.ProjectMember{}).
 			Where("project_id = ? AND user_id = ? AND is_active = true", *channel.ProjectID, userID).
 			Count(&count)
-		if count > 0 { return true, nil }
+		if count > 0 {
+			return true, nil
+		}
 	}
- 
+
 	if channel.Type == model.ChatTypeTeam && channel.TeamID != nil {
 		var count int64
 		r.db.WithContext(ctx).Model(&model.TeamMember{}).
 			Where("team_id = ? AND user_id = ? AND is_active = true", *channel.TeamID, userID).
 			Count(&count)
-		if count > 0 { return true, nil }
+		if count > 0 {
+			return true, nil
+		}
 	}
 
 	var count int64

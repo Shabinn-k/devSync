@@ -31,6 +31,12 @@ export interface ChatMessage {
     created_at: string;
 }
 
+export interface UserSummary {
+    id: number;
+    name: string;
+    email: string;
+}
+
 export interface CreateChannelRequest {
     name: string;
     type: ChannelType;
