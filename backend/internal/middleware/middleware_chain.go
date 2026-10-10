@@ -3,10 +3,18 @@ package middleware
 import (
 	"context"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+func MaxRequestBodyBytes(limit int64) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
+		c.Next()
+	}
+}
 
 type Chain []gin.HandlerFunc
 
@@ -34,7 +42,7 @@ func RequestLogger() gin.HandlerFunc {
 
 		latency := time.Since(start)
 		statusCode := c.Writer.Status()
-	
+
 		log.Printf("[%s] %s %d %v", method, path, statusCode, latency)
 	}
 }
@@ -43,7 +51,7 @@ func CustomRecovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("Panic recovered: %v", err)
+				log.Printf("Panic recovered; request aborted")
 				c.JSON(500, gin.H{
 					"error": "Internal server error",
 				})
@@ -53,7 +61,7 @@ func CustomRecovery() gin.HandlerFunc {
 		c.Next()
 	}
 }
- 
+
 func Timeout(timeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), timeout)

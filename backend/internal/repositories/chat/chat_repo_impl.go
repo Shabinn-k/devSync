@@ -2,6 +2,8 @@ package chat
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"devSync/internal/model"
 	"gorm.io/gorm"
@@ -37,10 +39,11 @@ func (r *repository) GetUserChannels(ctx context.Context, userID int) ([]model.C
 	err := r.db.WithContext(ctx).
 		Preload("Creator").
 		Preload("Members.User").
-		Where("id IN (SELECT channel_id FROM chat_members WHERE user_id = ?) "+
+		Where("(type = 'direct' AND id IN (SELECT channel_id FROM chat_members WHERE user_id = ?)) "+
 			"OR (type = 'org' AND organization_id IN (SELECT organization_id FROM organization_members WHERE user_id = ? AND is_active = true)) "+
-			"OR (type = 'project' AND project_id IN (SELECT project_id FROM project_members WHERE user_id = ? AND is_active = true))",
-			userID, userID, userID).
+			"OR (type = 'project' AND project_id IN (SELECT project_id FROM project_members WHERE user_id = ? AND is_active = true)) "+
+			"OR (type = 'team' AND team_id IN (SELECT team_id FROM team_members WHERE user_id = ? AND is_active = true))",
+			userID, userID, userID, userID).
 		Order("updated_at DESC").
 		Find(&channels).Error
 	if err != nil {
@@ -86,6 +89,67 @@ func (r *repository) FindDirectChannel(ctx context.Context, user1ID, user2ID int
 	return &channel, nil
 }
 
+func (r *repository) CanDirectMessage(ctx context.Context, user1ID, user2ID int) (bool, error) {
+	var count int64
+	err := r.db.WithContext(ctx).Table("organization_members AS a").
+		Joins("JOIN organization_members AS b ON b.organization_id = a.organization_id").
+		Joins("JOIN organizations AS o ON o.id = a.organization_id").
+		Joins("JOIN users AS ua ON ua.id = a.user_id").
+		Joins("JOIN users AS ub ON ub.id = b.user_id").
+		Where("a.user_id = ? AND b.user_id = ? AND a.is_active = true AND b.is_active = true AND o.is_active = true AND ua.is_active = true AND ub.is_active = true", user1ID, user2ID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// CreateDirectChannel serializes creation for a user pair and writes the
+// channel and both memberships atomically, preventing duplicate partial DMs.
+func (r *repository) CreateDirectChannel(ctx context.Context, user1ID, user2ID int, name string) (*model.ChatChannel, error) {
+	var channel model.ChatChannel
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		lockKey := fmt.Sprintf("devsync-dm:%d:%d", min(user1ID, user2ID), max(user1ID, user2ID))
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(hashtext(?))", lockKey).Error; err != nil {
+			return err
+		}
+		var eligible int64
+		if err := tx.Table("organization_members AS a").
+			Joins("JOIN organization_members AS b ON b.organization_id = a.organization_id").
+			Joins("JOIN organizations AS o ON o.id = a.organization_id").
+			Joins("JOIN users AS ua ON ua.id = a.user_id").
+			Joins("JOIN users AS ub ON ub.id = b.user_id").
+			Where("a.user_id = ? AND b.user_id = ? AND a.is_active = true AND b.is_active = true AND o.is_active = true AND ua.is_active = true AND ub.is_active = true", user1ID, user2ID).
+			Count(&eligible).Error; err != nil {
+			return err
+		}
+		if eligible == 0 {
+			return errors.New("direct messages require active users who share an organization")
+		}
+		err := tx.Preload("Creator").Preload("Members.User").
+			Where("type = 'direct' AND id IN (SELECT channel_id FROM chat_members WHERE user_id = ?) AND id IN (SELECT channel_id FROM chat_members WHERE user_id = ?)", user1ID, user2ID).
+			First(&channel).Error
+		if err == nil {
+			return nil
+		}
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		channel = model.ChatChannel{Name: name, Type: model.ChatTypeDirect, CreatedBy: user1ID}
+		if err := tx.Create(&channel).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(&model.ChatMember{ChannelID: channel.ID, UserID: user1ID}).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(&model.ChatMember{ChannelID: channel.ID, UserID: user2ID}).Error; err != nil {
+			return err
+		}
+		return tx.Preload("Creator").Preload("Members.User").First(&channel, channel.ID).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &channel, nil
+}
+
 func (r *repository) ListDMCandidates(ctx context.Context, currentUserID int) ([]model.User, error) {
 	var users []model.User
 	subquery := r.db.WithContext(ctx).
@@ -114,12 +178,56 @@ func (r *repository) AddMember(ctx context.Context, member *model.ChatMember) er
 }
 
 func (r *repository) GetChannelMembers(ctx context.Context, channelID int) ([]model.ChatMember, error) {
-	var members []model.ChatMember
-	err := r.db.WithContext(ctx).
-		Preload("User").
-		Where("channel_id = ?", channelID).
-		Find(&members).Error
-	return members, err
+	db := r.db.WithContext(ctx)
+	var channel model.ChatChannel
+	if err := db.Select("id", "type", "organization_id", "project_id", "team_id").First(&channel, channelID).Error; err != nil {
+		return nil, err
+	}
+
+	// Resolve recipients from the same active membership tables used by channel access checks.
+	var userIDs []int
+	switch channel.Type {
+	case model.ChatTypeOrg:
+		if channel.OrganizationID != nil {
+			if err := db.Model(&model.OrganizationMember{}).Where("organization_id = ? AND is_active = true", *channel.OrganizationID).Pluck("user_id", &userIDs).Error; err != nil {
+				return nil, err
+			}
+		}
+	case model.ChatTypeProject:
+		if channel.ProjectID != nil {
+			if err := db.Model(&model.ProjectMember{}).Where("project_id = ? AND is_active = true", *channel.ProjectID).Pluck("user_id", &userIDs).Error; err != nil {
+				return nil, err
+			}
+		}
+	case model.ChatTypeTeam:
+		if channel.TeamID != nil {
+			if err := db.Model(&model.TeamMember{}).Where("team_id = ? AND is_active = true", *channel.TeamID).Pluck("user_id", &userIDs).Error; err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var explicitMembers []model.ChatMember
+	if channel.Type == model.ChatTypeDirect {
+		if err := db.Where("channel_id = ?", channelID).Find(&explicitMembers).Error; err != nil {
+			return nil, err
+		}
+	}
+	seen := make(map[int]bool, len(userIDs)+len(explicitMembers))
+	members := make([]model.ChatMember, 0, len(userIDs)+len(explicitMembers))
+	for _, userID := range userIDs {
+		if !seen[userID] {
+			seen[userID] = true
+			members = append(members, model.ChatMember{ChannelID: channelID, UserID: userID})
+		}
+	}
+	for _, member := range explicitMembers {
+		if !seen[member.UserID] {
+			seen[member.UserID] = true
+			members = append(members, member)
+		}
+	}
+	return members, nil
 }
 
 func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int) (bool, error) {
@@ -133,9 +241,7 @@ func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int)
 		r.db.WithContext(ctx).Model(&model.OrganizationMember{}).
 			Where("organization_id = ? AND user_id = ? AND is_active = true", *channel.OrganizationID, userID).
 			Count(&count)
-		if count > 0 {
-			return true, nil
-		}
+		return count > 0, nil
 	}
 
 	if channel.Type == model.ChatTypeProject && channel.ProjectID != nil {
@@ -143,9 +249,7 @@ func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int)
 		r.db.WithContext(ctx).Model(&model.ProjectMember{}).
 			Where("project_id = ? AND user_id = ? AND is_active = true", *channel.ProjectID, userID).
 			Count(&count)
-		if count > 0 {
-			return true, nil
-		}
+		return count > 0, nil
 	}
 
 	if channel.Type == model.ChatTypeTeam && channel.TeamID != nil {
@@ -153,9 +257,10 @@ func (r *repository) IsChannelMember(ctx context.Context, channelID, userID int)
 		r.db.WithContext(ctx).Model(&model.TeamMember{}).
 			Where("team_id = ? AND user_id = ? AND is_active = true", *channel.TeamID, userID).
 			Count(&count)
-		if count > 0 {
-			return true, nil
-		}
+		return count > 0, nil
+	}
+	if channel.Type != model.ChatTypeDirect {
+		return false, nil
 	}
 
 	var count int64

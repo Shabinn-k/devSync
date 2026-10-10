@@ -1,0 +1,16 @@
+.env
+.env.*
+.git
+.gitignore
+Dockerfile
+README.md
+*.log
+*.pem
+*.key
+*.p12
+*.crt
+tmp/
+bin/
+uploads/
+.vscode/
+.idea/                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         

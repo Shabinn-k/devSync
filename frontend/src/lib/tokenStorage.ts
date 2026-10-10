@@ -5,6 +5,10 @@ const REFRESH_TOKEN_KEY = 'devsync_refresh_token';
 const USER_KEY = 'devsync_user';
 const ZUSTAND_AUTH_KEY = 'auth-storage';
 
+// Tokens remain in localStorage for compatibility with the current bearer API.
+// Any successful XSS can read them; migrate both client and server together to
+// an HttpOnly refresh cookie before high-risk production use.
+
 function readFromZustand(): { token: string | null; refreshToken: string | null; user: User | null } {
   try {
     const raw = localStorage.getItem(ZUSTAND_AUTH_KEY);
@@ -44,7 +48,9 @@ export const tokenStorage = {
     try {
       const raw = localStorage.getItem(USER_KEY);
       if (raw) return JSON.parse(raw);
-    } catch {}
+    } catch {
+      // Ignore malformed cached user data and try the Zustand fallback below.
+    }
     return readFromZustand().user;
   },
 

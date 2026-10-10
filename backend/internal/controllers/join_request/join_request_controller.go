@@ -9,6 +9,7 @@ import (
 	joinRequestReq "devSync/internal/dto/request"
 	"devSync/internal/model"
 	joinRequestService "devSync/internal/services/join_request"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -27,7 +28,10 @@ func (c *Controller) Create(ctx *gin.Context) {
 	userID := currentUserID(ctx)
 
 	var body joinRequestReq.CreateJoinRequestRequest
-	_ = ctx.ShouldBindJSON(&body)
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "invalid request body"})
+		return
+	}
 
 	out, err := c.svc.Create(ctx.Request.Context(), userID, orgID, &body)
 	if err != nil {
@@ -48,8 +52,8 @@ func (c *Controller) MyRequests(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    rows,
+		"success":    true,
+		"data":       rows,
 		"pagination": gin.H{"page": page, "limit": limit, "total_items": total},
 	})
 }
@@ -84,8 +88,8 @@ func (c *Controller) ListForOrg(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    rows,
+		"success":    true,
+		"data":       rows,
 		"pagination": gin.H{"page": page, "limit": limit, "total_items": total},
 	})
 }
@@ -102,7 +106,7 @@ func (c *Controller) Review(ctx *gin.Context) {
 	userID := currentUserID(ctx)
 
 	var body joinRequestReq.ReviewJoinRequestRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}

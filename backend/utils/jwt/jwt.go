@@ -53,8 +53,9 @@ func GenerateRefreshToken(userID int, secret string, expiry time.Duration) (stri
 
 func ParseToken(tokenString, secret string) (*Claims, error) {
 	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
+	token, err := parser.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if t.Method != jwt.SigningMethodHS256 {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return []byte(secret), nil
@@ -68,6 +69,9 @@ func ParseToken(tokenString, secret string) (*Claims, error) {
 	if !token.Valid {
 		return nil, ErrInvalidToken
 	}
+	if claims.UserID <= 0 || (claims.TokenType != "access" && claims.TokenType != "refresh") || claims.IssuedAt == nil {
+		return nil, ErrInvalidToken
+	}
 	return claims, nil
 }
 
@@ -75,4 +79,3 @@ func HashToken(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
-

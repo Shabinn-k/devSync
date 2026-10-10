@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 
 	"devSync/config"
 	"devSync/internal/controllers/invitation"
@@ -20,15 +21,14 @@ func RegisterInvitationRoutes(
 	{
 		inviteGroup.POST("/:id/invite", controller.Invite)
 	}
- 
+
 	router.GET("/invite/info", controller.GetInfo)
-	router.POST("/invite/decline", controller.Decline)
-	router.GET("/invite/decline", controller.Decline)
- 
+	declineLimiter := middleware.NewIPRateLimiter(rate.Limit(1.0/10.0), 4)
+	router.POST("/invite/decline", middleware.RateLimitScope(declineLimiter, "decline"), controller.Decline)
+
 	acceptGroup := router.Group("/invite")
 	acceptGroup.Use(middleware.AuthRequired(cfg, repo))
 	{
 		acceptGroup.POST("/accept", controller.Accept)
-		acceptGroup.GET("/accept", controller.Accept)
 	}
 }

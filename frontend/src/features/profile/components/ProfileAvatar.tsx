@@ -40,9 +40,8 @@ export const ProfileAvatar = ({ size = 'lg', editable = false }: ProfileAvatarPr
 
     setIsUploading(true);
     try {
-      const avatarUrl = await uploadAvatar(file);
+      await uploadAvatar(file);
       setImageError(false);
-      console.log('Avatar uploaded:', avatarUrl);
     } catch (error) {
       console.error('Failed to upload avatar:', error);
       setUploadError('Failed to upload avatar. Please try again.');

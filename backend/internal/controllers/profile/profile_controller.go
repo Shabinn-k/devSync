@@ -3,6 +3,7 @@ package profile
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -96,28 +97,34 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		return
 	}
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2*1024*1024+64*1024)
 	file, err := c.FormFile("avatar")
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "Avatar file is required")
 		return
 	}
 
-	allowedTypes := []string{"image/jpeg", "image/png", "image/webp", "image/gif"}
-	fileType := file.Header.Get("Content-Type")
-	allowed := false
-	for _, t := range allowedTypes {
-		if t == fileType {
-			allowed = true
-			break
-		}
-	}
-	if !allowed {
-		response.Error(c, http.StatusBadRequest, "File type not supported. Use JPEG, PNG, WEBP, or GIF")
-		return
-	}
-
 	if file.Size > 2*1024*1024 {
 		response.Error(c, http.StatusBadRequest, "File size too large. Max 2MB")
+		return
+	}
+	opened, err := file.Open()
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "Unable to read avatar")
+		return
+	}
+	header := make([]byte, 512)
+	n, readErr := opened.Read(header)
+	_ = opened.Close()
+	if readErr != nil && readErr != io.EOF {
+		response.Error(c, http.StatusBadRequest, "Unable to read avatar")
+		return
+	}
+	mimeType := http.DetectContentType(header[:n])
+	extensions := map[string]string{"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif"}
+	ext, allowed := extensions[mimeType]
+	if !allowed {
+		response.Error(c, http.StatusBadRequest, "File type not supported. Use JPEG, PNG, WEBP, or GIF")
 		return
 	}
 
@@ -127,7 +134,6 @@ func (h *Controller) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	ext := filepath.Ext(file.Filename)
 	filename := fmt.Sprintf("%d%s", userID, ext)
 	filePath := filepath.Join(uploadDir, filename)
 
@@ -174,4 +180,3 @@ func getUserID(c *gin.Context) (int, error) {
 	}
 	return 0, errors.New("unauthorized")
 }
-

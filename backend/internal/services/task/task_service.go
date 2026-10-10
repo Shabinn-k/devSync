@@ -122,6 +122,9 @@ func (s *service) GetByID(ctx context.Context, userID, taskID int) (*response.Ta
 	if err != nil {
 		return nil, err
 	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
+		return nil, err
+	}
 
 	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
 	if err != nil || !isMember {
@@ -142,6 +145,9 @@ func (s *service) GetByID(ctx context.Context, userID, taskID int) (*response.Ta
 }
 
 func (s *service) GetByProject(ctx context.Context, userID, projectID int, page, limit int) ([]response.TaskResponse, int64, error) {
+	if _, err := s.projectRepo.GetByID(ctx, projectID); err != nil {
+		return nil, 0, err
+	}
 	isMember, err := s.projectRepo.IsMember(ctx, projectID, userID)
 	if err != nil || !isMember {
 		return nil, 0, errors.New("unauthorized: must be project member")
@@ -183,11 +189,22 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 	if err != nil {
 		return nil, err
 	}
-
-	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
-	if err != nil || !isMember {
-		return nil, errors.New("unauthorized: must be project member")
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
+		return nil, err
 	}
+
+	isAdmin, err := s.projectRepo.IsAdmin(ctx, task.ProjectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isAdmin && (!isMember || task.CreatedBy != userID) {
+		return nil, errors.New("unauthorized: only the task creator or project administrator can edit task details")
+	}
+	previousStatus := task.Status
 
 	oldAssigneeID := task.AssigneeID
 	if req.Title != "" {
@@ -198,6 +215,9 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 	}
 	if req.Priority != "" {
 		task.Priority = req.Priority
+	}
+	if req.Status != "" {
+		task.Status = req.Status
 	}
 	if req.AssigneeID != nil {
 		_, err := s.authRepo.GetUserByID(ctx, *req.AssigneeID)
@@ -229,6 +249,14 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 			fmt.Sprintf("You have been assigned to task: %s", task.Title),
 			fmt.Sprintf("/tasks/%d", task.ID))
 	}
+	if previousStatus != model.TaskStatusDone && task.Status == model.TaskStatusDone {
+		if task.CreatedBy != userID {
+			s.sendNotification(ctx, task.CreatedBy, model.TypeTaskCompleted, "Task Completed", fmt.Sprintf("Task '%s' was marked as done", task.Title), fmt.Sprintf("/tasks/%d", taskID))
+		}
+		if task.AssigneeID != nil && *task.AssigneeID != userID && *task.AssigneeID != task.CreatedBy {
+			s.sendNotification(ctx, *task.AssigneeID, model.TypeTaskCompleted, "Task Completed", fmt.Sprintf("Task '%s' was marked as done", task.Title), fmt.Sprintf("/tasks/%d", taskID))
+		}
+	}
 
 	return s.mapToResponse(task), nil
 }
@@ -236,6 +264,9 @@ func (s *service) Update(ctx context.Context, userID, taskID int, req *request.U
 func (s *service) Delete(ctx context.Context, userID, taskID int) error {
 	task, err := s.taskRepo.GetByID(ctx, taskID)
 	if err != nil {
+		return err
+	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
 		return err
 	}
 
@@ -255,12 +286,22 @@ func (s *service) UpdateStatus(ctx context.Context, userID, taskID int, req *req
 	if err != nil {
 		return err
 	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
+		return err
+	}
 
 	isAssignee := task.AssigneeID != nil && *task.AssigneeID == userID
 	isCreator := task.CreatedBy == userID
-	isMember, _ := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
-	if !isAssignee && !isCreator && !isMember {
-		return errors.New("unauthorized: must be task assignee, creator, or project member")
+	isAdmin, err := s.projectRepo.IsAdmin(ctx, task.ProjectID, userID)
+	if err != nil {
+		return err
+	}
+	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if err != nil {
+		return err
+	}
+	if !isMember || (!isAssignee && !isCreator && !isAdmin) {
+		return errors.New("unauthorized: active project member who is assignee, creator, or administrator required")
 	}
 
 	if err := s.taskRepo.UpdateStatus(ctx, taskID, req.Status); err != nil {
@@ -290,11 +331,17 @@ func (s *service) AddComment(ctx context.Context, userID, taskID int, req *reque
 	if err != nil {
 		return nil, err
 	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
+		return nil, err
+	}
 
 	isAssignee := task.AssigneeID != nil && *task.AssigneeID == userID
 	isCreator := task.CreatedBy == userID
-	isMember, _ := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
-	if !isAssignee && !isCreator && !isMember {
+	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember || (!isAssignee && !isCreator) {
 		return nil, errors.New("unauthorized: must be task assignee, creator, or project member")
 	}
 
@@ -335,6 +382,9 @@ func (s *service) GetComments(ctx context.Context, userID, taskID int, page, lim
 	if err != nil {
 		return nil, 0, err
 	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
+		return nil, 0, err
+	}
 
 	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
 	if err != nil || !isMember {
@@ -360,9 +410,11 @@ func (s *service) DeleteComment(ctx context.Context, userID, commentID int) erro
 	if err != nil {
 		return err
 	}
-
 	task, err := s.taskRepo.GetByID(ctx, comment.TaskID)
 	if err != nil {
+		return err
+	}
+	if _, err := s.projectRepo.GetByID(ctx, task.ProjectID); err != nil {
 		return err
 	}
 
@@ -371,6 +423,13 @@ func (s *service) DeleteComment(ctx context.Context, userID, commentID int) erro
 		return err
 	}
 
+	isMember, err := s.projectRepo.IsMember(ctx, task.ProjectID, userID)
+	if err != nil {
+		return err
+	}
+	if !isAdmin && !isMember {
+		return errors.New("unauthorized: active project member required")
+	}
 	if comment.UserID != userID && task.CreatedBy != userID && !isAdmin {
 		return errors.New("unauthorized: cannot delete this comment")
 	}

@@ -5,7 +5,7 @@ export interface Invitation {
     id: number;
     organization_id: number;
     email: string;
-    token: string;
+    token?: string;
     role: InvitationRole;
     status: InvitationStatus;
     expires_at: string;

@@ -14,6 +14,21 @@ func (r *repository) Create(ctx context.Context, project *model.Project) error {
 	return r.db.WithContext(ctx).Create(project).Error
 }
 
+func (r *repository) CreateWithMembers(ctx context.Context, project *model.Project, members []model.ProjectMember) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(project).Error; err != nil {
+			return err
+		}
+		for i := range members {
+			members[i].ProjectID = project.ID
+		}
+		if len(members) > 0 {
+			return tx.Create(&members).Error
+		}
+		return nil
+	})
+}
+
 func (r *repository) GetByID(ctx context.Context, id int) (*model.Project, error) {
 	var project model.Project
 	err := r.db.WithContext(ctx).
@@ -25,12 +40,14 @@ func (r *repository) GetByID(ctx context.Context, id int) (*model.Project, error
 	return &project, err
 }
 
-func (r *repository) GetByOrganization(ctx context.Context, organizeID int, limit, offset int) ([]model.Project, int64, error) {
+func (r *repository) GetByOrganization(ctx context.Context, organizeID, userID int, limit, offset int) ([]model.Project, int64, error) {
 	var projects []model.Project
 	var total int64
 
 	query := r.db.WithContext(ctx).Model(&model.Project{}).
-		Where("organization_id = ? AND is_active = ?", organizeID, true)
+		Where("organization_id = ? AND is_active = ?", organizeID, true).
+		Where("created_by = ? OR id IN (SELECT project_id FROM project_members WHERE user_id = ? AND is_active = true) OR organization_id IN (SELECT organization_id FROM organization_members WHERE user_id = ? AND is_active = true AND role IN (?, ?)) OR organization_id IN (SELECT id FROM organizations WHERE created_by = ?)",
+			userID, userID, userID, model.OrgRoleAdmin, model.OrgRoleTeamLead, userID)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -166,27 +183,63 @@ func (r *repository) IsMember(ctx context.Context, projectID int, userID int) (b
 }
 
 func (r *repository) IsAdmin(ctx context.Context, projectID int, userID int) (bool, error) {
+	var proj model.Project
+	if err := r.db.WithContext(ctx).Select("id", "organization_id", "team_id", "created_by", "is_active").
+		Where("id = ? AND is_active = true", projectID).First(&proj).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	if proj.CreatedBy == userID {
+		return true, nil
+	}
 	var count int64
 	err := r.db.WithContext(ctx).
 		Model(&model.ProjectMember{}).
 		Where("project_id = ? AND user_id = ? AND role = ? AND is_active = ?", projectID, userID, model.ProjectRoleAdmin, true).
 		Count(&count).Error
-	if err == nil && count > 0 {
+	if err != nil {
+		return false, err
+	}
+	if count > 0 {
 		return true, nil
 	}
-	var projCount int64
-	err = r.db.WithContext(ctx).
-		Model(&model.Project{}).
-		Where("id = ? AND created_by = ? AND is_active = ?", projectID, userID, true).
-		Count(&projCount).Error
-	if err == nil && projCount > 0 {
-		return true, nil
-	}
+	var ownerCount int64
+	if err := r.db.WithContext(ctx).Model(&model.Organization{}).
+		Where("id = ? AND created_by = ? AND is_active = true", proj.OrganizationID, userID).
+		Count(&ownerCount).Error; err != nil { return false, err }
+	if ownerCount > 0 { return true, nil }
+	// Platform administrators retain explicit global project administration.
 	var user model.User
 	if err := r.db.WithContext(ctx).Select("role_id").Where("id = ?", userID).First(&user).Error; err == nil {
-		if user.RoleID == model.RoleIDAdmin || user.RoleID == model.RoleIDTeamLead {
+		if user.RoleID == model.RoleIDAdmin {
+			return true, nil
+		}
+	} else {
+		return false, err
+	}
+	// Organization-level admin/team-lead roles are scoped to this project's tenant.
+	err = r.db.WithContext(ctx).Model(&model.OrganizationMember{}).
+		Where("organization_id = ? AND user_id = ? AND is_active = true AND role IN (?, ?)", proj.OrganizationID, userID, model.OrgRoleAdmin, model.OrgRoleTeamLead).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	if count > 0 {
+		return true, nil
+	}
+	if proj.TeamID != nil {
+		err = r.db.WithContext(ctx).Table("teams AS t").
+			Joins("JOIN organization_members AS om ON om.organization_id = t.organization_id").
+			Where("t.id = ? AND t.organization_id = ? AND t.is_active = true AND t.lead_id = ? AND om.user_id = ? AND om.is_active = true", *proj.TeamID, proj.OrganizationID, userID, userID).
+			Count(&count).Error
+		if err != nil {
+			return false, err
+		}
+		if count > 0 {
 			return true, nil
 		}
 	}
-	return false, err
+	return false, nil
 }

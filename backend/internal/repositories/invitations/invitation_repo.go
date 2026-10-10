@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"gorm.io/gorm"
 	"devSync/internal/model"
+	"gorm.io/gorm"
 )
 
 var (
@@ -17,6 +17,8 @@ type Repository interface {
 	Create(ctx context.Context, invitation *model.OrganizationInvitation) error
 	GetByToken(ctx context.Context, token string) (*model.OrganizationInvitation, error)
 	Update(ctx context.Context, invitation *model.OrganizationInvitation) error
+	AcceptPending(ctx context.Context, token, email string, userID int) error
+	SetPendingStatus(ctx context.Context, token, status string) error
 	Delete(ctx context.Context, id int) error
 	DeleteExpired(ctx context.Context) error
 }

@@ -9,6 +9,7 @@ import (
 	"devSync/internal/dto/request"
 	"devSync/internal/response"
 	"devSync/internal/services/task"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -38,7 +39,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	}
 
 	var req request.CreateTaskRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &req); err != nil {
 		response.Error(ctx, http.StatusBadRequest, "Invalid request body: "+err.Error())
 		return
 	}
@@ -132,7 +133,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	}
 
 	var req request.UpdateTaskRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &req); err != nil {
 		response.Error(ctx, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -160,7 +161,7 @@ func (c *Controller) UpdateStatus(ctx *gin.Context) {
 	}
 
 	var req request.UpdateTaskStatusRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &req); err != nil {
 		response.Error(ctx, http.StatusBadRequest, "Invalid request body")
 		return
 	}
@@ -208,7 +209,7 @@ func (c *Controller) AddComment(ctx *gin.Context) {
 	}
 
 	var req request.AddCommentRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &req); err != nil {
 		response.Error(ctx, http.StatusBadRequest, "Invalid request body")
 		return
 	}

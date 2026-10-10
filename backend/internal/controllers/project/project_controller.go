@@ -11,6 +11,7 @@ import (
 	"devSync/internal/repositories/project"
 	"devSync/internal/response"
 	projectService "devSync/internal/services/project"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -51,7 +52,7 @@ func (ctrl *Controller) Create(c *gin.Context) {
 	}
 
 	var req request.CreateProjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -155,7 +156,7 @@ func (ctrl *Controller) Update(c *gin.Context) {
 	}
 
 	var req request.UpdateProjectRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -204,7 +205,7 @@ func (ctrl *Controller) AddMember(c *gin.Context) {
 	}
 
 	var req request.AddProjectMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -260,7 +261,7 @@ func (ctrl *Controller) UpdateMemberRole(c *gin.Context) {
 	}
 
 	var req request.UpdateProjectMemberRoleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
@@ -299,4 +300,3 @@ func (ctrl *Controller) RemoveMember(c *gin.Context) {
 
 	response.Success(c, gin.H{"message": "Member removed successfully"})
 }
-

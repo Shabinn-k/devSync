@@ -172,6 +172,12 @@ func (h *Controller) RefreshToken(c *gin.Context) {
 }
 
 func (h *Controller) Logout(c *gin.Context) {
+	value, exists := c.Get("userID")
+	userID, valid := value.(int)
+	if !exists || !valid || userID <= 0 {
+		response.Error(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 	var req authRequest.LogoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request body")
@@ -182,7 +188,7 @@ func (h *Controller) Logout(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.Logout(c.Request.Context(), &req); err != nil {
+	if err := h.service.Logout(c.Request.Context(), userID, &req); err != nil {
 		response.Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}

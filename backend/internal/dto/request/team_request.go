@@ -1,19 +1,19 @@
 package request
 
 type CreateTeamRequest struct {
-	OrganizationID int    `json:"organization_id" validate:"required"`
-	Name           string `json:"name" validate:"required,min=2,max=100"` 
-	LeadID         int    `json:"lead_id" validate:"required"`
+	OrganizationID int    `json:"organization_id" validate:"required,gt=0"`
+	Name           string `json:"name" validate:"required,min=2,max=100"`
+	LeadID         int    `json:"lead_id" validate:"required,gt=0"`
 }
 
 type UpdateTeamRequest struct {
-	Name        string `json:"name" validate:"omitempty,min=2,max=100"` 
-	LeadID      int    `json:"lead_id" validate:"omitempty"`
-	IsActive    *bool  `json:"is_active"`
+	Name     string `json:"name" validate:"omitempty,min=2,max=100"`
+	LeadID   int    `json:"lead_id" validate:"omitempty,gt=0"`
+	IsActive *bool  `json:"is_active"`
 }
 
 type AddTeamMemberRequest struct {
-	UserID int    `json:"user_id" validate:"required"`
+	UserID int    `json:"user_id" validate:"required,gt=0"`
 	Role   string `json:"role" validate:"required,oneof=admin member"`
 }
 

@@ -3,22 +3,14 @@ import { Bell, CheckCheck, WifiOff, Loader2 } from 'lucide-react';
 import { useNotificationStore } from '../store/notificationStore';
 import { useAuthStore } from '../../../stores/authStore';
 import { tokenStorage } from '../../../lib/tokenStorage';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 import { NotificationBadge } from './NotificationBadge';
 import { NotificationList } from './NotificationList';
 
-interface WebSocketNotificationEvent {
-  event?: string;
-  type?: string;
-  data?: any;
-  notification?: any;
-}
-
 export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isConnected } = useWebSocket();
 
   const {
     notifications,
@@ -29,10 +21,8 @@ export const NotificationBell: React.FC = () => {
     fetchUnreadCount,
     markAsRead,
     markAllRead,
-    addFromWebSocket,
   } = useNotificationStore();
 
-  const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.token || s.accessToken) || tokenStorage.getAccessToken() || null;
 
   useEffect(() => {
@@ -41,118 +31,6 @@ export const NotificationBell: React.FC = () => {
       fetchNotifications();
     }
   }, [token, fetchUnreadCount, fetchNotifications]);
-
-  useEffect(() => {
-    if (!token || token === 'undefined' || token === 'null') return;
-
-    let cancelled = false;
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    const connect = () => {
-      if (cancelled) return;
-      if (!token || token === 'undefined' || token === 'null') return;
-
-      console.log('[WS] Connecting, token length:', token.length);
-
-      if (wsRef.current) {
-        wsRef.current.onopen = null;
-        wsRef.current.onmessage = null;
-        wsRef.current.onerror = null;
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-
-      const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
-      const cleanBase = baseUrl.replace(/^http/, 'ws');
-      const wsUrl = `${cleanBase}/ws/notifications?token=${encodeURIComponent(token)}`;
-
-      try {
-        const ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-          if (cancelled) {
-            ws.close();
-            return;
-          }
-          setIsConnected(true);
-          attempts = 0;
-        };
-
-        ws.onmessage = (event: MessageEvent) => {
-          if (cancelled) return;
-          try {
-            const payload = JSON.parse(event.data) as WebSocketNotificationEvent;
-            window.dispatchEvent(new CustomEvent('devsync:ws_message', { detail: payload }));
-            if (payload && (payload.event === 'notification' || payload.type === 'notification')) {
-              const notif = payload.data || payload.notification;
-              if (notif) {
-                addFromWebSocket(notif);
-              }
-            }
-          } catch {
-          }
-        };
-
-        ws.onerror = () => {
-          setIsConnected(false);
-        };
-
-        ws.onclose = (event: CloseEvent) => {
-          setIsConnected(false);
-          wsRef.current = null;
-
-          if (cancelled || event.code === 1000) {
-            return;
-          }
-
-          if (attempts >= maxAttempts) {
-            console.warn('[WebSocket] Giving up after 5 failed connection attempts.');
-            return;
-          }
-
-          const delay = Math.min(1000 * Math.pow(2, attempts), 30000);
-          attempts += 1;
-
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, delay);
-        };
-      } catch {
-        setIsConnected(false);
-        if (attempts >= maxAttempts) {
-          console.warn('[WebSocket] Giving up after 5 failed connection attempts.');
-          return;
-        }
-        const delay = Math.min(1000 * Math.pow(2, attempts), 30000);
-        attempts += 1;
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connect();
-        }, delay);
-      }
-    };
-
-    connect();
-
-    return () => {
-      cancelled = true;
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-      if (wsRef.current) {
-        wsRef.current.onopen = null;
-        wsRef.current.onmessage = null;
-        wsRef.current.onerror = null;
-        wsRef.current.onclose = null;
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-      setIsConnected(false);
-    };
-  }, [token, user?.id, addFromWebSocket]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

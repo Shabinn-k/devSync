@@ -10,6 +10,7 @@ import (
 	"devSync/internal/dto/request"
 	"devSync/internal/response"
 	"devSync/internal/services/team"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -54,7 +55,7 @@ func (ctrl *Controller) Create(c *gin.Context) {
 	}
 
 	var req request.CreateTeamRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -152,7 +153,7 @@ func (ctrl *Controller) Update(c *gin.Context) {
 	}
 
 	var req request.UpdateTeamRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -201,7 +202,7 @@ func (ctrl *Controller) AddMember(c *gin.Context) {
 	}
 
 	var req request.AddTeamMemberRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -257,7 +258,7 @@ func (ctrl *Controller) UpdateMemberRole(c *gin.Context) {
 	}
 
 	var req request.UpdateTeamMemberRoleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}

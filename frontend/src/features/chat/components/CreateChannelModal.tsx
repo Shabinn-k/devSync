@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { X, Loader2, Building2, Users, User } from 'lucide-react';
 import { useChatStore } from '../store/chatStore';
 import { useOrganizationStore } from '../../organizations/store/organizationStore';
@@ -10,6 +11,13 @@ interface CreateChannelModalProps {
 }
 
 type ModalType = 'org' | 'team' | 'direct';
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (axios.isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+};
 
 export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
   onClose,
@@ -31,22 +39,13 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
     fetchMyTeams().catch(() => {});
   }, [fetchMyOrganizations, fetchMyTeams]);
  
-  useEffect(() => {
-    if (type === 'org' && !orgId && organizations.length > 0) {
-      setOrgId(organizations[0].id);
-    }
-  }, [type, orgId, organizations]);
- 
-  useEffect(() => {
-    if (type === 'team' && !teamId && teams.length > 0) {
-      setTeamId(teams[0].id);
-    }
-  }, [type, teamId, teams]);
+  const selectedOrgId = orgId || organizations[0]?.id || 0;
+  const selectedTeamId = teamId || teams[0]?.id || 0;
 
   useEffect(() => {
     if (type === 'direct') {
-      fetchDMCandidates().catch((err: any) => {
-        setError(err?.response?.data?.message || err.message || 'Failed to load members');
+      fetchDMCandidates().catch((err: unknown) => {
+        setError(getErrorMessage(err, 'Failed to load members'));
       });
     }
   }, [type, fetchDMCandidates]);
@@ -59,8 +58,8 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
       await openDirectChat(userId);
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Failed to open direct chat');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to open direct chat'));
     } finally {
       setIsSubmitting(false);
     }
@@ -76,11 +75,11 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
         setError('Channel name is required');
         return;
       }
-      if (type === 'org' && !orgId) {
+      if (type === 'org' && !selectedOrgId) {
         setError('Please select an organization');
         return;
       }
-      if (type === 'team' && !teamId) {
+      if (type === 'team' && !selectedTeamId) {
         setError('Please select a team');
         return;
       }
@@ -88,17 +87,15 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
       setIsSubmitting(true);
       await createChannel({
         name: name.trim(),
-        type: type === 'team' ? 'project' : type,
-        organization_id: type === 'org' ? orgId : undefined,
-        team_id: type === 'team' ? teamId : undefined,
+        type,
+        organization_id: type === 'org' ? selectedOrgId : undefined,
+        team_id: type === 'team' ? selectedTeamId : undefined,
       });
 
       onSuccess?.();
       onClose();
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.message || err.message || 'Failed to create channel'
-      );
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Failed to create channel'));
     } finally {
       setIsSubmitting(false);
     }
@@ -161,7 +158,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
                 <Building2 className="h-3 w-3" /> Organization
               </label>
               <select
-                value={orgId}
+                value={selectedOrgId}
                 onChange={(e) => setOrgId(Number(e.target.value))}
                 className={selectClass}
                 required
@@ -169,7 +166,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
                 <option value={0} disabled>
                   Select organization
                 </option>
-                {organizations.map((o: any) => (
+                {organizations.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}
                   </option>
@@ -189,7 +186,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
                 </p>
               ) : (
                 <select
-                  value={teamId}
+                  value={selectedTeamId}
                   onChange={(e) => setTeamId(Number(e.target.value))}
                   className={selectClass}
                   required
@@ -197,7 +194,7 @@ export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({
                   <option value={0} disabled>
                     Select team
                   </option>
-                  {teams.map((t: any) => (
+                  {teams.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>

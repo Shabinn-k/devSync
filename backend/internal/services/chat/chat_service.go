@@ -13,6 +13,7 @@ import (
 	"devSync/internal/repositories/chat"
 	"devSync/internal/repositories/organization"
 	"devSync/internal/repositories/project"
+	teamRepo "devSync/internal/repositories/team"
 	"gorm.io/gorm"
 )
 
@@ -35,6 +36,7 @@ type service struct {
 	authRepo    auth.Repository
 	orgRepo     organization.Repository
 	projRepo    project.Repository
+	teamRepo    teamRepo.Repository
 	broadcaster Broadcaster
 	cfg         *config.AppConfig
 }
@@ -44,6 +46,7 @@ func NewService(
 	authRepo auth.Repository,
 	orgRepo organization.Repository,
 	projRepo project.Repository,
+	teams teamRepo.Repository,
 	broadcaster Broadcaster,
 	cfg *config.AppConfig,
 ) Service {
@@ -52,6 +55,7 @@ func NewService(
 		authRepo:    authRepo,
 		orgRepo:     orgRepo,
 		projRepo:    projRepo,
+		teamRepo:    teams,
 		broadcaster: broadcaster,
 		cfg:         cfg,
 	}
@@ -63,6 +67,49 @@ func (s *service) CreateChannel(ctx context.Context, userID int, req *request.Cr
 			return nil, errors.New("invalid direct chat recipient")
 		}
 		return s.GetDirectChannel(ctx, userID, *req.RecipientID)
+	}
+	if req.Name == "" || len([]rune(req.Name)) > 100 {
+		return nil, errors.New("channel name must contain 1 to 100 characters")
+	}
+	switch req.Type {
+	case model.ChatTypeOrg:
+		if req.OrganizationID == nil || req.ProjectID != nil || req.TeamID != nil {
+			return nil, errors.New("an organization channel requires only organization_id")
+		}
+		org, err := s.orgRepo.GetByID(ctx, *req.OrganizationID)
+		if err != nil || org == nil || !org.IsActive {
+			return nil, errors.New("organization not found")
+		}
+		member, err := s.orgRepo.IsMember(ctx, org.ID, userID)
+		if err != nil || !member {
+			return nil, errors.New("organization membership required")
+		}
+	case model.ChatTypeProject:
+		if req.ProjectID == nil || req.OrganizationID != nil || req.TeamID != nil {
+			return nil, errors.New("a project channel requires only project_id")
+		}
+		proj, err := s.projRepo.GetByID(ctx, *req.ProjectID)
+		if err != nil || proj == nil {
+			return nil, errors.New("project not found")
+		}
+		member, err := s.projRepo.IsMember(ctx, proj.ID, userID)
+		if err != nil || !member {
+			return nil, errors.New("project membership required")
+		}
+	case model.ChatTypeTeam:
+		if req.TeamID == nil || req.OrganizationID != nil || req.ProjectID != nil {
+			return nil, errors.New("a team channel requires only team_id")
+		}
+		team, err := s.teamRepo.GetByID(ctx, *req.TeamID)
+		if err != nil || team == nil || !team.IsActive {
+			return nil, errors.New("team not found")
+		}
+		member, err := s.teamRepo.IsMember(ctx, team.ID, userID)
+		if err != nil || !member {
+			return nil, errors.New("team membership required")
+		}
+	default:
+		return nil, errors.New("unsupported channel type")
 	}
 
 	channel := &model.ChatChannel{
@@ -78,15 +125,17 @@ func (s *service) CreateChannel(ctx context.Context, userID int, req *request.Cr
 		return nil, err
 	}
 
-	_ = s.chatRepo.AddMember(ctx, &model.ChatMember{
-		ChannelID: channel.ID,
-		UserID:    userID,
-	})
-
 	return s.mapChannelToResponse(channel), nil
 }
 
 func (s *service) GetDirectChannel(ctx context.Context, userID, recipientID int) (*response.ChatChannelResponse, error) {
+	if recipientID <= 0 || recipientID == userID {
+		return nil, errors.New("invalid direct chat recipient")
+	}
+	allowed, err := s.chatRepo.CanDirectMessage(ctx, userID, recipientID)
+	if err != nil || !allowed {
+		return nil, errors.New("direct messages are limited to active users who share an organization")
+	}
 	existing, err := s.chatRepo.FindDirectChannel(ctx, userID, recipientID)
 	if err == nil && existing != nil {
 		return s.mapChannelToResponse(existing), nil
@@ -106,26 +155,11 @@ func (s *service) GetDirectChannel(ctx context.Context, userID, recipientID int)
 	}
 
 	channelName := fmt.Sprintf("%s & %s", currentUser.Name, recipient.Name)
-	channel := &model.ChatChannel{
-		Name:      channelName,
-		Type:      model.ChatTypeDirect,
-		CreatedBy: userID,
-	}
-
-	if err := s.chatRepo.CreateChannel(ctx, channel); err != nil {
+	channel, err := s.chatRepo.CreateDirectChannel(ctx, userID, recipientID, channelName)
+	if err != nil {
 		return nil, err
 	}
-
-	_ = s.chatRepo.AddMember(ctx, &model.ChatMember{
-		ChannelID: channel.ID,
-		UserID:    userID,
-	})
-	_ = s.chatRepo.AddMember(ctx, &model.ChatMember{
-		ChannelID: channel.ID,
-		UserID:    recipientID,
-	})
-
-	return s.GetChannelByID(ctx, userID, channel.ID)
+	return s.mapChannelToResponse(channel), nil
 }
 
 func (s *service) ListDMCandidates(ctx context.Context, currentUserID int) ([]response.UserSummary, error) {

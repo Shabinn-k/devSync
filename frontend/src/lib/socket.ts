@@ -1,6 +1,7 @@
 import { useNotificationStore } from '../stores/notificationStore';
 import { useAuthStore } from '../stores/authStore';
 import { tokenStorage } from './tokenStorage';
+import apiClient from './axios';
 
 type StatusListener = (isConnected: boolean, error: string | null) => void;
 
@@ -13,6 +14,8 @@ class SocketService {
   private readonly maxBackoff = 30000;
   private listeners = new Set<StatusListener>();
   private activeToken: string | null = null; 
+  private connecting = false;
+  private generation = 0;
 
   private notifyListeners() {
     this.listeners.forEach((listener) =>
@@ -49,6 +52,8 @@ class SocketService {
       this.notifyListeners();
       return;
     }
+
+    if (this.connecting) return;
  
     if (
       this.socket &&
@@ -60,13 +65,20 @@ class SocketService {
     }
 
     this.disconnect();
+    this.activeToken = token;
+    const generation = this.generation;
+    this.connecting = true;
+    void this.connectWithTicket(generation);
+  }
 
-    this.activeToken = token; 
-    const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
-    const cleanBase = baseUrl.replace(/^http/, 'ws');
-    const wsUrl = `${cleanBase}/ws/notifications?token=${encodeURIComponent(token)}`;
-
+  private async connectWithTicket(generation: number) {
     try {
+      const response = await apiClient.post('/ws/ticket');
+      const ticket = response.data?.data?.ticket;
+      if (!ticket || generation !== this.generation) return;
+      const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
+      const cleanBase = baseUrl.replace(/^http/, 'ws');
+      const wsUrl = `${cleanBase}/ws/notifications?ticket=${encodeURIComponent(ticket)}`;
       const socket = new WebSocket(wsUrl);
       this.socket = socket;
 
@@ -131,10 +143,14 @@ class SocketService {
       this.connectionError = errorMsg;
       this.isConnected = false; 
       this.notifyListeners();
+    } finally {
+      this.connecting = false;
     }
   }
 
   public disconnect() {
+    this.generation += 1;
+    this.connecting = false;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;

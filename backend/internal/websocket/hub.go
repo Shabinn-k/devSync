@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"sync"
@@ -22,6 +23,7 @@ type Hub struct {
 
 	register   chan *Client
 	unregister chan *Client
+	done       chan struct{}
 }
 
 func NewHub() *Hub {
@@ -29,6 +31,7 @@ func NewHub() *Hub {
 		clients:    make(map[int]map[*Client]bool),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
+		done:       make(chan struct{}),
 	}
 
 	globalHubMu.Lock()
@@ -44,31 +47,46 @@ func GetGlobalHub() *Hub {
 	return globalHub
 }
 
-func (h *Hub) Run() {
+func (h *Hub) Run(ctx context.Context) {
+	defer close(h.done)
 	for {
 		select {
+		case <-ctx.Done():
+			h.mu.Lock()
+			for userID, clients := range h.clients {
+				for client := range clients {
+					client.stop()
+					if client.conn != nil {
+						_ = client.conn.Close()
+					}
+				}
+				delete(h.clients, userID)
+			}
+			h.mu.Unlock()
+			return
 		case client := <-h.register:
 			h.mu.Lock()
 			if h.clients[client.userID] == nil {
 				h.clients[client.userID] = make(map[*Client]bool)
 			}
 			h.clients[client.userID][client] = true
+			activeConnections := len(h.clients[client.userID])
 			h.mu.Unlock()
-			log.Printf("[WebSocket Hub] Client registered for user_id: %d (Total connections: %d)", client.userID, len(h.clients[client.userID]))
+			log.Printf("WebSocket client connected (active connections: %d)", activeConnections)
 
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if userClients, ok := h.clients[client.userID]; ok {
 				if _, exists := userClients[client]; exists {
 					delete(userClients, client)
-					close(client.send)
+					client.stop()
 					if len(userClients) == 0 {
 						delete(h.clients, client.userID)
 					}
 				}
 			}
 			h.mu.Unlock()
-			log.Printf("[WebSocket Hub] Client unregistered for user_id: %d", client.userID)
+			log.Printf("WebSocket client disconnected")
 		}
 	}
 }

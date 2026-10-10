@@ -19,7 +19,7 @@ type UpdateProjectRequest struct {
 	Description string     `json:"description" validate:"omitempty,max=500"`
 	Status      string     `json:"status" validate:"omitempty,oneof=active inactive completed archived"`
 	Priority    string     `json:"priority" validate:"omitempty,oneof=low medium high urgent LOW MEDIUM HIGH URGENT"`
-	TeamID      *int       `json:"team_id"`
+	TeamID      *int       `json:"team_id" validate:"omitempty,gt=0"`
 	StartDate   *time.Time `json:"start_date"`
 	EndDate     *time.Time `json:"end_date"`
 }

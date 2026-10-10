@@ -13,7 +13,7 @@ func (r *repository) CountProjects(ctx context.Context, userID int) (int64, erro
 	}
 	var count int64
 	err := r.db.WithContext(ctx).Table("projects").
-		Where("is_active = ? AND (created_by = ? OR id IN (SELECT project_id FROM project_members WHERE user_id = ? AND is_active = ?) OR organization_id IN (SELECT organization_id FROM organization_members WHERE user_id = ? AND is_active = ?))", true, userID, userID, true, userID, true).
+		Where("is_active = ? AND (created_by = ? OR id IN (SELECT project_id FROM project_members WHERE user_id = ? AND is_active = ?))", true, userID, userID, true).
 		Count(&count).Error
 	return count, err
 }

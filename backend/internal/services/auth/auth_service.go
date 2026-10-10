@@ -35,7 +35,7 @@ type Service interface {
 	VerifyOTP(ctx context.Context, email, otp string) error
 	ResetPassword(ctx context.Context, req *authRequest.ResetPasswordRequest) error
 	RefreshToken(ctx context.Context, req *authRequest.RefreshTokenRequest) (*authResponse.TokenResponse, error)
-	Logout(ctx context.Context, req *authRequest.LogoutRequest) error
+	Logout(ctx context.Context, userID int, req *authRequest.LogoutRequest) error
 	GetCurrentUser(ctx context.Context, userID int) (*authResponse.UserResponse, error)
 }
 
@@ -64,7 +64,7 @@ func (s *service) Register(ctx context.Context, req *authRequest.RegisterRequest
 	if s.cfg.Env != "production" && req.Role == model.RoleNameTeamLead {
 		roleID = model.RoleIDTeamLead
 	}
-	log.Printf("auth: register email=%s env=%s assigned_role_id=%d", req.Email, s.cfg.Env, roleID)
+	log.Printf("auth: registration requested (environment=%s role_id=%d)", s.cfg.Env, roleID)
 
 	user := &model.User{
 		Name:         req.Name,
@@ -263,7 +263,18 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 
 	oldHash := jwt.HashToken(req.RefreshToken)
 	oldToken, err := s.repo.GetRefreshTokenByHash(ctx, oldHash)
-	if err != nil || oldToken == nil || oldToken.IsRevoked || time.Now().After(oldToken.ExpiresAt) {
+	if err != nil || oldToken == nil || time.Now().After(oldToken.ExpiresAt) {
+		return nil, errors.New("invalid or revoked refresh token")
+	}
+	if oldToken.UserID != claims.UserID {
+		return nil, errors.New("invalid or revoked refresh token")
+	}
+	if oldToken.IsRevoked {
+		// A known, previously rotated token indicates replay. Revoke the user's
+		// remaining refresh tokens so the account must authenticate again.
+		if err := s.repo.RevokeAllUserTokens(ctx, oldToken.UserID); err != nil {
+			return nil, errors.New("refresh token reuse detected; session revocation failed")
+		}
 		return nil, errors.New("invalid or revoked refresh token")
 	}
 
@@ -295,10 +306,10 @@ func (s *service) RefreshToken(ctx context.Context, req *authRequest.RefreshToke
 	return &resp, nil
 }
 
-func (s *service) Logout(ctx context.Context, req *authRequest.LogoutRequest) error {
+func (s *service) Logout(ctx context.Context, userID int, req *authRequest.LogoutRequest) error {
 	hash := jwt.HashToken(req.RefreshToken)
 	storedToken, err := s.repo.GetRefreshTokenByHash(ctx, hash)
-	if err != nil || storedToken == nil {
+	if err != nil || storedToken == nil || storedToken.UserID != userID || storedToken.IsRevoked || !storedToken.ExpiresAt.After(time.Now()) {
 		return errors.New("invalid refresh token")
 	}
 	return s.repo.RevokeRefreshToken(ctx, storedToken.ID)

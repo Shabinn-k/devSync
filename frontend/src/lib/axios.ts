@@ -24,17 +24,11 @@ apiClient.interceptors.request.use(
           const parsed = JSON.parse(raw);
           token = parsed?.state?.token || parsed?.state?.accessToken || null;
         }
-      } catch {}
+      } catch {
+        // Ignore corrupt persisted auth state and fall back to tokenStorage.
+      }
     }
     if (!token) token = tokenStorage.getAccessToken();
-
-    const hasToken = !!(token && token !== 'undefined' && token !== 'null');
-    const tokenPreview = token ? token.slice(0, 20) : '';
-    console.log('[Axios Interceptor]', {
-      hasToken,
-      tokenPreview,
-      url: config.url,
-    });
 
     if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;

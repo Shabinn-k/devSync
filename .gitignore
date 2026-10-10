@@ -1,1 +1,7 @@
 .env
+.env.*
+!.env.example
+admin-password
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo

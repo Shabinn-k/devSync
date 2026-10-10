@@ -24,8 +24,6 @@ export const profileApi = {
     if (payload.skills !== undefined) cleanPayload.skills = payload.skills;
     if (payload.social_links !== undefined) cleanPayload.social_links = payload.social_links;
 
-    console.log('Sending to backend:', cleanPayload);
-
     const res = await apiClient.put<ApiEnvelope<Profile>>('/profile/me', cleanPayload);
     return res.data.data;
   },

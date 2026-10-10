@@ -50,9 +50,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
   updateProfile: async (data: UpdateProfileRequest) => {
     set({ isSaving: true, error: null });
     try {
-      console.log('Updating profile:', data);
       const updatedProfile = await profileApi.updateMe(data);
-      console.log('Profile updated:', updatedProfile);
       set({ profile: updatedProfile, isSaving: false });
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to update profile';
@@ -66,11 +64,9 @@ export const useProfileStore = create<ProfileState>((set) => ({
     set({ isSaving: true, error: null });
     try {
       await profileApi.changePassword(data);
-      console.log('Password changed successfully');
       set({ isSaving: false });
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Failed to change password';
-      console.error('Change password error:', message);
       set({ error: message, isSaving: false });
       throw err;
     }
@@ -79,9 +75,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
   uploadAvatar: async (file: File) => {
     set({ isSaving: true, error: null });
     try {
-      console.log('Uploading avatar:', file.name);
       const avatarUrl = await profileApi.uploadAvatar(file);
-      console.log('Avatar uploaded:', avatarUrl);
 
       set((state) => ({
         profile: state.profile ? { ...state.profile, avatar_url: avatarUrl } : null,

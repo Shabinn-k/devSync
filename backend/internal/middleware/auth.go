@@ -17,7 +17,6 @@ func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFu
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			log.Printf("[AuthRequired] missing or invalid Authorization header: %q", authHeader)
 			response.Error(c, http.StatusUnauthorized, "Missing or invalid Authorization header")
 			c.Abort()
 			return
@@ -26,7 +25,6 @@ func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFu
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		claims, err := jwt.ParseToken(tokenString, cfg.JWTAccessSecret)
 		if err != nil {
-			log.Printf("[AuthRequired] jwt.ParseToken error: %v", err)
 			response.Error(c, http.StatusUnauthorized, "Invalid or expired token")
 			c.Abort()
 			return
@@ -38,7 +36,7 @@ func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFu
 			c.Abort()
 			return
 		}
- 
+
 		user, err := repo.GetUserByID(c.Request.Context(), claims.UserID)
 		if err != nil {
 			log.Printf("[AuthRequired] GetUserByID error for userID %d: %v", claims.UserID, err)
@@ -52,9 +50,10 @@ func AuthRequired(cfg *config.AppConfig, repo authRepo.Repository) gin.HandlerFu
 			c.Abort()
 			return
 		}
- 
+
 		c.Set("userID", claims.UserID)
 		c.Set("user", user)
+		c.Set("tokenExpiresAt", claims.ExpiresAt.Time)
 		c.Next()
 	}
 }

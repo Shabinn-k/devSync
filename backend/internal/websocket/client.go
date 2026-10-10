@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -15,19 +16,32 @@ const (
 )
 
 type Client struct {
-	hub    *Hub
-	conn   *websocket.Conn
-	send   chan []byte
-	userID int
+	hub       *Hub
+	conn      *websocket.Conn
+	send      chan []byte
+	userID    int
+	expiresAt time.Time
+	done      chan struct{}
+	stopOnce  sync.Once
 }
 
-func NewClient(hub *Hub, conn *websocket.Conn, userID int) *Client {
+func NewClient(hub *Hub, conn *websocket.Conn, userID int, expiresAt time.Time) *Client {
 	return &Client{
-		hub:    hub,
-		conn:   conn,
-		send:   make(chan []byte, 256),
-		userID: userID,
+		hub:       hub,
+		conn:      conn,
+		send:      make(chan []byte, 256),
+		userID:    userID,
+		expiresAt: expiresAt,
+		done:      make(chan struct{}),
 	}
+}
+
+func (c *Client) stop() {
+	c.stopOnce.Do(func() {
+		if c.done != nil {
+			close(c.done)
+		}
+	})
 }
 
 func (c *Client) GetUserID() int {
@@ -36,8 +50,11 @@ func (c *Client) GetUserID() int {
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.hub.unregister <- c
 		c.conn.Close()
+		select {
+		case c.hub.unregister <- c:
+		case <-c.hub.done:
+		}
 	}()
 
 	c.conn.SetReadLimit(maxMessageSize)
@@ -60,8 +77,14 @@ func (c *Client) ReadPump() {
 
 func (c *Client) WritePump() {
 	ticker := time.NewTicker(pingPeriod)
+	remaining := time.Until(c.expiresAt)
+	if c.expiresAt.IsZero() {
+		remaining = 24 * time.Hour
+	}
+	expiry := time.NewTimer(remaining)
 	defer func() {
 		ticker.Stop()
+		expiry.Stop()
 		c.conn.Close()
 	}()
 
@@ -95,6 +118,12 @@ func (c *Client) WritePump() {
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
+		case <-expiry.C:
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "authentication expired"))
+			return
+		case <-c.done:
+			return
 		}
 	}
 }

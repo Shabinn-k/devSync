@@ -9,6 +9,7 @@ import (
 	"devSync/internal/dto/request"
 	"devSync/internal/response"
 	chatService "devSync/internal/services/chat"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -66,7 +67,7 @@ func (ctrl *Controller) CreateChannel(c *gin.Context) {
 	}
 
 	var req request.CreateChannelRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload: "+err.Error())
 		return
 	}
@@ -88,7 +89,7 @@ func (ctrl *Controller) DirectChannel(c *gin.Context) {
 	}
 
 	var req request.DirectMessageRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request payload: "+err.Error())
 		return
 	}
@@ -163,7 +164,7 @@ func (ctrl *Controller) SendMessage(c *gin.Context) {
 	}
 
 	var req request.SendMessageRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := validator.BindAndValidateJSON(c, &req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid message payload: "+err.Error())
 		return
 	}

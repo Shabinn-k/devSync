@@ -5,25 +5,25 @@ type AdminUpdateUserRoleRequest struct {
 }
 
 type AdminUpdateUserStatusRequest struct {
-	IsActive bool `json:"is_active"`
+	IsActive *bool `json:"is_active" validate:"required"`
 }
 
 type AdminUpdateOrgStatusRequest struct {
-	IsActive bool `json:"is_active"`
+	IsActive *bool `json:"is_active" validate:"required"`
 }
 
 type AdminTransferOwnershipRequest struct {
-	NewOwnerID int `json:"new_owner_id" validate:"required"`
+	NewOwnerID int `json:"new_owner_id" validate:"required,gt=0"`
 }
- 
+
 type AdminListUsersQuery struct {
 	Page     int
 	Limit    int
 	Search   string
-	RoleID   int 
+	RoleID   int
 	IsActive *bool
 }
- 
+
 type AdminListOrgsQuery struct {
 	Page     int
 	Limit    int

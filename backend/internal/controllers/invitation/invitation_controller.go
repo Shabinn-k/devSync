@@ -1,7 +1,6 @@
 package invitation
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -48,26 +47,24 @@ func (c *Controller) Invite(ctx *gin.Context) {
 		Role  string `json:"role" binding:"required,oneof=admin member"`
 	}
 
-	log.Printf("📥 Invite request: user=%d, org=%d", userID, organizeID)
-
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		log.Printf("Binding error: %v", err)
 		response.Error(ctx, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
-	log.Printf("📤 Email: %s, Role: %s", req.Email, req.Role)
-
 	result, err := c.service.CreateInvitation(ctx.Request.Context(), userID, organizeID, req.Email, req.Role)
 	if err != nil {
-		log.Printf("Service error: %v", err)
 		response.Error(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	response.Created(ctx, gin.H{
-		"message":    "Invitation sent successfully to " + req.Email,
-		"invitation": result,
+		"message": "Invitation sent successfully to " + req.Email,
+		"invitation": gin.H{
+			"id": result.ID, "organization_id": result.OrganizationID,
+			"email": result.Email, "role": result.Role,
+			"status": result.Status, "expires_at": result.ExpiresAt,
+		},
 	})
 }
 

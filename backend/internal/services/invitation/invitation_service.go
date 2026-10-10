@@ -22,7 +22,7 @@ import (
 
 type Service interface {
 	CreateInvitation(ctx context.Context, userID, organizeID int, email, role string) (*model.OrganizationInvitation, error)
-	AcceptInvitation(ctx context.Context, token string, userID int) error  
+	AcceptInvitation(ctx context.Context, token string, userID int) error
 	DeclineInvitation(ctx context.Context, token string) error
 	GetInvitation(ctx context.Context, token string) (*model.OrganizationInvitation, error)
 	IsAdmin(ctx context.Context, organizeID, userID int) (bool, error)
@@ -57,11 +57,11 @@ func (s *service) IsAdmin(ctx context.Context, organizeID, userID int) (bool, er
 	if err != nil {
 		return false, err
 	}
-return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive, nil
+	return (member.Role == model.OrgRoleAdmin || member.Role == model.OrgRoleTeamLead) && member.IsActive, nil
 }
 
 func (s *service) CreateInvitation(ctx context.Context, userID, organizeID int, email, role string) (*model.OrganizationInvitation, error) {
-	log.Printf("📨 Creating invitation for %s to org %d", email, organizeID)
+	log.Printf("Creating invitation for organization %d", organizeID)
 
 	isAdmin, err := s.IsAdmin(ctx, organizeID, userID)
 	if err != nil {
@@ -100,8 +100,6 @@ func (s *service) CreateInvitation(ctx context.Context, userID, organizeID int, 
 		log.Printf("Failed to create invitation in DB: %v", err)
 		return nil, err
 	}
-
-	log.Printf("Invitation created with token: %s", token)
 
 	if existingUser != nil {
 		org, _ := s.orgRepo.GetByID(ctx, organizeID)
@@ -142,73 +140,16 @@ func (s *service) CreateInvitation(ctx context.Context, userID, organizeID int, 
 }
 
 func (s *service) AcceptInvitation(ctx context.Context, token string, userID int) error {
-	log.Printf("User %d accepting invitation with token %s", userID, token)
-
-	inv, err := s.invitationRepo.GetByToken(ctx, token)
-	if err != nil {
-		log.Printf("Failed to get invitation: %v", err)
-		return err
-	}
-
-	if inv.Status != model.InvitationStatusPending {
-		return errors.New("invitation already " + inv.Status)
-	}
-
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return errors.New("user not found")
 	}
-
-	if user.Email != inv.Email {
-		return errors.New("invitation email does not match user email")
-	}
-
-	isMember, err := s.orgRepo.IsMember(ctx, inv.OrganizationID, userID)
-	if err != nil {
-		return err
-	}
-	if isMember {
-		return errors.New("you are already a member of this organization")
-	}
-
-	member := &model.OrganizationMember{
-		OrganizationID: inv.OrganizationID,
-		UserID:         userID,
-		Role:           inv.Role,
-		IsActive:       true,
-	}
-	if err := s.orgRepo.AddMember(ctx, member); err != nil {
-		log.Printf("Failed to add member: %v", err)
-		return err
-	}
-
-	inv.Status = model.InvitationStatusAccepted
-	now := time.Now()
-	inv.UpdatedAt = now
-	if err := s.invitationRepo.Update(ctx, inv); err != nil {
-		log.Printf("Failed to update invitation: %v", err)
-		return err
-	}
-
-	log.Printf("User %d successfully joined organization %d", userID, inv.OrganizationID)
-	return nil
+	return s.invitationRepo.AcceptPending(ctx, token, user.Email, userID)
 }
 
 func (s *service) DeclineInvitation(ctx context.Context, token string) error {
-	log.Printf("Declining invitation with token %s", token)
 
-	inv, err := s.invitationRepo.GetByToken(ctx, token)
-	if err != nil {
-		return err
-	}
-
-	if inv.Status != model.InvitationStatusPending {
-		return errors.New("invitation already " + inv.Status)
-	}
-
-	inv.Status = model.InvitationStatusDeclined
-	inv.UpdatedAt = time.Now()
-	return s.invitationRepo.Update(ctx, inv)
+	return s.invitationRepo.SetPendingStatus(ctx, token, model.InvitationStatusDeclined)
 }
 
 func (s *service) GetInvitation(ctx context.Context, token string) (*model.OrganizationInvitation, error) {
@@ -220,7 +161,6 @@ func (s *service) GetInvitation(ctx context.Context, token string) (*model.Organ
 }
 
 func (s *service) sendInvitationEmail(ctx context.Context, invitation *model.OrganizationInvitation) error {
-	log.Printf("📧 Preparing invitation email for %s", invitation.Email)
 
 	org, err := s.orgRepo.GetByID(ctx, invitation.OrganizationID)
 	if err != nil || org == nil {
@@ -229,11 +169,10 @@ func (s *service) sendInvitationEmail(ctx context.Context, invitation *model.Org
 	}
 
 	invitationLink := fmt.Sprintf("%s/invite?token=%s", s.cfg.FrontendURL, invitation.Token)
-	log.Printf("🔗 Invitation link: %s", invitationLink)
 
-subject := fmt.Sprintf("You've been invited to join %s", org.Name)
+	subject := fmt.Sprintf("You've been invited to join %s", org.Name)
 
-body := fmt.Sprintf(`<!DOCTYPE html>
+	body := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">

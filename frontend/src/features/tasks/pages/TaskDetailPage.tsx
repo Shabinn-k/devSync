@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useTaskStore } from '../store/taskStore';
 import { TaskDetailHeader } from '../components/TaskDetailHeader';
-import { TaskComments } from '../components/TaskComments';
 
 export const TaskDetailPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -56,10 +55,7 @@ export const TaskDetailPage = () => {
                 {/* Task Header */}
                 <TaskDetailHeader task={currentTask} />
 
-                {/* Comments */}
-                <div className="mt-6">
-                    <TaskComments taskId={currentTask.id} />
-                </div>
+                
             </div>
         </div>
     );

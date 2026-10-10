@@ -18,9 +18,9 @@ type Checker struct {
 }
 
 type HealthService struct {
-	checks   []Checker
-	mu       sync.RWMutex
-	status   map[string]bool
+	checks    []Checker
+	mu        sync.RWMutex
+	status    map[string]bool
 	lastCheck time.Time
 }
 
@@ -40,6 +40,7 @@ func (hs *HealthService) AddCheck(name string, check func(ctx context.Context) e
 }
 
 func (hs *HealthService) Run(ctx context.Context) {
+	hs.runChecks(ctx)
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -53,6 +54,12 @@ func (hs *HealthService) Run(ctx context.Context) {
 	}
 }
 
+// CheckNow performs a readiness check synchronously. Call it before exposing
+// the HTTP listener so the first readiness request has a real dependency state.
+func (hs *HealthService) CheckNow(ctx context.Context) {
+	hs.runChecks(ctx)
+}
+
 func (hs *HealthService) runChecks(ctx context.Context) {
 	hs.mu.Lock()
 	defer hs.mu.Unlock()
@@ -62,9 +69,8 @@ func (hs *HealthService) runChecks(ctx context.Context) {
 
 	for _, check := range hs.checks {
 		checkCtx, cancel := context.WithTimeout(ctx, check.Timeout)
-		defer cancel()
-
 		err := check.Check(checkCtx)
+		cancel()
 		hs.status[check.Name] = err == nil
 		if err != nil {
 			allHealthy = false

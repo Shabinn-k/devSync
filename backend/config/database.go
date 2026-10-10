@@ -1,9 +1,10 @@
 package config
 
 import (
-	"context"
+	"crypto/tls"
 	"fmt"
-	"log"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -14,61 +15,113 @@ import (
 	"devSync/internal/model"
 )
 
-func ConnectDatabase(cfg *AppConfig) *gorm.DB {
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword,
-		cfg.DBName, cfg.DBSSLMode, cfg.DBTimezone,
-	)
+func ConnectDatabase(cfg *AppConfig) (*gorm.DB, error) {
+	dsn := databaseDSN(cfg)
+	logLevel := logger.Warn
+	if cfg.Env == "development" {
+		logLevel = logger.Info
+	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logLevel),
 		NowFunc: func() time.Time {
 			return time.Now().UTC()
 		},
 	})
 	if err != nil {
-		log.Fatalf("config: failed to connect to database: %v", err)
+		return nil, fmt.Errorf("connect to database: %w", err)
 	}
-
-	if err := db.AutoMigrate(
-		&model.User{},
-		&model.Role{},
-		&model.RefreshToken{},
-		&model.UserProfile{},
-		&model.Organization{},
-		&model.OrganizationMember{},
-		&model.OrganizationJoinRequest{},
-		&model.Project{},
-		&model.ProjectMember{},
-		&model.Task{},
-		&model.Comment{},
-		&model.Team{},
-		&model.TeamMember{},
-		&model.Notification{},
-		&model.OrganizationInvitation{},
-		&model.ChatChannel{},
-		&model.ChatMember{},
-		&model.ChatMessage{},
-	); err != nil {
-		log.Fatalf("config: failed to migrate database: %v", err)
-	}
-
-	log.Println("config: database connected and migrated successfully")
-	return db
+	return db, nil
 }
 
-func ConnectRedis(cfg *AppConfig) *redis.Client {
-	client := redis.NewClient(&redis.Options{
+func databaseDSN(cfg *AppConfig) string {
+	query := url.Values{}
+	query.Set("sslmode", cfg.DBSSLMode)
+	query.Set("TimeZone", cfg.DBTimezone)
+	if cfg.DBSSLRootCert != "" {
+		query.Set("sslrootcert", cfg.DBSSLRootCert)
+	}
+	// GORM's PostgreSQL dialector extracts TimeZone with a regexp before
+	// pgx parses the URL. Keep the timezone value unescaped so names such as
+	// Asia/Kolkata are not passed to PostgreSQL as Asia%2FKolkata.
+	encodedQuery := query.Encode()
+	encodedTimezone := "TimeZone=" + url.QueryEscape(cfg.DBTimezone)
+	rawTimezone := "TimeZone=" + cfg.DBTimezone
+	encodedQuery = strings.Replace(encodedQuery, encodedTimezone, rawTimezone, 1)
+	dsn := &url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(cfg.DBUser, cfg.DBPassword),
+		Host:     fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
+		Path:     "/" + cfg.DBName,
+		RawQuery: encodedQuery,
+	}
+	return dsn.String()
+}
+
+func ConnectRedis(cfg *AppConfig) (*redis.Client, error) {
+	options := &redis.Options{
 		Addr:     cfg.RedisHost + ":" + cfg.RedisPort,
 		Password: cfg.RedisPassword,
 		DB:       cfg.RedisDB,
-	})
-
-	if err := client.Ping(context.Background()).Err(); err != nil {
-		log.Fatalf("config: failed to connect to Redis: %v", err)
 	}
+	if cfg.RedisTLS {
+		options.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12, ServerName: cfg.RedisHost}
+	}
+	client := redis.NewClient(options)
 
-	log.Println("config: Redis connected successfully")
-	return client
+	return client, nil
+}
+
+// Migrate applies the model schema only when explicitly invoked by an
+// operator. It is repeatable and never drops existing data.
+func Migrate(db *gorm.DB) error {
+	return db.Connection(func(conn *gorm.DB) error {
+		if err := conn.Exec("SELECT pg_advisory_lock(729184302)").Error; err != nil {
+			return fmt.Errorf("acquire migration lock: %w", err)
+		}
+		defer conn.Exec("SELECT pg_advisory_unlock(729184302)")
+		if err := conn.AutoMigrate(&schemaMigration{}); err != nil {
+			return fmt.Errorf("initialize migration history: %w", err)
+		}
+		const initialSchema = "001_initial_gorm_schema"
+		var applied schemaMigration
+		result := conn.Where("version = ?", initialSchema).First(&applied)
+		if result.Error == nil {
+			return nil
+		}
+		if result.Error != gorm.ErrRecordNotFound {
+			return result.Error
+		}
+		return conn.Transaction(func(tx *gorm.DB) error {
+			if err := tx.AutoMigrate(
+				&model.Role{}, &model.User{}, &model.RefreshToken{}, &model.UserProfile{},
+				&model.Organization{}, &model.OrganizationMember{}, &model.OrganizationJoinRequest{},
+				&model.Project{}, &model.ProjectMember{}, &model.Task{}, &model.Comment{},
+				&model.Team{}, &model.TeamMember{}, &model.Notification{}, &model.OrganizationInvitation{},
+				&model.ChatChannel{}, &model.ChatMember{}, &model.ChatMessage{},
+			); err != nil {
+				return err
+			}
+			return tx.Create(&schemaMigration{Version: initialSchema}).Error
+		})
+	})
+}
+
+type schemaMigration struct {
+	Version   string `gorm:"primaryKey;size:100"`
+	AppliedAt time.Time
+}
+
+func CheckSchema(db *gorm.DB) error {
+	models := []any{&model.Role{}, &model.User{}, &model.RefreshToken{}, &model.UserProfile{},
+		&model.Organization{}, &model.OrganizationMember{}, &model.OrganizationJoinRequest{},
+		&model.Project{}, &model.ProjectMember{}, &model.Task{}, &model.Comment{},
+		&model.Team{}, &model.TeamMember{}, &model.Notification{}, &model.OrganizationInvitation{},
+		&model.ChatChannel{}, &model.ChatMember{}, &model.ChatMessage{}}
+	for _, m := range models {
+		if !db.Migrator().HasTable(m) {
+			return fmt.Errorf("database schema is incomplete; run the explicit migrate command (missing %T)", m)
+		}
+	}
+	return nil
 }

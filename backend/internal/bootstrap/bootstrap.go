@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -55,9 +56,27 @@ import (
 )
 
 func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisClient *redis.Client) *gin.Engine {
-	router := gin.Default()
+	if cfg.Env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	// Avoid Gin's default logger because it includes raw query strings, which
+	// could expose the short-lived WebSocket ticket in access logs.
+	router := gin.New()
+	var trustedProxies []string
+	if strings.TrimSpace(cfg.TrustedProxies) != "" {
+		for _, proxy := range strings.Split(cfg.TrustedProxies, ",") {
+			if proxy = strings.TrimSpace(proxy); proxy != "" {
+				trustedProxies = append(trustedProxies, proxy)
+			}
+		}
+	}
+	if err := router.SetTrustedProxies(trustedProxies); err != nil {
+		log.Fatalf("Invalid trusted proxy configuration: %v", err)
+	}
 
 	router.Use(middleware.CORSMiddleware(cfg.CORSOrigins))
+	router.Use(middleware.MaxRequestBodyBytes(4 << 20))
+	router.Use(middleware.ValidatePagination())
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.CustomRecovery())
 
@@ -76,14 +95,25 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 	healthService := health.NewHealthService()
 	healthService.AddCheck("database", health.DatabaseCheck(sqlDB), 5*time.Second)
 	healthService.AddCheck("redis", health.RedisCheck(redisClient), 5*time.Second)
+	healthService.AddCheck("schema", func(checkCtx context.Context) error {
+		return config.CheckSchema(db.WithContext(checkCtx))
+	}, 5*time.Second)
+	// Prime readiness before the caller starts listening. Otherwise the first
+	// requests can race the background health goroutine and see an empty status.
+	initialHealthCtx, cancelInitialHealth := context.WithTimeout(ctx, 15*time.Second)
+	healthService.CheckNow(initialHealthCtx)
+	cancelInitialHealth()
 	router.GET("/health", healthService.HealthHandler)
+	router.GET("/ready", healthService.HealthHandler)
+	router.GET("/live", func(c *gin.Context) { c.Status(200) })
 
 	go healthService.Run(ctx)
 
 	cacheLayer := cache.NewRedisCache(redisClient)
 
 	wsHub := ws.NewHub()
-	go wsHub.Run()
+	go wsHub.Run(ctx)
+	wsTickets := ws.NewTicketStore()
 
 	authRepository := authRepo.NewRepository(db)
 	profileRepository := profileRepo.NewRepository(db)
@@ -112,7 +142,7 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 
 	notifSvc := notifService.NewService(notifRepository, wsHub, cfg)
 	notifController := notification.NewController(notifSvc)
-	routes.RegisterNotificationRoutes(router, notifController, wsHub, cfg, authRepository)
+	routes.RegisterNotificationRoutes(router, notifController, wsHub, cfg, authRepository, wsTickets)
 
 	orgSvc := orgService.NewService(orgRepository, authRepository, cfg)
 	orgController := organization.NewController(orgSvc)
@@ -134,7 +164,7 @@ func InitRouter(ctx context.Context, cfg *config.AppConfig, db *gorm.DB, redisCl
 	invitationController := invitationCtrl.NewController(invitationSvc)
 	routes.RegisterInvitationRoutes(router, invitationController, cfg, authRepository)
 
-	chatSvc := chatService.NewService(chatRepository, authRepository, orgRepository, projRepository, wsHub, cfg)
+	chatSvc := chatService.NewService(chatRepository, authRepository, orgRepository, projRepository, teamRepository, wsHub, cfg)
 	chatController := chatCtrl.NewController(chatSvc)
 	routes.RegisterChatRoutes(router, chatController, cfg, authRepository)
 

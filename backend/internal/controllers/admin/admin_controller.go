@@ -10,6 +10,7 @@ import (
 	adminRequest "devSync/internal/dto/request"
 	"devSync/internal/model"
 	adminService "devSync/internal/services/admin"
+	"devSync/utils/validator"
 )
 
 type Controller struct {
@@ -19,7 +20,6 @@ type Controller struct {
 func NewController(svc adminService.Service) *Controller {
 	return &Controller{svc: svc}
 }
-
 
 func (c *Controller) ListUsers(ctx *gin.Context) {
 	limit := parseIntDefault(ctx.Query("limit"), 20)
@@ -80,7 +80,7 @@ func (c *Controller) UpdateUserRole(ctx *gin.Context) {
 		return
 	}
 	var body adminRequest.AdminUpdateUserRoleRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -102,7 +102,7 @@ func (c *Controller) UpdateUserStatus(ctx *gin.Context) {
 		return
 	}
 	var body adminRequest.AdminUpdateUserStatusRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -111,7 +111,11 @@ func (c *Controller) UpdateUserStatus(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": "unauthorized"})
 		return
 	}
-	if err := c.svc.UpdateUserStatus(ctx.Request.Context(), adminID, id, body.IsActive); err != nil {
+	if body.IsActive == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "is_active is required"})
+		return
+	}
+	if err := c.svc.UpdateUserStatus(ctx.Request.Context(), adminID, id, *body.IsActive); err != nil {
 		handleServiceError(ctx, err)
 		return
 	}
@@ -134,7 +138,6 @@ func (c *Controller) DeleteUser(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true, "message": "user deactivated"})
 }
-
 
 func (c *Controller) ListOrganizations(ctx *gin.Context) {
 	limit := parseIntDefault(ctx.Query("limit"), 20)
@@ -194,11 +197,15 @@ func (c *Controller) UpdateOrgStatus(ctx *gin.Context) {
 		return
 	}
 	var body adminRequest.AdminUpdateOrgStatusRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	if err := c.svc.UpdateOrgStatus(ctx.Request.Context(), id, body.IsActive); err != nil {
+	if body.IsActive == nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "is_active is required"})
+		return
+	}
+	if err := c.svc.UpdateOrgStatus(ctx.Request.Context(), id, *body.IsActive); err != nil {
 		handleServiceError(ctx, err)
 		return
 	}
@@ -211,7 +218,7 @@ func (c *Controller) TransferOwnership(ctx *gin.Context) {
 		return
 	}
 	var body adminRequest.AdminTransferOwnershipRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	if err := validator.BindAndValidateJSON(ctx, &body); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
@@ -234,7 +241,6 @@ func (c *Controller) DeleteOrg(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true, "message": "organization deactivated"})
 }
 
-
 func (c *Controller) GetStats(ctx *gin.Context) {
 	stats, err := c.svc.GetStats(ctx.Request.Context())
 	if err != nil {
@@ -243,7 +249,6 @@ func (c *Controller) GetStats(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true, "message": "Success", "data": stats})
 }
-
 
 func handleServiceError(ctx *gin.Context, err error) {
 	msg := err.Error()

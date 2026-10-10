@@ -137,8 +137,6 @@ export const EditProfileForm = ({ onClose }: EditProfileFormProps) => {
       return;
     }
 
-    console.log('Sending payload:', payload);
-
     try {
       await updateProfile(payload);
       onClose();

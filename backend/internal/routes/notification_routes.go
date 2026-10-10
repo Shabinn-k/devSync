@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"golang.org/x/time/rate"
 
 	"devSync/config"
 	"devSync/internal/controllers/notification"
@@ -16,8 +17,11 @@ func RegisterNotificationRoutes(
 	hub *ws.Hub,
 	cfg *config.AppConfig,
 	repo authRepo.Repository,
+	tickets *ws.TicketStore,
 ) {
-	router.GET("/ws/notifications", ws.ServeWS(hub, cfg))
+	ticketLimiter := middleware.NewIPRateLimiter(rate.Limit(1.0/5.0), 5)
+	router.POST("/ws/ticket", middleware.RateLimitScope(ticketLimiter, "ticket"), middleware.AuthRequired(cfg, repo), ws.IssueTicket(tickets))
+	router.GET("/ws/notifications", ws.ServeWS(hub, tickets, cfg))
 
 	notifGroup := router.Group("/notifications")
 	notifGroup.Use(middleware.AuthRequired(cfg, repo))

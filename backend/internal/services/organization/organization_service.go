@@ -270,28 +270,7 @@ func (s *service) AddMember(ctx context.Context, userID, organizeID int, req *re
 }
 
 func (s *service) sendInvitationEmail(ctx context.Context, email string, organizeID int) error {
-	org, err := s.orgRepo.GetByID(ctx, organizeID)
-	if err != nil {
-		return err
-	}
-
-	invitationLink := fmt.Sprintf("%s/register?email=%s&org=%d", s.cfg.FrontendURL, email, organizeID)
-
-	subject := fmt.Sprintf("Invitation to join %s on DevSync", org.Name)
-	body := fmt.Sprintf(`
-		<h2>You've been invited to join %s on DevSync!</h2>
-		<p>Click the link below to create your account and join:</p>
-		<a href="%s">%s</a>
-		<p>This invitation will expire in 7 days.</p>
-		<br>
-		<p>Best regards,<br>The DevSync Team</p>
-	`, org.Name, invitationLink, invitationLink)
-
-	log.Printf("Sending invitation email to %s for org %d", email, organizeID)
-	log.Printf("Subject: %s", subject)
-	log.Printf("Body: %s", body)
-
-	return nil
+	return errors.New("organization email invitations are not available through this route")
 }
 func (s *service) GetMembers(ctx context.Context, userID, organizeID int) ([]response.OrganizationMemberResponse, error) {
 	isMember, err := s.orgRepo.IsMember(ctx, organizeID, userID)
