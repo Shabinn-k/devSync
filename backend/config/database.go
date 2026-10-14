@@ -72,41 +72,58 @@ func ConnectRedis(cfg *AppConfig) (*redis.Client, error) {
 	return client, nil
 }
 
-// Migrate applies the model schema only when explicitly invoked by an
-// operator. It is repeatable and never drops existing data.
 func Migrate(db *gorm.DB) error {
-	return db.Connection(func(conn *gorm.DB) error {
-		if err := conn.Exec("SELECT pg_advisory_lock(729184302)").Error; err != nil {
-			return fmt.Errorf("acquire migration lock: %w", err)
-		}
-		defer conn.Exec("SELECT pg_advisory_unlock(729184302)")
-		if err := conn.AutoMigrate(&schemaMigration{}); err != nil {
-			return fmt.Errorf("initialize migration history: %w", err)
-		}
-		const initialSchema = "001_initial_gorm_schema"
-		var applied schemaMigration
-		result := conn.Where("version = ?", initialSchema).First(&applied)
-		if result.Error == nil {
-			return nil
-		}
-		if result.Error != gorm.ErrRecordNotFound {
-			return result.Error
-		}
-		return conn.Transaction(func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(
-				&model.Role{}, &model.User{}, &model.RefreshToken{}, &model.UserProfile{},
-				&model.Organization{}, &model.OrganizationMember{}, &model.OrganizationJoinRequest{},
-				&model.Project{}, &model.ProjectMember{}, &model.Task{}, &model.Comment{},
-				&model.Team{}, &model.TeamMember{}, &model.Notification{}, &model.OrganizationInvitation{},
-				&model.ChatChannel{}, &model.ChatMember{}, &model.ChatMessage{},
-			); err != nil {
-				return err
-			}
-			return tx.Create(&schemaMigration{Version: initialSchema}).Error
-		})
-	})
-}
+    return db.Transaction(func(tx *gorm.DB) error {
+        if err := tx.Exec(
+            "SELECT pg_advisory_xact_lock(729184302)",
+        ).Error; err != nil {
+            return fmt.Errorf("acquire migration lock: %w", err)
+        }
 
+        if err := tx.AutoMigrate(&schemaMigration{}); err != nil {
+            return fmt.Errorf("initialize migration history: %w", err)
+        }
+
+        const initialSchema = "001_initial_gorm_schema"
+
+        var applied schemaMigration
+        result := tx.Where("version = ?", initialSchema).First(&applied)
+
+        if result.Error == nil {
+            return nil
+        }
+        if result.Error != gorm.ErrRecordNotFound {
+            return result.Error
+        }
+
+        if err := tx.AutoMigrate(
+            &model.Role{},
+            &model.User{},
+            &model.RefreshToken{},
+            &model.UserProfile{},
+            &model.Organization{},
+            &model.OrganizationMember{},
+            &model.OrganizationJoinRequest{},
+            &model.Project{},
+            &model.ProjectMember{},
+            &model.Task{},
+            &model.Comment{},
+            &model.Team{},
+            &model.TeamMember{},
+            &model.Notification{},
+            &model.OrganizationInvitation{},
+            &model.ChatChannel{},
+            &model.ChatMember{},
+            &model.ChatMessage{},
+        ); err != nil {
+            return err
+        }
+
+        return tx.Create(&schemaMigration{
+            Version: initialSchema,
+        }).Error
+    })
+}
 type schemaMigration struct {
 	Version   string `gorm:"primaryKey;size:100"`
 	AppliedAt time.Time
