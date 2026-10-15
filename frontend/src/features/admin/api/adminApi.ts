@@ -1,5 +1,5 @@
-import axios from 'axios';
 import api from '../../../lib/axios';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 import type {
   AdminUser,
   AdminUserDetail,
@@ -11,11 +11,7 @@ import type {
 } from '../types/admin';
 
 export const extractApiError = (err: unknown, fallback: string): string => {
-  if (axios.isAxiosError(err) && err.response?.data?.message) {
-    return err.response.data.message;
-  }
-  if (err instanceof Error) return err.message;
-  return fallback;
+  return getUserFriendlyError(err, fallback);
 };
 
 export const adminApi = {

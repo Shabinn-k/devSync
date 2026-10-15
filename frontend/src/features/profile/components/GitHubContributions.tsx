@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Calendar, TrendingUp, XCircle } from 'lucide-react';
 import { GithubIcon } from './SocialIcons';
 import { profileApi } from '../api/profileApi';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 
 interface GitHubContributionsProps {
   githubUsername?: string;
@@ -65,7 +66,7 @@ export const GitHubContributions = ({ githubUsername }: GitHubContributionsProps
         setError(null);
       } catch (err: any) {
         console.error('GitHub contribution error:', err);
-        const msg = err.response?.data?.message || err.message || 'Could not load GitHub contributions';
+        const msg = getUserFriendlyError(err, 'Could not load GitHub contributions. Please try again.');
         setError(msg);
         setContributions([]);
         setTotalContributions(0);

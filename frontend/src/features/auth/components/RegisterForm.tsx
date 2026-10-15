@@ -65,8 +65,8 @@ export const RegisterForm = () => {
         toast.success('Account created! Please verify your email.');
         navigate('/verify-email');
       })
-      .catch((err) => {
-        toast.error(err.message || 'Registration failed');
+      .catch(() => {
+        // The auth store renders the user-facing error inline.
       });
   };
 
@@ -106,7 +106,7 @@ export const RegisterForm = () => {
       </div>
 
       {(error || validationError) && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+        <div role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
           {validationError || error}
         </div>
       )}

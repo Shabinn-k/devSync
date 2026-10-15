@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthInput } from './AuthInput';
 import { SocialButton } from './SocialButton';
 import { AuthDivider } from './AuthDivider';
@@ -28,6 +28,7 @@ export const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -51,9 +52,10 @@ export const LoginForm = () => {
     try {
      await login({ email, password });
 const user = useAuthStore.getState().user;
-navigate(user?.role_id === 3 ? '/admin' : '/dashboard', { replace: true });
-    } catch (err: any) {
-      console.error('Login failed:', err);
+      const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+      navigate(requestedPath || (user?.role_id === 3 ? '/admin' : '/dashboard'), { replace: true });
+    } catch {
+      // The auth store provides the user-facing error message.
     } finally {
       setIsSubmitting(false);
     }
@@ -77,7 +79,7 @@ navigate(user?.role_id === 3 ? '/admin' : '/dashboard', { replace: true });
       <p className="mt-1 text-sm text-white/40">Please enter your details.</p>
 
       {(error || validationError) && (
-        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+        <div role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
           {validationError || error}
         </div>
       )}

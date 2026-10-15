@@ -7,6 +7,7 @@ import { organizationApi } from '../../organizations/api/organizationApi';
 import type { OrganizationMember } from '../../organizations/types/organization';
 import type { TeamMember } from '../types/team';
 import type { TeamRole } from '../types/team';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 
 interface AddTeamMemberModalProps {
     teamId: number;
@@ -35,7 +36,7 @@ export const AddTeamMemberModal = ({ teamId, orgId, onClose, onSuccess }: AddTea
             })
             .catch((err: any) => {
                 if (!cancelled) {
-                    setError(err?.response?.data?.message || err.message || 'Failed to load members');
+                    setError(getUserFriendlyError(err, 'Unable to load members. Please try again.'));
                 }
             })
             .finally(() => {
@@ -63,11 +64,7 @@ export const AddTeamMemberModal = ({ teamId, orgId, onClose, onSuccess }: AddTea
             onSuccess?.();
             onClose();
         } catch (err: any) {
-            setError(
-                err?.response?.data?.message ||
-                err.message ||
-                'Failed to add member to team'
-            );
+            setError(getUserFriendlyError(err, 'Unable to add the member. Please try again.'));
         }
     };
 

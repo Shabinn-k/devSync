@@ -34,6 +34,7 @@ import { AdminLayout } from "../features/admin/components/AdminLayout";
 import { AdminDashboardPage } from "../features/admin/pages/AdminDashboard";
 import { AdminUsersPage } from "../features/admin/pages/AdminUserPage";
 import { AdminOrganizationsPage } from "../features/admin/pages/AdminOrganizationPage";
+import { NotFoundPage } from "../components/NotFoundPage";
 
 const RootRoute = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -88,7 +89,7 @@ export const AppRoutes = () => {
         <Route path="organizations" element={<AdminOrganizationsPage />} />
       </Route>
 
-      <Route path="*" element={<RootRoute />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

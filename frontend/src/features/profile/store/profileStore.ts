@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { profileApi } from '../api/profileApi';
 import type { Profile, UpdateProfileRequest, ChangePasswordRequest, ProfileStats } from '../types/profile';
 import { useAuthStore } from '../../../stores/authStore';
+import axios from 'axios';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 
 interface ProfileState {
   profile: Profile | null;
@@ -39,7 +41,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
       set({ profile, isLoading: false });
     } catch (err: any) {
-      if (err.response?.status === 401) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         useAuthStore.getState().logout();
         return;
       }
@@ -53,8 +55,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
       const updatedProfile = await profileApi.updateMe(data);
       set({ profile: updatedProfile, isSaving: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to update profile';
-      console.error('Update profile error:', message);
+      const message = getUserFriendlyError(err, 'Unable to update your profile. Please try again.');
       set({ error: message, isSaving: false });
       throw err;
     }
@@ -66,7 +67,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
       await profileApi.changePassword(data);
       set({ isSaving: false });
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to change password';
+      const message = getUserFriendlyError(err, 'Unable to change your password. Please try again.');
       set({ error: message, isSaving: false });
       throw err;
     }
@@ -91,8 +92,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
       return avatarUrl;
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Failed to upload avatar';
-      console.error('Upload avatar error:', message);
+      const message = getUserFriendlyError(err, 'Unable to upload your photo. Please try again.');
       set({ error: message, isSaving: false });
       throw err;
     }

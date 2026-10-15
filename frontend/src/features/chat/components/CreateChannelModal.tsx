@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { X, Loader2, Building2, Users, User } from 'lucide-react';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 import { useChatStore } from '../store/chatStore';
 import { useOrganizationStore } from '../../organizations/store/organizationStore';
 import { useTeamStore } from '../../teams/store/teamStore'; 
@@ -13,10 +13,7 @@ interface CreateChannelModalProps {
 type ModalType = 'org' | 'team' | 'direct';
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (axios.isAxiosError<{ message?: string }>(error)) {
-    return error.response?.data?.message || error.message || fallback;
-  }
-  return error instanceof Error ? error.message : fallback;
+  return getUserFriendlyError(error, fallback);
 };
 
 export const CreateChannelModal: React.FC<CreateChannelModalProps> = ({

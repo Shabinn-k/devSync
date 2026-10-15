@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 import { tokenStorage } from './tokenStorage';
+import { normalizeApiError } from './apiErrors';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
@@ -8,6 +9,7 @@ export const apiClient = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
+  timeout: 30_000,
 });
  
 apiClient.interceptors.request.use(
@@ -46,10 +48,9 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config || {};
 
-    const isAuthEndpoint =
-      originalRequest.url?.includes('/auth/login') ||
-      originalRequest.url?.includes('/auth/refresh-token') ||
-      originalRequest.url?.includes('/auth/register');
+    const isAuthEndpoint = originalRequest.url?.startsWith('/auth/') &&
+      !originalRequest.url.includes('/auth/me') &&
+      !originalRequest.url.includes('/auth/logout');
 
     if (
       error.response?.status === 401 &&
@@ -71,7 +72,7 @@ apiClient.interceptors.response.use(
 
       if (!refreshToken) {
         useAuthStore.getState().logout?.();
-        return Promise.reject(error);
+        return Promise.reject(normalizeApiError(error));
       }
 
       if (isRefreshing) {
@@ -81,7 +82,7 @@ apiClient.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               resolve(apiClient(originalRequest));
             } else {
-              reject(error);
+              reject(normalizeApiError(error));
             }
           });
         });
@@ -119,13 +120,13 @@ apiClient.interceptors.response.use(
         refreshQueue.forEach((cb) => cb(null));
         refreshQueue = [];
         useAuthStore.getState().logout?.();
-        return Promise.reject(refreshErr);
+        return Promise.reject(normalizeApiError(refreshErr));
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(normalizeApiError(error));
   }
 );
 

@@ -5,6 +5,7 @@ import { useProjectStore } from '../store/projectStore';
 import { useOrganizationStore } from '../../organizations/store/organizationStore';
 import { useTeamStore } from '../../teams/store/teamStore';
 import toast from 'react-hot-toast';
+import { getUserFriendlyError } from '../../../lib/apiErrors';
 
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'] as const;
 type Priority = typeof PRIORITIES[number];
@@ -71,7 +72,7 @@ export const CreateProjectPage = () => {
       toast.success('Project created');
       navigate(`/projects/${project.id}`);
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || err.message || 'Failed to create project');
+      toast.error(getUserFriendlyError(err, 'Unable to create the project. Please try again.'));
     }
   };
 

@@ -1,7 +1,9 @@
 import { create } from 'zustand';
+import axios from 'axios';
 import { persist } from 'zustand/middleware';
 import { authApi } from '../features/auth/api/authApi';
 import { tokenStorage } from '../lib/tokenStorage';
+import { getUserFriendlyError } from '../lib/apiErrors';
 import type {
     User,
     LoginRequest,
@@ -89,8 +91,8 @@ export const useAuthStore = create<AuthState>()(
                         unverifiedEmail: data.email,
                         selectedRole: null,
                     });
-                } catch (err: any) {
-                    set({ error: err.message || 'Registration failed', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Registration failed. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -115,8 +117,8 @@ export const useAuthStore = create<AuthState>()(
                         isAuthenticated: !!accessToken,
                         isLoading: false,
                     });
-                } catch (err: any) {
-                    set({ error: err.message || 'Login failed', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Unable to sign in. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -129,6 +131,7 @@ export const useAuthStore = create<AuthState>()(
                         await authApi.logout(currentRefreshToken);
                     }
                 } catch {
+                    // Logout always clears local credentials, even when the API is unavailable.
                 } finally {
                     tokenStorage.clearAllAuth();
                     set({
@@ -156,8 +159,8 @@ export const useAuthStore = create<AuthState>()(
                     const user = await authApi.getMe();
                     tokenStorage.setUser(user);
                     set({ user, isAuthenticated: true });
-                } catch (err: any) {
-                    if (err?.response?.status === 401) {
+                } catch (err: unknown) {
+                    if (axios.isAxiosError(err) && err.response?.status === 401) {
                         await get().logout();
                     }
                 }
@@ -168,8 +171,8 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     await authApi.verifyEmail(data);
                     set({ isLoading: false, unverifiedEmail: null });
-                } catch (err: any) {
-                    set({ error: err.message || 'Email verification failed', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Email verification failed. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -179,8 +182,8 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     await authApi.resendOTP(email);
                     set({ isLoading: false });
-                } catch (err: any) {
-                    set({ error: err.message || 'Failed to resend OTP', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Unable to send a new code. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -194,8 +197,8 @@ export const useAuthStore = create<AuthState>()(
                     }
                     await authApi.verifyOTP(resetEmail, otp);
                     set({ isLoading: false, resetOTP: otp });
-                } catch (err: any) {
-                    set({ error: err.message || 'OTP verification failed', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Code verification failed. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -205,8 +208,8 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     await authApi.forgotPassword({ email });
                     set({ isLoading: false, resetEmail: email });
-                } catch (err: any) {
-                    set({ error: err.message || 'Failed to send reset email', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Unable to send a reset code. Please try again.'), isLoading: false });
                     throw err;
                 }
             },
@@ -225,8 +228,8 @@ export const useAuthStore = create<AuthState>()(
                         confirm_password: newPassword,
                     });
                     set({ isLoading: false, resetEmail: null, resetOTP: null });
-                } catch (err: any) {
-                    set({ error: err.message || 'Failed to reset password', isLoading: false });
+                } catch (err: unknown) {
+                    set({ error: getUserFriendlyError(err, 'Unable to reset your password. Please try again.'), isLoading: false });
                     throw err;
                 }
             },

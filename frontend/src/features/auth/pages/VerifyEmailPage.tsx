@@ -32,6 +32,7 @@ const VerifyEmailPage = () => {
       setIsVerified(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch {
+      // The auth store provides the user-facing error message.
     }
   };
 
@@ -42,6 +43,7 @@ const VerifyEmailPage = () => {
         setValidationError(null);
       }
     } catch {
+      // The auth store provides the user-facing error message.
     }
   };
 
@@ -106,7 +108,7 @@ const VerifyEmailPage = () => {
           </div>
 
           {(error || validationError) && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+            <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
               {validationError || error}
             </div>
           )}

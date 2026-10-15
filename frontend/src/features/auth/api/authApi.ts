@@ -12,7 +12,7 @@ import type {
 
 export const authApi = {
     register: (data: RegisterRequest): Promise<AuthResponse> =>
-        apiClient.post<ApiResponse<any>>('/auth/register', {
+        apiClient.post<ApiResponse<AuthResponse & { access_token?: string; refresh_token?: string }>>('/auth/register', {
             ...data,
             confirm_password: data.confirm_password || data.password,
         })
@@ -31,7 +31,7 @@ export const authApi = {
             }),
 
     login: (data: LoginRequest): Promise<AuthResponse> =>
-        apiClient.post<ApiResponse<any>>('/auth/login', data)
+        apiClient.post<ApiResponse<AuthResponse & { access_token?: string; refresh_token?: string }>>('/auth/login', data)
             .then((res) => {
                 if (res.data.success && res.data.data) {
                     const d = res.data.data;

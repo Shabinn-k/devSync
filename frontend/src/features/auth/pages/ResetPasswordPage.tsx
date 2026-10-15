@@ -47,7 +47,8 @@ const ResetPasswordPage = () => {
       await resetPasswordWithOTP(resetOTP, newPassword);
       setIsSubmitted(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch (err: any) {
+    } catch {
+      // The auth store provides the user-facing error message.
     }
   };
 
@@ -106,7 +107,7 @@ const ResetPasswordPage = () => {
           </div>
 
           {(error || validationError) && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+            <div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
               {validationError || error}
             </div>
           )}

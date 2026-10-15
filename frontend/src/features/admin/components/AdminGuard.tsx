@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../../stores/authStore';
 import { tokenStorage } from '../../../lib/tokenStorage';
@@ -10,14 +10,19 @@ interface AdminGuardProps {
 export const AdminGuard = ({ children }: AdminGuardProps) => {
   const { user, isAuthenticated, hydrated, isLoading, getMe } = useAuthStore();
   const token = useAuthStore((s) => s.token || s.accessToken) || tokenStorage.getAccessToken();
+  const [checkingUser, setCheckingUser] = useState(() => Boolean(token && !user));
 
   useEffect(() => {
-    if (token && !user && !isLoading) {
-      getMe();
+    if (token && !user) {
+      let active = true;
+      void getMe().finally(() => {
+        if (active) setCheckingUser(false);
+      });
+      return () => { active = false; };
     }
-  }, [token, user, isLoading, getMe]);
+  }, [token, user, getMe]);
 
-  if (!hydrated || (token && !user) || (isLoading && !user)) {
+  if (!hydrated || (checkingUser && token && !user) || (isLoading && !user)) {
     return (
       <div className="flex h-screen items-center justify-center bg-white">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-900" />
