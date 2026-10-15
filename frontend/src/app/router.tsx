@@ -22,6 +22,7 @@ import { TasksPage } from "../features/tasks/pages/TaskPage";
 import { TaskDetailPage } from "../features/tasks/pages/TaskDetailPage";
 
 import TeamDetailPage from "../features/teams/pages/TeamDetailPage";
+import TeamsPage from "../features/teams/pages/TeamsPage";
 
 import { ProtectedRoute, PublicRoute } from "../components/routes/Guards";
 import { useAuthStore } from "../stores/authStore";
@@ -81,6 +82,7 @@ export const AppRoutes = () => {
 
       {/* Chat */}
       <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+      <Route path="/teams" element={<ProtectedRoute><TeamsPage /></ProtectedRoute>} />
 
       {/* Admin (super admin only) */}
       <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>

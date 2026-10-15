@@ -106,18 +106,21 @@ const DashboardPage = () => {
               label="Projects"
               value={displayStats.projects}
               subtext="+2 this month"
+              to="/projects"
             />
             <StatsCard
               icon={<CheckSquare className="h-5 w-5 text-white/30" />}
               label="Tasks"
               value={displayStats.tasks}
               subtext={`${displayStats.active_tasks || 0} active`}
+              to="/tasks"
             />
             <StatsCard
               icon={<Users className="h-5 w-5 text-white/30" />}
               label="Teams"
               value={displayStats.teams}
               subtext="3 active members"
+              to="/teams"
             />
             <StatsCard
               icon={<TrendingUp className="h-5 w-5 text-white/30" />}
@@ -176,7 +179,7 @@ const DashboardPage = () => {
               <QuickAction
                 icon={<Plus className="h-5 w-5 text-white/40" />}
                 label="Create Task"
-                path="/tasks/create"
+                path="/tasks"
               />
               <QuickAction
                 icon={<User className="h-5 w-5 text-white/40" />}

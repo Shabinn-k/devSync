@@ -15,7 +15,7 @@ export const TeamCard = ({ team }: TeamCardProps) => {
             transition={{ duration: 0.2 }}
         >
             <Link
-                to={`/teams/${team.id}`}
+                to={`/organizations/${team.organization_id}/teams/${team.id}`}
                 className="block rounded-2xl border border-white/5 bg-white/5 p-5 transition-all hover:border-white/15 hover:bg-white/10"
             >
                 <div className="flex items-start justify-between">

@@ -4,6 +4,7 @@ import {
   FolderKanban,
   CheckSquare,
   Building2,
+  Users,
   Shield,
   X,
 } from 'lucide-react';
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { to: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
   { to: '/projects',      label: 'Projects',      icon: FolderKanban },
   { to: '/tasks',         label: 'Tasks',         icon: CheckSquare },
+  { to: '/teams',         label: 'Teams',         icon: Users },
   { to: '/organizations', label: 'Organizations', icon: Building2 },
 ];
 
